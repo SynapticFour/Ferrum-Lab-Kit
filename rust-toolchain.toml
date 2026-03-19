@@ -1,5 +1,5 @@
 [toolchain]
-# Transitive crates (e.g. `time` 0.3.47, `home` 0.5.12) require rustc 1.88+.
+# Transitive AWS SDK crates (e.g. `aws-types` 1.3.14) require rustc 1.91.1+.
 # lab-kit-ferrum pins ferrum-core; if Ferrum raises MSRV, bump this in sync.
-channel = "1.88"
+channel = "1.91.1"
 components = ["rustfmt", "clippy"]
