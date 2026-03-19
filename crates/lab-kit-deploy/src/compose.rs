@@ -4,7 +4,9 @@ use std::path::{Path, PathBuf};
 use lab_kit_core::{LabKitConfig, ServiceId, ServiceRegistry};
 use serde_yaml::Value;
 
-use crate::routing::write_external_upstreams_next_to_compose;
+use crate::routing::{
+    write_external_upstreams_next_to_compose, write_traefik_dynamic_proxy_next_to_compose,
+};
 use crate::DeployError;
 
 fn fragment_path(fragments_dir: &Path, name: &str) -> PathBuf {
@@ -53,6 +55,7 @@ pub fn generate_compose_file(
     let out = serde_yaml::to_string(&merged)?;
     fs::write(output_path, out)?;
     write_external_upstreams_next_to_compose(cfg, output_path)?;
+    write_traefik_dynamic_proxy_next_to_compose(cfg, output_path)?;
     Ok(())
 }
 

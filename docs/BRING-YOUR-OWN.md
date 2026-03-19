@@ -17,6 +17,12 @@ The **service registry** marks `deploy: false` and uses your URL for health pre-
 
 When you run `lab-kit generate compose`, Lab Kit writes **`external-upstreams.yaml`** next to the merged `docker-compose.yml` if any service uses `external_url`. It lists **service → base URL** for your reverse proxy (Traefik, Caddy, Envoy, …) so traffic to local routes can be forwarded to existing institute endpoints. See the `note` field inside the generated file.
 
+### `proxy-traefik-dynamic.yaml` (Traefik)
+
+In addition, Lab Kit generates **`proxy-traefik-dynamic.yaml`** (when any service is external) with a ready-to-load Traefik *dynamic config*.
+
+It uses typical GA4GH path prefixes (e.g. `/ga4gh/drs/v1`, `/ga4gh/wes/v1`, …) and forwards them to each service’s `external_url` base.
+
 ## Adapter traits (`lab-kit-adapters`)
 
 | Trait | Purpose |
