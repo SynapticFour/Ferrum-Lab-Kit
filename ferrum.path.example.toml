@@ -1,0 +1,9 @@
+# Prefer the Git pin via `lab-kit-ferrum` (see crates/lab-kit-ferrum/Cargo.toml and
+# docs/FERRUM-INTEGRATION.md). For a full Ferrum checkout next to this repo:
+#
+#   git clone https://github.com/SynapticFour/Ferrum.git ../Ferrum
+#
+# you may override crates with [patch] in the workspace root Cargo.toml, e.g.:
+#
+# [patch."https://github.com/SynapticFour/Ferrum.git"]
+# ferrum-core = { path = "../Ferrum/crates/ferrum-core" }

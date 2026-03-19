@@ -1,0 +1,30 @@
+[package]
+name = "lab-kit-adapters"
+description = "Bring-your-own backend traits and built-in adapters for Ferrum Lab Kit"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+[features]
+default = ["s3"]
+# Reason: optional Docker-based Postgres integration test (slow; not for every CI push).
+integration-tests = ["dep:testcontainers"]
+s3 = ["dep:aws-config", "dep:aws-sdk-s3", "dep:aws-credential-types"]
+
+[dependencies]
+anyhow.workspace = true
+async-trait = "0.1"
+aws-config = { workspace = true, optional = true }
+aws-credential-types = { version = "1.2", optional = true }
+aws-sdk-s3 = { workspace = true, optional = true }
+chrono.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+sqlx.workspace = true
+testcontainers = { version = "0.23", optional = true }
+thiserror.workspace = true
+tokio = { version = "1.40", features = ["fs", "rt-multi-thread", "macros", "process"] }
+tracing.workspace = true
+url.workspace = true

@@ -1,0 +1,41 @@
+# Default: all workloads off. `lab-kit generate helm` sets enabled + optional externalUrl.
+global:
+  imageRegistry: ""
+
+lab:
+  name: ""
+  environment: production
+
+services:
+  drs:
+    enabled: false
+    image: synapticfour/ferrum-drs:latest
+    externalUrl: null
+  htsget:
+    enabled: false
+    image: synapticfour/ferrum-htsget:latest
+    externalUrl: null
+  wes:
+    enabled: false
+    image: synapticfour/ferrum-wes:latest
+    externalUrl: null
+  tes:
+    enabled: false
+    image: synapticfour/ferrum-tes:latest
+    externalUrl: null
+  beacon:
+    enabled: false
+    image: synapticfour/ferrum-beacon:latest
+    externalUrl: null
+  trs:
+    enabled: false
+    image: synapticfour/ferrum-trs:latest
+    externalUrl: null
+  auth:
+    enabled: false
+    image: synapticfour/ferrum-auth-proxy:latest
+    externalUrl: null
+
+auth:
+  lsLogin:
+    issuer: "https://login.elixir-czech.org/oidc/"

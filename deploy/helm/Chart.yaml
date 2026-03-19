@@ -1,0 +1,10 @@
+apiVersion: v2
+name: ferrum-lab-kit
+description: Selective GA4GH deployment for Ferrum (Lab Kit)
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+keywords:
+  - ga4gh
+  - ferrum
+  - bioinformatics

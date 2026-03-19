@@ -1,0 +1,31 @@
+schema_version = 1
+
+[lab]
+name = "Data + workflow lab profile"
+environment = "production"
+
+[auth]
+provider = "ls-login"
+
+[auth.ls-login]
+client_id = "your-client-id"
+client_secret = "your-client-secret"
+issuer = "https://login.elixir-czech.org/oidc/"
+
+[services.drs]
+storage_backend = "s3"
+
+[services.drs.s3]
+endpoint = "http://minio.internal:9000"
+bucket = "genomes"
+access_key = "CHANGE_ME"
+secret_key = "CHANGE_ME"
+
+[services.wes]
+workflow_engine = "nextflow"
+compute_backend = "slurm"
+
+[services.wes.slurm]
+host = "hpc-login.internal"
+user = "ferrum"
+partition = "compute"

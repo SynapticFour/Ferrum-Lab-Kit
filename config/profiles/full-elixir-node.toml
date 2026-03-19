@@ -1,0 +1,41 @@
+schema_version = 1
+
+[lab]
+name = "ELIXIR node candidate (full Lab Kit surface)"
+environment = "staging"
+
+[auth]
+provider = "ls-login"
+
+[auth.ls-login]
+client_id = "your-client-id"
+client_secret = "your-client-secret"
+issuer = "https://login.elixir-czech.org/oidc/"
+
+[services.drs]
+storage_backend = "posix"
+
+[services.drs.posix]
+root = "/srv/genomic-data"
+
+[services.htsget]
+
+[services.beacon]
+dataset_id = "national-node-cohort-001"
+access_level = "controlled"
+
+[services.wes]
+workflow_engine = "nextflow"
+compute_backend = "slurm"
+
+[services.wes.slurm]
+partition = "long"
+
+[services.tes]
+compute_backend = "slurm"
+
+[services.trs]
+registry_name = "National tools"
+
+[external]
+beacon_network_url = "https://beacon-network.elixir-europe.org"

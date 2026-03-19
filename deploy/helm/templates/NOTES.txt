@@ -1,0 +1,7 @@
+Ferrum Lab Kit (Helm)
+
+1. Merge `lab-kit generate helm` output into `-f` values (enabled + optional externalUrl per service).
+2. Install: `helm install ferrum-lab-kit . -n ferrum -f generated-values.yaml`
+3. Templates under `templates/deployment-*.yaml` create Deployments/Services for each enabled surface.
+4. Pin images to Ferrum release tags from https://github.com/SynapticFour/Ferrum
+5. If a service uses `externalUrl` only (not deployed here), configure your ingress to that upstream instead.

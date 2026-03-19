@@ -1,0 +1,8 @@
+services:
+  wes:
+    image: synapticfour/ferrum-wes:latest
+    networks: [lab]
+    ports:
+      - "8083:8080"
+    environment:
+      LAB_KIT_SERVICE: wes

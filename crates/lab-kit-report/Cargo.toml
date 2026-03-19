@@ -1,0 +1,22 @@
+[package]
+name = "lab-kit-report"
+description = "HelixTest conformance JSON + license-gated PDF reports for Ferrum Lab Kit"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+[features]
+default = ["pdf"]
+# PDF uses printpdf — can be disabled for minimal builds.
+pdf = ["dep:printpdf"]
+
+[dependencies]
+anyhow.workspace = true
+chrono.workspace = true
+printpdf = { workspace = true, optional = true }
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+tracing.workspace = true

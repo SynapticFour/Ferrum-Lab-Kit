@@ -1,0 +1,9 @@
+# Always merged first by `lab-kit generate compose`.
+# Replace image placeholders with Ferrum release images from github.com/SynapticFour/Ferrum.
+name: ferrum-lab-kit
+
+services: {}
+
+networks:
+  lab:
+    driver: bridge

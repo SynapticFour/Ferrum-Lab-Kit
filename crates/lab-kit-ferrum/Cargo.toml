@@ -1,0 +1,12 @@
+[package]
+name = "lab-kit-ferrum"
+description = "Compile-time bridge to SynapticFour/Ferrum platform crates"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+# Pin must stay in sync with config/ci/ferrum-revision.txt
+ferrum-core = { git = "https://github.com/SynapticFour/Ferrum.git", tag = "v0.1.0" }

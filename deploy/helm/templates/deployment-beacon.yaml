@@ -1,0 +1,38 @@
+{{- if .Values.services.beacon.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "ferrum-lab-kit.name" . }}-beacon
+  labels:
+    {{- include "ferrum-lab-kit.labels" . | nindent 4 }}
+    app.kubernetes.io/component: beacon
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8080
+      targetPort: 8080
+      name: http
+  selector:
+    app.kubernetes.io/component: beacon
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "ferrum-lab-kit.name" . }}-beacon
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: beacon
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/component: beacon
+        {{- include "ferrum-lab-kit.labels" . | nindent 8 }}
+    spec:
+      containers:
+        - name: beacon
+          image: {{ .Values.services.beacon.image }}
+          ports:
+            - containerPort: 8080
+{{- end }}

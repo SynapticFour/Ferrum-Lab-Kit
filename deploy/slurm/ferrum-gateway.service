@@ -1,0 +1,16 @@
+[Unit]
+Description=Ferrum Lab Kit gateway on HPC login node (WES/TES → SLURM)
+After=network-online.target munge.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=ferrum
+Group=ferrum
+# Replace with Ferrum gateway binary; coordinates sbatch for TES/WES workers.
+ExecStart=/usr/local/bin/ferrum-slurm-proxy --config /etc/ferrum/lab-kit.toml
+Restart=on-failure
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target

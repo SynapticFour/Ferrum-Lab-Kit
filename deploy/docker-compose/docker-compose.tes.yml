@@ -1,0 +1,8 @@
+services:
+  tes:
+    image: synapticfour/ferrum-tes:latest
+    networks: [lab]
+    ports:
+      - "8084:8080"
+    environment:
+      LAB_KIT_SERVICE: tes

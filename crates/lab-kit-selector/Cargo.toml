@@ -1,0 +1,29 @@
+[package]
+name = "lab-kit-selector"
+description = "lab-kit CLI — service selection, deploy generation, status, conformance"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+[[bin]]
+name = "lab-kit"
+path = "src/main.rs"
+
+[dependencies]
+anyhow.workspace = true
+clap.workspace = true
+dialoguer.workspace = true
+lab-kit-adapters = { path = "../lab-kit-adapters", default-features = false, features = ["s3"] }
+lab-kit-auth = { path = "../lab-kit-auth" }
+lab-kit-core = { path = "../lab-kit-core" }
+lab-kit-deploy = { path = "../lab-kit-deploy" }
+lab-kit-ferrum = { path = "../lab-kit-ferrum" }
+lab-kit-report = { path = "../lab-kit-report" }
+serde_json.workspace = true
+tempfile.workspace = true
+tokio.workspace = true
+toml.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true

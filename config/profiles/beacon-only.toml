@@ -1,0 +1,18 @@
+schema_version = 1
+
+[lab]
+name = "Demo ELIXIR Beacon Node"
+environment = "demo"
+
+[auth]
+provider = "ls-login"
+
+[auth.ls-login]
+client_id = "demo-client"
+client_secret = "demo-secret"
+issuer = "https://login.elixir-czech.org/oidc/"
+scopes = ["openid", "profile", "email", "offline_access", "ga4gh_passport_v1"]
+
+[services.beacon]
+dataset_id = "demo-cohort-001"
+access_level = "registered"

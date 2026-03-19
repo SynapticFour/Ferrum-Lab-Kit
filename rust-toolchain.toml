@@ -1,0 +1,4 @@
+[toolchain]
+# Align with Ferrum (github.com/SynapticFour/Ferrum); lab-kit-ferrum depends on ferrum-core.
+channel = "1.75"
+components = ["rustfmt", "clippy"]

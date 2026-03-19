@@ -1,0 +1,8 @@
+services:
+  auth-proxy:
+    image: synapticfour/ferrum-auth-proxy:latest
+    networks: [lab]
+    ports:
+      - "8090:8080"
+    environment:
+      LAB_KIT_SERVICE: auth

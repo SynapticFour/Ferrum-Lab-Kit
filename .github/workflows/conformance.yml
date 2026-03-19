@@ -1,0 +1,75 @@
+name: Conformance
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_live_suite:
+        description: "Run helixtest --all against docker compose (needs working Ferrum images)"
+        required: false
+        default: false
+        type: boolean
+  push:
+    branches: [main]
+    paths:
+      - "crates/**"
+      - "config/profiles/**"
+      - "config/ci/**"
+      - "deploy/docker-compose/**"
+      - "deploy/helm/**"
+      - ".github/workflows/conformance.yml"
+
+jobs:
+  compose-profile:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Read pinned HelixTest revision
+        id: helixtest_rev
+        run: |
+          REV=$(awk '!/^#/ && NF { print $1; exit }' config/ci/helixtest-revision.txt)
+          echo "rev=$REV" >> "$GITHUB_OUTPUT"
+
+      - uses: dtolnay/rust-toolchain@1.75
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Build lab-kit
+        run: cargo build -p lab-kit-selector --release
+
+      - name: Generate compose (beacon-only profile)
+        run: |
+          cargo run -p lab-kit-selector -- generate compose \
+            --config config/profiles/beacon-only.toml \
+            --fragments deploy/docker-compose \
+            --output generated/docker-compose.yml
+
+      - name: Show merged compose (head)
+        run: head -n 50 generated/docker-compose.yml
+
+      - name: Checkout HelixTest (pinned)
+        uses: actions/checkout@v4
+        with:
+          repository: SynapticFour/HelixTest
+          ref: ${{ steps.helixtest_rev.outputs.rev }}
+          path: helixtest-upstream
+
+      - name: Build HelixTest CLI
+        working-directory: helixtest-upstream
+        run: cargo build -p helixtest-cli --release
+
+      - name: HelixTest CLI smoke (no live services)
+        working-directory: helixtest-upstream
+        run: |
+          ./target/release/helixtest --version
+          ./target/release/helixtest | grep -q "Nothing to do"
+
+      - name: Live suite (optional — needs real Ferrum images)
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.run_live_suite == 'true'
+        continue-on-error: true
+        run: |
+          docker compose -f generated/docker-compose.yml up -d
+          sleep 15
+          ./helixtest-upstream/target/release/helixtest \
+            --all --mode ferrum --report json --only beacon || true
+          docker compose -f generated/docker-compose.yml down -v

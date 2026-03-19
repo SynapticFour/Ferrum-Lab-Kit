@@ -1,0 +1,8 @@
+services:
+  beacon:
+    image: synapticfour/ferrum-beacon:latest
+    networks: [lab]
+    ports:
+      - "8085:8080"
+    environment:
+      LAB_KIT_SERVICE: beacon

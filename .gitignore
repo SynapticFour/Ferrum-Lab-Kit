@@ -1,0 +1,15 @@
+/target/
+**/*.rs.bk
+*.pem
+*.key
+.env
+.env.*
+!.env.example
+.DS_Store
+.idea/
+.vscode/
+*.log
+dist/
+reports/
+*.pdf
+/generated/

@@ -1,0 +1,3 @@
+# Git tag on https://github.com/SynapticFour/Ferrum.git (must match lab-kit-ferrum/Cargo.toml).
+# Bump in a dedicated PR when upgrading the Ferrum pin.
+v0.1.0

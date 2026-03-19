@@ -1,0 +1,21 @@
+[package]
+name = "lab-kit-auth"
+description = "ELIXIR LS Login / OIDC adapters and GA4GH Passport helpers for Ferrum Lab Kit"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+async-trait = "0.1"
+base64 = "0.22"
+jsonwebtoken.workspace = true
+lab-kit-core = { path = "../lab-kit-core" }
+reqwest.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+tokio = { workspace = true, features = ["rt-multi-thread"] }
+tracing.workspace = true
+url.workspace = true

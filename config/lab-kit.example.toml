@@ -1,0 +1,54 @@
+# Ferrum Lab Kit — canonical example (copy to `lab-kit.toml`).
+# Absent `[services.*]` blocks are not deployed. Set `external_url` to use your own endpoint.
+
+schema_version = 1
+
+[lab]
+name = "Max Planck Institute for Molecular Genetics"
+contact = "bioinformatics@molgen.mpg.de"
+environment = "production" # staging | demo | production
+
+[auth]
+provider = "ls-login" # ls-login | keycloak | ldap | none (demo only)
+
+[auth.ls-login]
+client_id = "your-client-id"
+client_secret = "your-client-secret"
+# Discovery: https://login.elixir-czech.org/oidc/.well-known/openid-configuration
+issuer = "https://login.elixir-czech.org/oidc/"
+# redirect_uri = "https://lab.example.org/oauth/callback"
+scopes = ["openid", "profile", "email", "offline_access", "ga4gh_passport_v1"]
+
+# --- Services (all optional) ---
+
+# [services.drs]
+# external_url = "https://drs.existing-institute.de"
+# storage_backend = "s3"
+# [services.drs.s3]
+# endpoint = "http://minio.cluster.internal:9000"
+# bucket = "genomic-data"
+# access_key = "..."
+# secret_key = "..."
+
+# [services.wes]
+# workflow_engine = "nextflow"
+# compute_backend = "slurm"
+# [services.wes.slurm]
+# host = "hpc-login.cluster.internal"
+# user = "ferrum"
+# partition = "short"
+
+# [services.tes]
+# compute_backend = "slurm" # inherits [services.wes.slurm] in deploy templates when omitted
+
+# [services.beacon]
+# dataset_id = "mpg-genomics-cohort-001"
+# access_level = "registered" # public | registered | controlled
+
+# [services.trs]
+# registry_name = "MPG Workflow Registry"
+
+# --- Bring-your-own external endpoints ---
+# [external]
+# htsget_url = "https://htsget.existing.institute"
+# beacon_network_url = "https://beacon-network.elixir-europe.org"

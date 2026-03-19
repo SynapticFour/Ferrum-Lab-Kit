@@ -1,0 +1,8 @@
+services:
+  trs:
+    image: synapticfour/ferrum-trs:latest
+    networks: [lab]
+    ports:
+      - "8086:8080"
+    environment:
+      LAB_KIT_SERVICE: trs
