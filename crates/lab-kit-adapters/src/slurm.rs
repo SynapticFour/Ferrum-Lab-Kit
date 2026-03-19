@@ -21,6 +21,12 @@ impl ComputeBackend for SlurmComputeBackend {
         if let Some(p) = &self.partition {
             cmd.args(["-p", p]);
         }
+        if let Some(c) = spec.cpus {
+            cmd.arg("-c").arg(c.to_string());
+        }
+        if let Some(m) = spec.memory_mb {
+            cmd.arg("--mem").arg(format!("{m}M"));
+        }
         cmd.arg("--job-name").arg(&spec.name);
         cmd.arg("--wrap").arg(&spec.script);
         let child = cmd.spawn().map_err(|e| {

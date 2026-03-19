@@ -10,6 +10,8 @@ cargo clippy --workspace --all-targets -- -D warnings
 cargo test --workspace
 ```
 
+Or `./install.sh` for a release build of the `lab-kit` binary (see [README](README.md#install-cli-optional)).
+
 Optional **Postgres metadata** integration test (Docker; not part of default CI):
 
 ```bash

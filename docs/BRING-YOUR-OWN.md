@@ -22,7 +22,7 @@ When you run `lab-kit generate compose`, Lab Kit writes **`external-upstreams.ya
 | Trait | Purpose |
 |-------|---------|
 | `StorageBackend` | S3/MinIO (`S3StorageBackend`), POSIX (`PosixStorageBackend`), … |
-| `ComputeBackend` | SLURM (`SlurmComputeBackend` via local `sbatch`) |
+| `ComputeBackend` | SLURM: local login node (`SlurmComputeBackend`, `sbatch`/`squeue`) or remote (`SlurmSshComputeBackend`, `ssh user@login … sbatch`/`squeue`) |
 | `MetadataStore` | SQLite (`SqliteMetadataStore`) and PostgreSQL (`PostgresMetadataStore`) via **sqlx** + embedded migrations under `crates/lab-kit-adapters/migrations/{sqlite,postgres}/` |
 | `WorkflowEngine` | Nextflow hook (`NextflowWorkflowEngine` defers to Ferrum WES) |
 

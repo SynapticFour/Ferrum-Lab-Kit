@@ -11,7 +11,7 @@
 | `lab-kit-core` | `lab-kit.toml` schema, validation, `ServiceRegistry`, `HealthAggregator` |
 | `lab-kit-ferrum` | Git-pinned `ferrum-core` from [SynapticFour/Ferrum](https://github.com/SynapticFour/Ferrum) — shared types / future gateway glue |
 | `lab-kit-auth` | ELIXIR LS Login OIDC (discovery, JWKS, JWT validation), `AuthProvider` trait, Passport / Beacon tier helpers |
-| `lab-kit-adapters` | `StorageBackend`, `ComputeBackend`, `MetadataStore`, `WorkflowEngine` + S3, POSIX, SLURM, SQLite/Postgres (sqlx) |
+| `lab-kit-adapters` | `StorageBackend`, `ComputeBackend`, `MetadataStore`, `WorkflowEngine` + S3, POSIX, SLURM (local + SSH), SQLite/Postgres (sqlx) |
 | `lab-kit-deploy` | Compose merge, Helm values emission, systemd unit stubs |
 | `lab-kit-report` | HelixTest JSON → `conformance-report.json`; PDF behind `FERRUM_LAB_KIT_LICENSE_KEY` |
 | `lab-kit-selector` | `lab-kit` CLI: `init`, `generate`, `status`, `conformance` |

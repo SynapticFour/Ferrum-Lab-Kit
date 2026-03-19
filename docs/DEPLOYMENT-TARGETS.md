@@ -20,5 +20,6 @@ Lab Kit targets three environments equally (see `lab-kit generate …`).
 - **Use case:** German and DACH university HPC (login node + `sbatch`).
 - **Flow:** `lab-kit generate systemd` → install units (e.g. under `/etc/systemd/system/`).
 - **Gateway:** `deploy/slurm/ferrum-gateway.service` documents the **ferrum-slurm-proxy** pattern (WES/TES → SLURM).
+- **Remote login node:** Ferrum integrations can use `SlurmSshComputeBackend` in `lab-kit-adapters` to run `sbatch`/`squeue` over **SSH** (key or agent; `BatchMode=yes`). Handy when the gateway runs on a VM/container without a local SLURM client.
 
 Ferrum images and binaries are **placeholders** until wired to real Ferrum releases.

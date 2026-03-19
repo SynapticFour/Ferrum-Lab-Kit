@@ -11,6 +11,7 @@ mod posix_storage;
 #[cfg(feature = "s3")]
 mod s3_storage;
 mod slurm;
+mod slurm_ssh;
 mod storage;
 mod workflow;
 
@@ -26,5 +27,6 @@ pub use posix_storage::PosixStorageBackend;
 #[cfg(feature = "s3")]
 pub use s3_storage::S3StorageBackend;
 pub use slurm::SlurmComputeBackend;
+pub use slurm_ssh::SlurmSshComputeBackend;
 pub use storage::{StorageBackend, StorageError, StorageObjectMeta};
 pub use workflow::{WorkflowEngine, WorkflowError, WorkflowRunSpec};

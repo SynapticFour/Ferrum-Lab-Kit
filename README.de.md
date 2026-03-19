@@ -2,6 +2,16 @@
 
 **Ferrum Lab Kit** ist die **Einstiegslösung (On-Ramp)** zu [Ferrum](https://github.com/SynapticFour/Ferrum): eine **Deployments- und Integrationsschicht** für kleine und mittlere Forschungslabore, **ELIXIR-Knoten-Kandidaten**, **GHGA**-Datensubmitting und **GDI**-Teilnehmer, die **ausgewählte GA4GH-konforme Dienste** betreiben wollen, ohne die gesamte Ferrum-Plattform auszurollen. Es ist ein **eigenes Repository** (kein Fork) und **implementiert keine GA4GH-Logik erneut**; es konfiguriert Ferrum-Komponenten gegen **Ihre** Storage-, Scheduler- und Identity-Infrastruktur.
 
+## CLI installieren (optional)
+
+```bash
+./install.sh              # Release-Build → target/release/lab-kit
+./install.sh --install    # zusätzlich cargo install (Standard: ~/.cargo/bin)
+./install.sh --install --prefix "$HOME/.local"   # → ~/.local/bin
+```
+
+Benötigt [Rust](https://rustup.rs); `rust-toolchain.toml` im Repo wird berücksichtigt.
+
 ## Kurzweg: Beacon v2 + ELIXIR LS Login (ca. 5 Befehle)
 
 ```bash
