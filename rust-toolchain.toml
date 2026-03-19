@@ -1,5 +1,5 @@
 [toolchain]
-# 1.85+: Cargo can parse crates.io manifests using `edition = "2024"` (e.g. `time` 0.3.47+).
-# lab-kit-ferrum still pins ferrum-core; if Ferrum raises MSRV, bump this in sync.
-channel = "1.85"
+# Transitive crates (e.g. `time` 0.3.47, `home` 0.5.12) require rustc 1.88+.
+# lab-kit-ferrum pins ferrum-core; if Ferrum raises MSRV, bump this in sync.
+channel = "1.88"
 components = ["rustfmt", "clippy"]
