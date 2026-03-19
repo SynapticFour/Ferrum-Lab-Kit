@@ -62,7 +62,10 @@ async fn postgres_metadata_roundtrip() {
         overall_pass: true,
         per_service: json!({}),
     };
-    let id = store.insert_conformance_run(&run).await.expect("insert run");
+    let id = store
+        .insert_conformance_run(&run)
+        .await
+        .expect("insert run");
     let got = store
         .get_conformance_run(id)
         .await

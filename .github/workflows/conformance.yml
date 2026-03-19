@@ -30,7 +30,7 @@ jobs:
           REV=$(awk '!/^#/ && NF { print $1; exit }' config/ci/helixtest-revision.txt)
           echo "rev=$REV" >> "$GITHUB_OUTPUT"
 
-      - uses: dtolnay/rust-toolchain@1.75
+      - uses: dtolnay/rust-toolchain@1.85
 
       - uses: Swatinem/rust-cache@v2
 

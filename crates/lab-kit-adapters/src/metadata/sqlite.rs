@@ -36,9 +36,7 @@ impl SqliteMetadataStore {
             .max_connections(max)
             .connect_with(opts)
             .await?;
-        sqlx::migrate!("./migrations/sqlite")
-            .run(&pool)
-            .await?;
+        sqlx::migrate!("./migrations/sqlite").run(&pool).await?;
         Ok(Self { pool })
     }
 }
@@ -52,7 +50,10 @@ impl MetadataStore for SqliteMetadataStore {
         Ok(())
     }
 
-    async fn upsert_service_registry_entry(&self, row: &ServiceRegistryRow) -> Result<(), MetadataError> {
+    async fn upsert_service_registry_entry(
+        &self,
+        row: &ServiceRegistryRow,
+    ) -> Result<(), MetadataError> {
         let health: Option<i64> = row.health_ok.map(|b| if b { 1 } else { 0 });
         sqlx::query(
             r#"
@@ -100,7 +101,10 @@ impl MetadataStore for SqliteMetadataStore {
             .collect::<Result<Vec<_>, _>>()
     }
 
-    async fn insert_conformance_run(&self, row: &ConformanceRunInsert) -> Result<i64, MetadataError> {
+    async fn insert_conformance_run(
+        &self,
+        row: &ConformanceRunInsert,
+    ) -> Result<i64, MetadataError> {
         let helix = serde_json::to_string(&row.helix_output)?;
         let per = serde_json::to_string(&row.per_service)?;
         let res = sqlx::query(
@@ -117,7 +121,10 @@ impl MetadataStore for SqliteMetadataStore {
         Ok(res.last_insert_rowid())
     }
 
-    async fn get_conformance_run(&self, id: i64) -> Result<Option<ConformanceRunRow>, MetadataError> {
+    async fn get_conformance_run(
+        &self,
+        id: i64,
+    ) -> Result<Option<ConformanceRunRow>, MetadataError> {
         let row = sqlx::query_as::<_, ConformanceRunSqliteRow>(
             r#"SELECT id, run_at, helix_output, overall_pass, per_service
                FROM conformance_runs WHERE id = ?"#,
@@ -128,7 +135,10 @@ impl MetadataStore for SqliteMetadataStore {
         row.map(|r| r.try_into()).transpose()
     }
 
-    async fn list_conformance_runs(&self, limit: i64) -> Result<Vec<ConformanceRunRow>, MetadataError> {
+    async fn list_conformance_runs(
+        &self,
+        limit: i64,
+    ) -> Result<Vec<ConformanceRunRow>, MetadataError> {
         let lim = limit.clamp(1, 10_000);
         let rows = sqlx::query_as::<_, ConformanceRunSqliteRow>(
             r#"SELECT id, run_at, helix_output, overall_pass, per_service
@@ -142,7 +152,10 @@ impl MetadataStore for SqliteMetadataStore {
             .collect::<Result<Vec<_>, _>>()
     }
 
-    async fn upsert_license_activation(&self, row: &LicenseActivationRow) -> Result<(), MetadataError> {
+    async fn upsert_license_activation(
+        &self,
+        row: &LicenseActivationRow,
+    ) -> Result<(), MetadataError> {
         let features = serde_json::to_string(&row.features)?;
         sqlx::query(
             r#"
@@ -258,8 +271,7 @@ fn parse_dt_flex(t: &str) -> Result<DateTime<Utc>, MetadataError> {
     DateTime::parse_from_rfc3339(t)
         .map(|d| d.with_timezone(&Utc))
         .or_else(|_| {
-            chrono::NaiveDateTime::parse_from_str(t, "%Y-%m-%d %H:%M:%S")
-                .map(|n| n.and_utc())
+            chrono::NaiveDateTime::parse_from_str(t, "%Y-%m-%d %H:%M:%S").map(|n| n.and_utc())
         })
         .map_err(|e| MetadataError::Other(e.to_string()))
 }
@@ -320,7 +332,10 @@ mod tests {
             expires_at: None,
             features: json!({}),
         };
-        store.upsert_license_activation(&lic).await.expect("license");
+        store
+            .upsert_license_activation(&lic)
+            .await
+            .expect("license");
         assert!(store.get_license_by_hash("h1").await.unwrap().is_some());
     }
 }

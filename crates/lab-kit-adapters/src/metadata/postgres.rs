@@ -25,9 +25,7 @@ impl PostgresMetadataStore {
             .max_connections(max_connections.max(1))
             .connect(database_url)
             .await?;
-        sqlx::migrate!("./migrations/postgres")
-            .run(&pool)
-            .await?;
+        sqlx::migrate!("./migrations/postgres").run(&pool).await?;
         Ok(Self { pool })
     }
 }
@@ -41,7 +39,10 @@ impl MetadataStore for PostgresMetadataStore {
         Ok(())
     }
 
-    async fn upsert_service_registry_entry(&self, row: &ServiceRegistryRow) -> Result<(), MetadataError> {
+    async fn upsert_service_registry_entry(
+        &self,
+        row: &ServiceRegistryRow,
+    ) -> Result<(), MetadataError> {
         sqlx::query(
             r#"
             INSERT INTO service_registry (lab_name, service_name, endpoint_url, health_ok, last_health_check)
@@ -86,7 +87,10 @@ impl MetadataStore for PostgresMetadataStore {
         Ok(rows.into_iter().map(Into::into).collect())
     }
 
-    async fn insert_conformance_run(&self, row: &ConformanceRunInsert) -> Result<i64, MetadataError> {
+    async fn insert_conformance_run(
+        &self,
+        row: &ConformanceRunInsert,
+    ) -> Result<i64, MetadataError> {
         let id = sqlx::query_scalar::<_, i64>(
             r#"
             INSERT INTO conformance_runs (helix_output, overall_pass, per_service)
@@ -102,7 +106,10 @@ impl MetadataStore for PostgresMetadataStore {
         Ok(id)
     }
 
-    async fn get_conformance_run(&self, id: i64) -> Result<Option<ConformanceRunRow>, MetadataError> {
+    async fn get_conformance_run(
+        &self,
+        id: i64,
+    ) -> Result<Option<ConformanceRunRow>, MetadataError> {
         let row = sqlx::query_as::<_, ConformanceRunPgRow>(
             r#"SELECT id, run_at, helix_output, overall_pass, per_service
                FROM conformance_runs WHERE id = $1"#,
@@ -113,7 +120,10 @@ impl MetadataStore for PostgresMetadataStore {
         Ok(row.map(Into::into))
     }
 
-    async fn list_conformance_runs(&self, limit: i64) -> Result<Vec<ConformanceRunRow>, MetadataError> {
+    async fn list_conformance_runs(
+        &self,
+        limit: i64,
+    ) -> Result<Vec<ConformanceRunRow>, MetadataError> {
         let lim = limit.clamp(1, 10_000);
         let rows = sqlx::query_as::<_, ConformanceRunPgRow>(
             r#"SELECT id, run_at, helix_output, overall_pass, per_service
@@ -125,7 +135,10 @@ impl MetadataStore for PostgresMetadataStore {
         Ok(rows.into_iter().map(Into::into).collect())
     }
 
-    async fn upsert_license_activation(&self, row: &LicenseActivationRow) -> Result<(), MetadataError> {
+    async fn upsert_license_activation(
+        &self,
+        row: &LicenseActivationRow,
+    ) -> Result<(), MetadataError> {
         sqlx::query(
             r#"
             INSERT INTO license_activations (key_hash, activated_at, expires_at, features)

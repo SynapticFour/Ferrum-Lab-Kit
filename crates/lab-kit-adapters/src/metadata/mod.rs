@@ -33,8 +33,10 @@ pub trait MetadataStore: Send + Sync {
     async fn ping(&self) -> Result<(), MetadataError>;
 
     /// Upsert a service row keyed by `(lab_name, service_name)`.
-    async fn upsert_service_registry_entry(&self, row: &ServiceRegistryRow)
-        -> Result<(), MetadataError>;
+    async fn upsert_service_registry_entry(
+        &self,
+        row: &ServiceRegistryRow,
+    ) -> Result<(), MetadataError>;
 
     /// List registry rows, optionally filtered by `lab_name`.
     async fn list_service_registry(
@@ -43,16 +45,28 @@ pub trait MetadataStore: Send + Sync {
     ) -> Result<Vec<ServiceRegistryRow>, MetadataError>;
 
     /// Insert a conformance run; returns new row id.
-    async fn insert_conformance_run(&self, row: &ConformanceRunInsert) -> Result<i64, MetadataError>;
+    async fn insert_conformance_run(
+        &self,
+        row: &ConformanceRunInsert,
+    ) -> Result<i64, MetadataError>;
 
     /// Fetch one conformance run by id.
-    async fn get_conformance_run(&self, id: i64) -> Result<Option<ConformanceRunRow>, MetadataError>;
+    async fn get_conformance_run(
+        &self,
+        id: i64,
+    ) -> Result<Option<ConformanceRunRow>, MetadataError>;
 
     /// Recent runs, newest first.
-    async fn list_conformance_runs(&self, limit: i64) -> Result<Vec<ConformanceRunRow>, MetadataError>;
+    async fn list_conformance_runs(
+        &self,
+        limit: i64,
+    ) -> Result<Vec<ConformanceRunRow>, MetadataError>;
 
     /// Upsert license activation by `key_hash`.
-    async fn upsert_license_activation(&self, row: &LicenseActivationRow) -> Result<(), MetadataError>;
+    async fn upsert_license_activation(
+        &self,
+        row: &LicenseActivationRow,
+    ) -> Result<(), MetadataError>;
 
     /// Lookup license by hash.
     async fn get_license_by_hash(
