@@ -12,6 +12,8 @@ cargo test --workspace
 
 Or `./install.sh` for a release build of the `lab-kit` binary (see [README](README.md#install-cli-optional)).
 
+To bump the **[Ferrum](https://github.com/SynapticFour/Ferrum)** `ferrum-core` pin: `./scripts/bump-ferrum.sh` (see [docs/FERRUM-INTEGRATION.md](docs/FERRUM-INTEGRATION.md)).
+
 Optional **Postgres metadata** integration test (Docker; not part of default CI):
 
 ```bash
