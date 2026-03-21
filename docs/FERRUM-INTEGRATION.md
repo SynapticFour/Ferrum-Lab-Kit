@@ -5,8 +5,8 @@ Lab Kit depends on the **[Ferrum](https://github.com/SynapticFour/Ferrum)** plat
 ## Git pin (`ferrum-core`)
 
 - Crate: **`lab-kit-ferrum`** → `ferrum-core` from  
-  `https://github.com/SynapticFour/Ferrum.git` **tag `v0.1.0`** (see `crates/lab-kit-ferrum/Cargo.toml`).
-- **Bump procedure:** edit the tag in `Cargo.toml` and **`config/ci/ferrum-revision.txt`** in the same PR, then `cargo update -p ferrum-core`.
+  `https://github.com/SynapticFour/Ferrum.git` pinned by **full git `rev`** (see `crates/lab-kit-ferrum/Cargo.toml`).
+- **Bump procedure:** pick a Ferrum commit (often `main` HEAD), set the same SHA in `Cargo.toml` and **`config/ci/ferrum-revision.txt`**, then `cargo update -p ferrum-core` and run tests.
 
 ## CLI check
 
@@ -14,7 +14,7 @@ Lab Kit depends on the **[Ferrum](https://github.com/SynapticFour/Ferrum)** plat
 cargo run -p lab-kit-selector -- ferrum check
 ```
 
-Prints the linked `ferrum_core::FerrumError` type name and the pinned tag.
+Prints the linked `ferrum_core::FerrumError` type name and the pinned revision.
 
 ## Runtime wiring
 

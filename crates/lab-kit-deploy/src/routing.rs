@@ -92,16 +92,15 @@ struct TraefikServer {
 }
 
 fn ga4gh_path_prefix(id: ServiceId) -> &'static str {
-    // Typical GA4GH prefixes used by Ferrum services. If a future Ferrum release changes
-    // routing, update this mapping.
+    // Must match `ferrum-gateway` route prefixes (SynapticFour/Ferrum `nest(...)` paths).
     match id {
         ServiceId::Drs => "/ga4gh/drs/v1",
-        ServiceId::Htsget => "/ga4gh/htsget/v2",
+        ServiceId::Htsget => "/ga4gh/htsget/v1",
         ServiceId::Wes => "/ga4gh/wes/v1",
         ServiceId::Tes => "/ga4gh/tes/v1",
-        ServiceId::Beacon => "/beacon/v2",
-        ServiceId::Trs => "/ga4gh/trs/v1",
-        ServiceId::Auth => "/ga4gh/passport/v1",
+        ServiceId::Beacon => "/ga4gh/beacon/v2",
+        ServiceId::Trs => "/ga4gh/trs/v2",
+        ServiceId::Auth => "/passports/v1",
     }
 }
 
@@ -230,7 +229,10 @@ mod tests {
     #[test]
     fn ga4gh_prefixes_are_reasonable() {
         assert_eq!(ga4gh_path_prefix(ServiceId::Drs), "/ga4gh/drs/v1");
-        assert_eq!(ga4gh_path_prefix(ServiceId::Beacon), "/beacon/v2");
+        assert_eq!(ga4gh_path_prefix(ServiceId::Beacon), "/ga4gh/beacon/v2");
+        assert_eq!(ga4gh_path_prefix(ServiceId::Trs), "/ga4gh/trs/v2");
+        assert_eq!(ga4gh_path_prefix(ServiceId::Htsget), "/ga4gh/htsget/v1");
+        assert_eq!(ga4gh_path_prefix(ServiceId::Auth), "/passports/v1");
     }
 
     #[test]

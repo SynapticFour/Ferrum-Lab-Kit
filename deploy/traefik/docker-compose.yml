@@ -1,0 +1,24 @@
+# Generic Traefik v3 sidecar: loads all YAML files from ./dynamic (file provider).
+# Lab Kit writes proxy-traefik-dynamic.yaml next to generated compose; copy it into ./dynamic/.
+name: ferrum-lab-kit-traefik
+
+services:
+  traefik:
+    image: traefik:v3.3
+    command:
+      - --api.dashboard=false
+      - --providers.file.directory=/dynamic
+      - --providers.file.watch=true
+      - --entrypoints.web.address=:80
+      - --log.level=INFO
+    ports:
+      # Avoid clashing with Lab Kit / Ferrum dev ports (8081–8090).
+      - "9080:80"
+    volumes:
+      - ./dynamic:/dynamic:ro
+    networks:
+      - lab
+
+networks:
+  lab:
+    driver: bridge

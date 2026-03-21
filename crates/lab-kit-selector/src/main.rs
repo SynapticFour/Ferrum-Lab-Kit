@@ -192,8 +192,8 @@ async fn main() -> anyhow::Result<()> {
                     lab_kit_ferrum::ferrum_core_type_name()
                 );
                 println!(
-                    "Pinned tag: {}  |  {}",
-                    lab_kit_ferrum::FERRUM_GIT_TAG,
+                    "Pinned rev: {}  |  {}",
+                    lab_kit_ferrum::FERRUM_GIT_REV,
                     lab_kit_ferrum::FERRUM_GIT_URL
                 );
                 println!("Keep in sync: config/ci/ferrum-revision.txt");

@@ -21,7 +21,9 @@ When you run `lab-kit generate compose`, Lab Kit writes **`external-upstreams.ya
 
 In addition, Lab Kit generates **`proxy-traefik-dynamic.yaml`** (when any service is external) with a ready-to-load Traefik *dynamic config*.
 
-It uses typical GA4GH path prefixes (e.g. `/ga4gh/drs/v1`, `/ga4gh/wes/v1`, …) and forwards them to each service’s `external_url` base.
+Path prefixes match **[Ferrum `ferrum-gateway`](https://github.com/SynapticFour/Ferrum)** (e.g. `/ga4gh/drs/v1`, `/ga4gh/trs/v2`, `/ga4gh/beacon/v2`, `/ga4gh/htsget/v1`, `/passports/v1`, …) and forward to each service’s `external_url` base.
+
+**No Traefik yet?** See the optional generic Compose stack under [`deploy/traefik/`](../deploy/traefik/README.md) (copy the generated YAML into `deploy/traefik/dynamic/`).
 
 ## Adapter traits (`lab-kit-adapters`)
 

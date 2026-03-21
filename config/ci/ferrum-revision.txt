@@ -1,3 +1,3 @@
-# Git tag on https://github.com/SynapticFour/Ferrum.git (must match lab-kit-ferrum/Cargo.toml).
-# Bump in a dedicated PR when upgrading the Ferrum pin.
-v0.1.0
+# Git revision on https://github.com/SynapticFour/Ferrum.git (must match lab-kit-ferrum/Cargo.toml).
+# Use the full commit SHA to track Ferrum main between releases; bump in a dedicated PR.
+8d8a6dc00b55add29896423863bbe6f2f26508b1
