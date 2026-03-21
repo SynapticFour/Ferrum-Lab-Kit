@@ -1,0 +1,11 @@
+{
+  "client_request_id": "lab-kit-example-register-1",
+  "items": [
+    {
+      "kind": "url",
+      "url": "https://example.org/sample-data.txt",
+      "name": "example-remote-object",
+      "mime_type": "text/plain"
+    }
+  ]
+}

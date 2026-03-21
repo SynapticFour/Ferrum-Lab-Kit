@@ -55,6 +55,17 @@ Mehr in [docs/GA4GH-STANDARDS.md](docs/GA4GH-STANDARDS.md).
 
 Wer die komplette souveräne Plattform braucht: **[github.com/SynapticFour/Ferrum](https://github.com/SynapticFour/Ferrum)**.
 
+## CLI (`lab-kit`)
+
+| Befehl | Zweck |
+|--------|--------|
+| `lab-kit init` | Interaktiver Wizard → `lab-kit.toml` |
+| `lab-kit generate compose` / `helm` / `systemd` | Deploy-Artefakte erzeugen |
+| `lab-kit status` | Health der konfigurierten Dienste |
+| `lab-kit conformance run` / `report` | HelixTest + Berichte |
+| `lab-kit ferrum check` | Git-gepinnter `ferrum-core`-Link prüfen |
+| `lab-kit ingest …` | Aufruf von Ferrum **`/api/v1/ingest/*`** (Maschinen-Ingest) — siehe [Ferrum `docs/INGEST-LAB-KIT.md`](https://github.com/SynapticFour/Ferrum/blob/main/docs/INGEST-LAB-KIT.md) und [docs/FERRUM-INTEGRATION.md](docs/FERRUM-INTEGRATION.md) |
+
 ## English README
 
 See [README.md](README.md).

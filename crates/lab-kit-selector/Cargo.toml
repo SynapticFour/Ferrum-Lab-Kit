@@ -20,6 +20,7 @@ lab-kit-auth = { path = "../lab-kit-auth" }
 lab-kit-core = { path = "../lab-kit-core" }
 lab-kit-deploy = { path = "../lab-kit-deploy" }
 lab-kit-ferrum = { path = "../lab-kit-ferrum" }
+lab-kit-ingest = { path = "../lab-kit-ingest" }
 lab-kit-report = { path = "../lab-kit-report" }
 serde_json.workspace = true
 tempfile.workspace = true

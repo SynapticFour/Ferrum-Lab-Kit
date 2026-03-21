@@ -210,6 +210,7 @@ mod tests {
                 ..Default::default()
             },
             external: ExternalSection::default(),
+            ferrum: Default::default(),
         }
     }
 

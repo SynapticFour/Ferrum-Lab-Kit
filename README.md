@@ -58,6 +58,7 @@ Details: [docs/GA4GH-STANDARDS.md](docs/GA4GH-STANDARDS.md).
 | `lab-kit conformance run` | Invoke external **HelixTest** CLI |
 | `lab-kit conformance report` | JSON (+ optional licensed PDF) |
 | `lab-kit ferrum check` | Confirms Git-pinned `ferrum-core` from [Ferrum](https://github.com/SynapticFour/Ferrum) resolves |
+| `lab-kit ingest …` | HTTP client for Ferrum **`/api/v1/ingest/*`** (register, upload, job status) — see [Ferrum `docs/INGEST-LAB-KIT.md`](https://github.com/SynapticFour/Ferrum/blob/main/docs/INGEST-LAB-KIT.md) |
 
 ## Documentation
 

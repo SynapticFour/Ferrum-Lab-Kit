@@ -9,6 +9,7 @@ use lab_kit_core::{
     LabKitConfig, LabSection, LsLoginConfig, ServiceRegistry, ServicesSection,
 };
 use lab_kit_deploy::{generate_compose_file, generate_helm_values, generate_systemd_units};
+use lab_kit_ingest::{IngestClient, RegisterItem, RegisterRequest, UploadOptions};
 use lab_kit_report::generate_reports;
 use tracing_subscriber::EnvFilter;
 
@@ -46,12 +47,73 @@ enum Command {
         #[command(subcommand)]
         action: FerrumAction,
     },
+    /// Call Ferrum **`/api/v1/ingest/*`** (machine ingest). See Ferrum `docs/INGEST-LAB-KIT.md`.
+    Ingest(IngestCmd),
 }
 
 #[derive(Subcommand)]
 enum FerrumAction {
     /// Confirm `ferrum-core` resolves (git pin in `lab-kit-ferrum`).
     Check,
+}
+
+#[derive(Parser)]
+struct IngestCmd {
+    #[command(flatten)]
+    shared: IngestShared,
+    #[command(subcommand)]
+    action: IngestAction,
+}
+
+#[derive(Parser)]
+struct IngestShared {
+    #[arg(short, long, default_value = "lab-kit.toml")]
+    config: PathBuf,
+    /// ferrum-gateway base URL (overrides `FERRUM_GATEWAY_URL` and `[ferrum].gateway_url`).
+    #[arg(long, env = "FERRUM_GATEWAY_URL")]
+    gateway: Option<String>,
+    /// Bearer token (overrides `FERRUM_TOKEN`). Omit on demo stacks without required auth.
+    #[arg(long, env = "FERRUM_TOKEN")]
+    token: Option<String>,
+}
+
+#[derive(Subcommand)]
+enum IngestAction {
+    /// `POST /api/v1/ingest/register` with a JSON body (see Ferrum ingest docs).
+    Register {
+        /// Path to JSON body (`client_request_id`, `items`, …).
+        #[arg(long)]
+        json: PathBuf,
+    },
+    /// Register a single URL reference (shorthand for `ingest register`).
+    RegisterUrl {
+        /// HTTPS (or other) URL Ferrum may fetch (SSRF-checked server-side).
+        url: String,
+        #[arg(long)]
+        name: Option<String>,
+        #[arg(long)]
+        client_request_id: Option<String>,
+    },
+    /// `POST /api/v1/ingest/upload` (multipart).
+    Upload {
+        /// File to upload.
+        #[arg(long)]
+        file: PathBuf,
+        #[arg(long)]
+        name: Option<String>,
+        #[arg(long)]
+        mime_type: Option<String>,
+        #[arg(long)]
+        encrypt: Option<bool>,
+        #[arg(long)]
+        expected_sha256: Option<String>,
+        #[arg(long)]
+        workspace_id: Option<String>,
+        #[arg(long)]
+        client_request_id: Option<String>,
+    },
+    /// `GET /api/v1/ingest/jobs/{job_id}`
+    Job { job_id: String },
 }
 
 #[derive(Subcommand)]
@@ -199,6 +261,113 @@ async fn main() -> anyhow::Result<()> {
                 println!("Keep in sync: config/ci/ferrum-revision.txt");
             }
         },
+        Command::Ingest(cmd) => run_ingest(cmd).await?,
+    }
+    Ok(())
+}
+
+fn resolve_gateway_url(flag: Option<String>, cfg: Option<&LabKitConfig>) -> anyhow::Result<String> {
+    if let Some(u) = flag.filter(|s| !s.is_empty()) {
+        return Ok(u);
+    }
+    if let Ok(u) = std::env::var("FERRUM_GATEWAY_URL") {
+        if !u.is_empty() {
+            return Ok(u);
+        }
+    }
+    if let Some(c) = cfg {
+        if let Some(u) = c.ferrum.gateway_url.as_ref() {
+            return Ok(u.to_string());
+        }
+    }
+    anyhow::bail!(
+        "set --gateway, environment FERRUM_GATEWAY_URL, or [ferrum].gateway_url in lab-kit.toml"
+    );
+}
+
+fn resolve_token(flag: Option<String>) -> Option<String> {
+    flag.filter(|s| !s.is_empty())
+        .or_else(|| std::env::var("FERRUM_TOKEN").ok().filter(|s| !s.is_empty()))
+}
+
+async fn run_ingest(cmd: IngestCmd) -> anyhow::Result<()> {
+    let have_gateway_hint = cmd.shared.gateway.as_ref().is_some_and(|s| !s.is_empty())
+        || std::env::var("FERRUM_GATEWAY_URL")
+            .ok()
+            .is_some_and(|s| !s.is_empty());
+
+    let cfg = match load_config(&cmd.shared.config) {
+        Ok(c) => Some(c),
+        Err(e) => {
+            if have_gateway_hint {
+                None
+            } else {
+                return Err(e).with_context(|| format!("load {}", cmd.shared.config.display()));
+            }
+        }
+    };
+
+    let base = resolve_gateway_url(cmd.shared.gateway.clone(), cfg.as_ref())
+        .context("could not resolve ferrum-gateway base URL")?;
+    let token = resolve_token(cmd.shared.token.clone());
+    let client = IngestClient::new(&base, token).context("build ingest client")?;
+
+    match cmd.action {
+        IngestAction::Register { json } => {
+            let raw = std::fs::read_to_string(&json)
+                .with_context(|| format!("read {}", json.display()))?;
+            let body: RegisterRequest =
+                serde_json::from_str(&raw).context("parse register JSON body")?;
+            let job = client.register(&body).await?;
+            println!("{}", serde_json::to_string_pretty(&job)?);
+        }
+        IngestAction::RegisterUrl {
+            url,
+            name,
+            client_request_id,
+        } => {
+            let body = RegisterRequest {
+                client_request_id,
+                workspace_id: None,
+                items: vec![RegisterItem::Url {
+                    url,
+                    name,
+                    mime_type: None,
+                    derived_from: None,
+                }],
+            };
+            let job = client.register(&body).await?;
+            println!("{}", serde_json::to_string_pretty(&job)?);
+        }
+        IngestAction::Upload {
+            file,
+            name,
+            mime_type,
+            encrypt,
+            expected_sha256,
+            workspace_id,
+            client_request_id,
+        } => {
+            let bytes = std::fs::read(&file).with_context(|| format!("read {}", file.display()))?;
+            let file_name = file
+                .file_name()
+                .map(|s| s.to_string_lossy().into_owned())
+                .unwrap_or_else(|| "upload.bin".into());
+            let opts = UploadOptions {
+                name,
+                mime_type,
+                encrypt,
+                expected_sha256,
+                workspace_id,
+                client_request_id,
+            };
+            let job = client.upload(&file_name, bytes, opts).await?;
+            println!("{}", serde_json::to_string_pretty(&job)?);
+        }
+        IngestAction::Job { job_id } => {
+            let job = client.get_job(&job_id).await?;
+            println!("{}", serde_json::to_string_pretty(&job)?);
+        }
     }
     Ok(())
 }
@@ -315,6 +484,7 @@ async fn init_wizard(output: &Path) -> anyhow::Result<()> {
         auth: auth_section,
         services,
         external: Default::default(),
+        ferrum: Default::default(),
     };
     cfg.validate()?;
     let toml = toml::to_string_pretty(&cfg)?;

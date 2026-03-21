@@ -10,9 +10,9 @@ mod registry;
 
 pub use config::{
     AuthProvider as AuthProviderKind, AuthSection, BeaconAccessLevel, BeaconServiceConfig,
-    DrsServiceConfig, ExternalSection, HtsgetServiceConfig, KeycloakConfig, LabKitConfig,
-    LabSection, LdapAuthConfig, LsLoginConfig, ServicesSection, TesServiceConfig, TrsServiceConfig,
-    WesServiceConfig,
+    DrsServiceConfig, ExternalSection, FerrumSection, HtsgetServiceConfig, KeycloakConfig,
+    LabKitConfig, LabSection, LdapAuthConfig, LsLoginConfig, ServicesSection, TesServiceConfig,
+    TrsServiceConfig, WesServiceConfig,
 };
 pub use error::CoreError;
 pub use health::{HealthAggregator, ServiceHealth};

@@ -20,3 +20,45 @@ Prints the linked `ferrum_core::FerrumError` type name and the pinned revision.
 ## Runtime wiring
 
 Deploy generators still use **placeholder images** until you point Compose/Helm at Ferrum release images or build from the Ferrum repo. Shared **types, config, and auth** primitives come from `ferrum-core` via `lab-kit-ferrum` for gateways and future glue code.
+
+## Versioned ingest (`/api/v1/ingest/*`)
+
+Ferrum exposes a **stable, scripting-oriented** ingest API on **ferrum-gateway** (same auth as other gateway routes). Upstream specification:
+
+- **[Ferrum `docs/INGEST-LAB-KIT.md`](https://github.com/SynapticFour/Ferrum/blob/main/docs/INGEST-LAB-KIT.md)** — paths, JSON shapes, multipart upload, idempotency (`client_request_id`), structured errors.
+
+Lab Kit ships:
+
+| Piece | Role |
+|-------|------|
+| **`lab-kit-ingest`** | Rust client: `register`, `upload` (multipart), `get_job` |
+| **`lab-kit ingest`** | CLI wrapping that client |
+
+### Configuration
+
+- **Gateway URL:** `--gateway`, environment **`FERRUM_GATEWAY_URL`**, or optional **`[ferrum].gateway_url`** in `lab-kit.toml` (see `config/lab-kit.example.toml`).
+- **Bearer token:** `--token` or **`FERRUM_TOKEN`** when `FERRUM_AUTH__REQUIRE_AUTH=true` (see Ferrum installation docs).
+
+If `lab-kit.toml` is missing or invalid, you can still run `lab-kit ingest` when **`--gateway` or `FERRUM_GATEWAY_URL`** is set.
+
+### CLI examples
+
+```bash
+# Register one URL (demo gateway, no token)
+lab-kit ingest --gateway http://localhost:8080 register-url https://example.com/data.txt --name demo
+
+# Full register body from JSON (see upstream doc; repo example below)
+lab-kit ingest --gateway http://localhost:8080 register --json config/examples/ingest-register.json
+
+# Multipart upload
+lab-kit ingest --gateway http://localhost:8080 upload --file ./README.md
+
+# Poll job
+lab-kit ingest --gateway http://localhost:8080 job <job_id>
+```
+
+Verify objects with DRS: `GET {gateway}/ga4gh/drs/v1/objects/{id}`.
+
+### Library use
+
+Other Rust tools in your workspace can depend on **`lab-kit-ingest`** and call `IngestClient` directly.

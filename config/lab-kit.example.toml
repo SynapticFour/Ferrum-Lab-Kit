@@ -52,3 +52,7 @@ scopes = ["openid", "profile", "email", "offline_access", "ga4gh_passport_v1"]
 # [external]
 # htsget_url = "https://htsget.existing.institute"
 # beacon_network_url = "https://beacon-network.elixir-europe.org"
+
+# --- Optional: ferrum-gateway base URL for `lab-kit ingest` (overridden by --gateway / FERRUM_GATEWAY_URL) ---
+# [ferrum]
+# gateway_url = "http://localhost:8080"

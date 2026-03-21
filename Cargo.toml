@@ -6,6 +6,7 @@ members = [
     "crates/lab-kit-auth",
     "crates/lab-kit-deploy",
     "crates/lab-kit-ferrum",
+    "crates/lab-kit-ingest",
     "crates/lab-kit-report",
     "crates/lab-kit-selector",
 ]
@@ -29,6 +30,7 @@ printpdf = "0.7"
 reqwest = { version = "0.12", default-features = false, features = [
     "blocking",
     "json",
+    "multipart",
     "rustls-tls",
 ] }
 rusqlite = { version = "0.32", features = ["bundled"] }

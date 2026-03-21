@@ -16,6 +16,9 @@ pub struct LabKitConfig {
     pub services: ServicesSection,
     #[serde(default)]
     pub external: ExternalSection,
+    /// Optional **ferrum-gateway** base URL for CLI helpers (e.g. `lab-kit ingest`).
+    #[serde(default)]
+    pub ferrum: FerrumSection,
 }
 
 fn default_schema_version() -> u32 {
@@ -249,6 +252,14 @@ pub struct SlurmNestedConfig {
     pub user: Option<String>,
     #[serde(default)]
     pub partition: Option<String>,
+}
+
+/// Optional Ferrum gateway hints (not required for `generate compose` unless you use ingest CLI).
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct FerrumSection {
+    /// Base URL of **ferrum-gateway** (no path), e.g. `http://localhost:8080`.
+    #[serde(default)]
+    pub gateway_url: Option<Url>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
