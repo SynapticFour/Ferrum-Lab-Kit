@@ -1,0 +1,43 @@
+# GA4GH local stack overlay: WES workdir on a host-visible path, TES via Docker,
+# optional Crypt4GH key dir, and nested-engine networking (host.docker.internal).
+#
+# Merge with the main demo Compose file (fixes project name so the default network is predictable):
+#
+#   export FERRUM_WES_WORK_HOST=/absolute/path/on/host/wes-runs
+#   export FERRUM_TES_WORK_HOST=/absolute/path/on/host/tes-jobs
+#   docker compose -p ferrum-ga4gh -f deploy/docker-compose.yml -f demo/docker-compose.ga4gh.yml up -d --build
+#
+# Naming (avoid confusion):
+#   * FERRUM_WES_WORK_HOST / FERRUM_TES_WORK_HOST — used ONLY on the host (Compose volume source).
+#     Do not pass them into the container. The historical misspelling FERUM_WES_WORK_HOST is wrong; use FERRUM_*.
+#   * FERRUM_WES_WORK_DIR / FERRUM_TES_WORK_DIR — paths inside the gateway container (must match volume targets below).
+#
+# See: docs/GA4GH-DEMO-COMPOSE.md
+
+name: ferrum-ga4gh
+
+services:
+  ferrum-gateway:
+    environment:
+      # htsget / DRS tickets — use gateway URL reachable from host browsers and nested task containers
+      FERRUM_PUBLIC_BASE_URL: ${FERRUM_PUBLIC_BASE_URL:-http://localhost:8080}
+      # WES: directory visible to nested docker runs (symmetric host path — see docs/TES-DOCKER-BACKEND.md)
+      FERRUM_WES_WORK_DIR: /wes-runs
+      FERRUM_WES_TES_URL: http://ferrum-gateway:8080/ga4gh/tes/v1
+      # TES: Docker executor (gateway image must be built with ferrum-tes "docker" feature — default Dockerfile.gateway)
+      FERRUM_TES_BACKEND: docker
+      FERRUM_TES_WORK_DIR: /tes-jobs
+      # Attach each TES task container to this user-defined network (project name + "_default")
+      FERRUM_TES_DOCKER_NETWORK: ferrum-ga4gh_default
+      # Comma-separated host:ip entries; host-gateway is resolved by the Docker daemon on Linux (Compose 2)
+      FERRUM_TES_EXTRA_HOSTS: host.docker.internal:host-gateway
+      # Optional Crypt4GH node keys for encrypt-at-rest ingest + /stream decrypt (see docs/CRYPT4GH.md)
+      FERRUM_ENCRYPTION__CRYPT4GH_KEY_DIR: ${FERRUM_ENCRYPTION__CRYPT4GH_KEY_DIR:-/etc/ferrum/crypt4gh-keys}
+    volumes:
+      - ${FERRUM_WES_WORK_HOST:?}:/wes-runs
+      - ${FERRUM_TES_WORK_HOST:?}:/tes-jobs
+      - /var/run/docker.sock:/var/run/docker.sock
+      # Populate on host with {FERRUM_CRYPT4GH_MASTER_KEY_ID:-node}.pub / .sec before enabling encrypt=true ingest
+      - ${FERRUM_CRYPT4GH_KEY_HOST_DIR:-./var/ferrum-crypt4gh-keys}:${FERRUM_ENCRYPTION__CRYPT4GH_KEY_DIR:-/etc/ferrum/crypt4gh-keys}:ro
+    extra_hosts:
+      - "host.docker.internal:host-gateway"

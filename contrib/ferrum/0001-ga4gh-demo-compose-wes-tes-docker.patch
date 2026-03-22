@@ -1,0 +1,309 @@
+diff --git a/README.md b/README.md
+index 6a4e81b2..667490c6 100644
+--- a/README.md
++++ b/README.md
+@@ -118,6 +118,12 @@ ferrum demo start
+ 
+ Open **http://localhost:3000**. The demo includes pre-seeded DRS objects and test users. (Port may vary; run `ferrum status` to confirm.)
+ 
++### GA4GH WES → TES (Docker Compose overlay)
++
++For a **full local stack** with **host-visible WES/TES workdirs**, **Docker socket**, optional **Crypt4GH** keys, and **`host.docker.internal`** for nested workflow engines, merge **`demo/docker-compose.ga4gh.yml`** with **`deploy/docker-compose.yml`**. Variable checklist and run commands: **[docs/GA4GH-DEMO-COMPOSE.md](docs/GA4GH-DEMO-COMPOSE.md)**.
++
++**Deployment / integration layer (selective GA4GH services, Compose fragments, `lab-kit` CLI):** [Ferrum Lab Kit](https://github.com/SynapticFour/Ferrum-Lab-Kit).
++
+ ---
+ 
+ ## GA4GH Standards
+diff --git a/crates/ferrum-gateway/Cargo.toml b/crates/ferrum-gateway/Cargo.toml
+index d4e81b28..093cd71a 100644
+--- a/crates/ferrum-gateway/Cargo.toml
++++ b/crates/ferrum-gateway/Cargo.toml
+@@ -17,7 +17,7 @@ ferrum-drs = { path = "../ferrum-drs" }
+ ferrum-htsget = { path = "../ferrum-htsget" }
+ ferrum-trs = { path = "../ferrum-trs" }
+ ferrum-wes = { path = "../ferrum-wes" }
+-ferrum-tes = { path = "../ferrum-tes" }
++ferrum-tes = { path = "../ferrum-tes", features = ["docker"] }
+ ferrum-passports = { path = "../ferrum-passports" }
+ ferrum-crypt4gh = { path = "../ferrum-crypt4gh" }
+ ferrum-beacon = { path = "../ferrum-beacon" }
+diff --git a/crates/ferrum-gateway/src/main.rs b/crates/ferrum-gateway/src/main.rs
+index be451798..1c1ee89a 100644
+--- a/crates/ferrum-gateway/src/main.rs
++++ b/crates/ferrum-gateway/src/main.rs
+@@ -357,10 +357,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+         )
+     });
+ 
+-    // TES: enable when we have a pool. In demo/CI use a no-op backend (podman isn't available on GitHub runners).
++    // TES: backend from FERRUM_TES_BACKEND (default "noop" for CI). Work dir for executor scratch.
++    // GA4GH Docker demo overlay sets FERRUM_TES_BACKEND=docker and mounts docker.sock — see demo/docker-compose.ga4gh.yml.
++    let tes_backend = std::env::var("FERRUM_TES_BACKEND").unwrap_or_else(|_| "noop".to_string());
++    let tes_work_dir = std::env::var("FERRUM_TES_WORK_DIR")
++        .ok()
++        .filter(|s| !s.trim().is_empty())
++        .map(std::path::PathBuf::from);
+     let tes_params = pg_pool
+         .clone()
+-        .map(|pool| (pool, Some("noop".to_string()), None));
++        .map(|pool| (pool, Some(tes_backend), tes_work_dir));
+ 
+     run(
+         bind,
+diff --git a/crates/ferrum-tes/src/executors/docker.rs b/crates/ferrum-tes/src/executors/docker.rs
+index b56a756c..f94a85b4 100644
+--- a/crates/ferrum-tes/src/executors/docker.rs
++++ b/crates/ferrum-tes/src/executors/docker.rs
+@@ -5,6 +5,7 @@ use crate::executor::TaskExecutor;
+ use crate::types::{CreateTaskRequest, TaskState};
+ use async_trait::async_trait;
+ use bollard::container::{Config, CreateContainerOptions, StartContainerOptions};
++use bollard::models::{ContainerStateStatusEnum, HostConfig};
+ use bollard::Docker;
+ 
+ pub struct DockerExecutor {
+@@ -34,6 +35,34 @@ impl TaskExecutor for DockerExecutor {
+         }
+         let exec = &request.executors[0];
+         let name = format!("tes-{}", task_id);
++
++        // Optional: attach TES task containers to the Compose user-defined network and add extra_hosts
++        // (e.g. host.docker.internal:host-gateway) so nested workflow engines can reach workflow URLs on the host.
++        // Set on the **gateway** process env (inherited when it spawns tasks): FERRUM_TES_DOCKER_NETWORK,
++        // FERRUM_TES_EXTRA_HOSTS (comma-separated "host:ip" entries; Docker resolves host-gateway on supported daemons).
++        let mut host_config = HostConfig::default();
++        if let Ok(net) = std::env::var("FERRUM_TES_DOCKER_NETWORK") {
++            let net = net.trim().to_string();
++            if !net.is_empty() {
++                host_config.network_mode = Some(net);
++            }
++        }
++        if let Ok(extra) = std::env::var("FERRUM_TES_EXTRA_HOSTS") {
++            let hosts: Vec<String> = extra
++                .split(',')
++                .map(|s| s.trim().to_string())
++                .filter(|s| !s.is_empty())
++                .collect();
++            if !hosts.is_empty() {
++                host_config.extra_hosts = Some(hosts);
++            }
++        }
++        let host_config = if host_config.network_mode.is_some() || host_config.extra_hosts.is_some() {
++            Some(host_config)
++        } else {
++            None
++        };
++
+         let config = Config {
+             image: Some(exec.image.clone()),
+             entrypoint: exec.entrypoint.clone(),
+@@ -43,9 +72,13 @@ impl TaskExecutor for DockerExecutor {
+                     .map(|(k, v)| format!("{}={}", k, v))
+                     .collect::<Vec<_>>()
+             }),
++            host_config,
+             ..Default::default()
+         };
+-        let opts = CreateContainerOptions { name };
++        let opts = CreateContainerOptions {
++            name,
++            platform: None::<String>,
++        };
+         let create = self
+             .docker
+             .create_container(Some(opts), config)
+@@ -75,10 +108,10 @@ impl TaskExecutor for DockerExecutor {
+             .inspect_container(id, None)
+             .await
+             .map_err(|e| TesError::Executor(e.to_string()))?;
+-        let state = inspect.state.and_then(|s| s.status);
+-        match state.as_deref() {
+-            Some("running") => Ok(TaskState::Running),
+-            Some("exited") => {
++        let status = inspect.state.as_ref().and_then(|s| s.status.as_ref());
++        match status {
++            Some(ContainerStateStatusEnum::RUNNING) => Ok(TaskState::Running),
++            Some(ContainerStateStatusEnum::EXITED) => {
+                 let exit = inspect.state.and_then(|s| s.exit_code).unwrap_or(1);
+                 Ok(if exit == 0 {
+                     TaskState::Complete
+diff --git a/demo/docker-compose.ga4gh.yml b/demo/docker-compose.ga4gh.yml
+new file mode 100644
+index 00000000..49ad3823
+--- /dev/null
++++ b/demo/docker-compose.ga4gh.yml
+@@ -0,0 +1,43 @@
++# GA4GH local stack overlay: WES workdir on a host-visible path, TES via Docker,
++# optional Crypt4GH key dir, and nested-engine networking (host.docker.internal).
++#
++# Merge with the main demo Compose file (fixes project name so the default network is predictable):
++#
++#   export FERRUM_WES_WORK_HOST=/absolute/path/on/host/wes-runs
++#   export FERRUM_TES_WORK_HOST=/absolute/path/on/host/tes-jobs
++#   docker compose -p ferrum-ga4gh -f deploy/docker-compose.yml -f demo/docker-compose.ga4gh.yml up -d --build
++#
++# Naming (avoid confusion):
++#   * FERRUM_WES_WORK_HOST / FERRUM_TES_WORK_HOST — used ONLY on the host (Compose volume source).
++#     Do not pass them into the container. The historical misspelling FERUM_WES_WORK_HOST is wrong; use FERRUM_*.
++#   * FERRUM_WES_WORK_DIR / FERRUM_TES_WORK_DIR — paths inside the gateway container (must match volume targets below).
++#
++# See: docs/GA4GH-DEMO-COMPOSE.md
++
++name: ferrum-ga4gh
++
++services:
++  ferrum-gateway:
++    environment:
++      # htsget / DRS tickets — use gateway URL reachable from host browsers and nested task containers
++      FERRUM_PUBLIC_BASE_URL: ${FERRUM_PUBLIC_BASE_URL:-http://localhost:8080}
++      # WES: directory visible to nested docker runs (symmetric host path — see docs/TES-DOCKER-BACKEND.md)
++      FERRUM_WES_WORK_DIR: /wes-runs
++      FERRUM_WES_TES_URL: http://ferrum-gateway:8080/ga4gh/tes/v1
++      # TES: Docker executor (gateway image must be built with ferrum-tes "docker" feature — default Dockerfile.gateway)
++      FERRUM_TES_BACKEND: docker
++      FERRUM_TES_WORK_DIR: /tes-jobs
++      # Attach each TES task container to this user-defined network (project name + "_default")
++      FERRUM_TES_DOCKER_NETWORK: ferrum-ga4gh_default
++      # Comma-separated host:ip entries; host-gateway is resolved by the Docker daemon on Linux (Compose 2)
++      FERRUM_TES_EXTRA_HOSTS: host.docker.internal:host-gateway
++      # Optional Crypt4GH node keys for encrypt-at-rest ingest + /stream decrypt (see docs/CRYPT4GH.md)
++      FERRUM_ENCRYPTION__CRYPT4GH_KEY_DIR: ${FERRUM_ENCRYPTION__CRYPT4GH_KEY_DIR:-/etc/ferrum/crypt4gh-keys}
++    volumes:
++      - ${FERRUM_WES_WORK_HOST:?}:/wes-runs
++      - ${FERRUM_TES_WORK_HOST:?}:/tes-jobs
++      - /var/run/docker.sock:/var/run/docker.sock
++      # Populate on host with {FERRUM_CRYPT4GH_MASTER_KEY_ID:-node}.pub / .sec before enabling encrypt=true ingest
++      - ${FERRUM_CRYPT4GH_KEY_HOST_DIR:-./var/ferrum-crypt4gh-keys}:${FERRUM_ENCRYPTION__CRYPT4GH_KEY_DIR:-/etc/ferrum/crypt4gh-keys}:ro
++    extra_hosts:
++      - "host.docker.internal:host-gateway"
+diff --git a/deploy/docker-compose.yml b/deploy/docker-compose.yml
+index 4e2badc6..e1d43080 100644
+--- a/deploy/docker-compose.yml
++++ b/deploy/docker-compose.yml
+@@ -1,6 +1,9 @@
+ # Ferrum local demo - single command: docker compose up
+ # Services: gateway, postgres, minio, keycloak, ferrum-ui, init
+ # Usage: make demo  (or: docker compose -f deploy/docker-compose.yml up -d)
++#
++# GA4GH WES→TES (Docker) overlay — host workdirs, docker.sock, optional Crypt4GH, nested-engine networking:
++#   see demo/docker-compose.ga4gh.yml and docs/GA4GH-DEMO-COMPOSE.md
+ 
+ services:
+   postgres:
+diff --git a/docs/GA4GH-DEMO-COMPOSE.md b/docs/GA4GH-DEMO-COMPOSE.md
+new file mode 100644
+index 00000000..1f10b798
+--- /dev/null
++++ b/docs/GA4GH-DEMO-COMPOSE.md
+@@ -0,0 +1,82 @@
++# GA4GH demo: Compose overlay (WES + TES Docker)
++
++This file documents the **`demo/docker-compose.ga4gh.yml`** merge overlay for local **WES → TES (Docker)** workflows with **host-visible work directories**, **Docker socket**, optional **Crypt4GH** keys, and **`host.docker.internal`** for nested workflow engines.
++
++**Baseline stack:** `deploy/docker-compose.yml` (Postgres, MinIO, Keycloak, gateway, UI).
++
++**Run (example):**
++
++```bash
++export FERRUM_WES_WORK_HOST=/abs/path/wes-runs
++export FERRUM_TES_WORK_HOST=/abs/path/tes-jobs
++mkdir -p "$FERRUM_WES_WORK_HOST" "$FERRUM_TES_WORK_HOST"
++
++docker compose -p ferrum-ga4gh \
++  -f deploy/docker-compose.yml \
++  -f demo/docker-compose.ga4gh.yml \
++  up -d --build
++```
++
++Use **`-p ferrum-ga4gh`** so the default user-defined network is predictably **`ferrum-ga4gh_default`** (matches `FERRUM_TES_DOCKER_NETWORK` in the overlay).
++
++---
++
++## Environment variables (checklist)
++
++### Host-only (Compose substitution — **not** passed to the container)
++
++| Variable | Purpose |
++|----------|---------|
++| `FERRUM_WES_WORK_HOST` | **Absolute** host path bind-mounted to **`/wes-runs`** in the gateway container. |
++| `FERRUM_TES_WORK_HOST` | **Absolute** host path bind-mounted to **`/tes-jobs`** (TES executor scratch). |
++| `FERRUM_CRYPT4GH_KEY_HOST_DIR` | Optional. Host directory with node keypair `{id}.pub` / `{id}.sec` (default bind: `./var/ferrum-crypt4gh-keys` → container path below). |
++
++**Spelling:** always **`FERRUM_…`** (two `R`s). A historical typo **`FERUM_WES_WORK_HOST`** is invalid — do not use in docs or `.env`.
++
++### Inside `ferrum-gateway` (read by Rust)
++
++| Variable | Typical value (this overlay) | Notes |
++|----------|------------------------------|--------|
++| `FERRUM_WES_WORK_DIR` | `/wes-runs` | Must match the **in-container** mount target for `FERRUM_WES_WORK_HOST`. |
++| `FERRUM_WES_TES_URL` | `http://ferrum-gateway:8080/ga4gh/tes/v1` | In-compose TES base URL. |
++| `FERRUM_TES_BACKEND` | `docker` | Selects Docker TES executor (gateway links `ferrum-tes` with `docker` feature). |
++| `FERRUM_TES_WORK_DIR` | `/tes-jobs` | Executor scratch; must match mount target for `FERRUM_TES_WORK_HOST`. |
++| `FERRUM_TES_DOCKER_NETWORK` | `ferrum-ga4gh_default` | Docker **network mode** name for TES task containers (same Compose project network as services). |
++| `FERRUM_TES_EXTRA_HOSTS` | `host.docker.internal:host-gateway` | Propagated to TES-created containers; helps nested engines fetch workflow descriptors from the host. |
++| `FERRUM_PUBLIC_BASE_URL` | e.g. `http://localhost:8080` | DRS/htsget ticket URLs — set so clients and nested tasks can reach the gateway. |
++| `FERRUM_ENCRYPTION__CRYPT4GH_KEY_DIR` | `/etc/ferrum/crypt4gh-keys` | Optional; required for **encrypt=true** ingest and Crypt4GH stream behaviour (see [CRYPT4GH.md](CRYPT4GH.md)). |
++
++---
++
++## Mounts
++
++| Mount | Why |
++|-------|-----|
++| `FERRUM_*_WORK_HOST` → `/wes-runs`, `/tes-jobs` | **Symmetric path contract** for WES/TES and nested `docker run` (see [TES-DOCKER-BACKEND.md](TES-DOCKER-BACKEND.md)). |
++| `/var/run/docker.sock` | TES Docker executor talks to the host daemon. |
++| Crypt4GH host dir → `/etc/ferrum/crypt4gh-keys` | Node keys for at-rest encryption / stream decrypt. |
++| `extra_hosts: host.docker.internal:host-gateway` on **gateway** | Gateway process can resolve host; TES tasks get **`FERRUM_TES_EXTRA_HOSTS`** from the same environment when tasks are created. |
++
++**Optional static `docker` CLI inside task images:** not set in Compose — if an engine shell-outs to `docker`, either install the CLI in the **workflow image** or bind-mount a binary (site-specific; see [TES-DOCKER-BACKEND.md](TES-DOCKER-BACKEND.md) § *docker.sock vs docker CLI*).
++
++---
++
++## Crypt4GH (optional parity with encrypted-at-rest demos)
++
++1. Create a key directory on the host (see [CRYPT4GH.md](CRYPT4GH.md), [INGEST-LAB-KIT.md](INGEST-LAB-KIT.md)).
++2. Set `FERRUM_CRYPT4GH_KEY_HOST_DIR` or use the default `./var/ferrum-crypt4gh-keys` and place `{crypt4gh_master_key_id}.pub` / `.sec` there.
++3. Use **`POST /api/v1/ingest/upload`** with `encrypt=true` or equivalent DRS ingest flags as documented upstream.
++
++---
++
++## Related docs
++
++- [TES-DOCKER-BACKEND.md](TES-DOCKER-BACKEND.md) — nested containers, bind mounts, `docker.sock`  
++- [GA4GH.md](GA4GH.md) — WES/TES/DRS paths  
++- [WORKFLOWS.md](WORKFLOWS.md) — engine submission notes  
++
++**Ferrum Lab Kit** (deployment / integration layer): [github.com/SynapticFour/Ferrum-Lab-Kit](https://github.com/SynapticFour/Ferrum-Lab-Kit)
++
++---
++
++*[← Documentation index](README.md)*
+diff --git a/docs/README.md b/docs/README.md
+index 4a6887f8..994c9bb1 100644
+--- a/docs/README.md
++++ b/docs/README.md
+@@ -65,6 +65,7 @@ Documentation is organized into: **Getting Started**, **Architecture**, **Standa
+ | [PROVENANCE.md](PROVENANCE.md) | Data provenance and lineage: DAG model, when edges are recorded, API endpoints, UI, RO-Crate export, configuration. |
+ | [WORKFLOWS.md](WORKFLOWS.md) | Submitting Nextflow, CWL, WDL, Snakemake via WES; DRS inputs; HPC execution; live log streaming. See also [WES-WORKFLOW-ENGINES.md](WES-WORKFLOW-ENGINES.md). |
+ | [TES-DOCKER-BACKEND.md](TES-DOCKER-BACKEND.md) | TES Docker/Podman: **entrypoint vs command**, nested `docker run`, host binds, `docker.sock` vs CLI, WES defaults pointer. |
++| [GA4GH-DEMO-COMPOSE.md](GA4GH-DEMO-COMPOSE.md) | **Local GA4GH demo overlay:** merge Compose file for WES workdir, TES Docker, `FERRUM_TES_*` env, Crypt4GH mount, `host.docker.internal`. |
+ | [CONTRIBUTING.md](../CONTRIBUTING.md) | Development setup, testing, PR process, adding a GA4GH service, Rust style. |
+ | [SECURITY.md](../SECURITY.md) | Supported versions, reporting vulnerabilities, security model, operator considerations. |
+ | [COMPLIANCE.md](COMPLIANCE.md) | Regulatory compliance: GDPR, BDSG, Gaia-X, NIS2, EHDS, GA4GH |
+diff --git a/docs/TES-DOCKER-BACKEND.md b/docs/TES-DOCKER-BACKEND.md
+index 6c23efd8..2a62ba9b 100644
+--- a/docs/TES-DOCKER-BACKEND.md
++++ b/docs/TES-DOCKER-BACKEND.md
+@@ -58,9 +58,9 @@ Details and nested-mount pitfalls: [Nested container execution / Host path contr
+ |--------|----------------------------|
+ | TES **entrypoint** optional (`executors[].entrypoint`) for Docker / Podman / Slurm-wrapped Podman | **Implemented** (see [Entrypoint vs command](#entrypoint-vs-command-docker-api-semantics)) |
+ | Docs on nested mounts / `docker.sock` | **Documented** (this file) |
+-| **Symmetric host-path** vs **“`/work` only”** volume contract between **WES → TES** task JSON and site bind mounts | **Open / documented-only** — no dedicated WES→TES volume normalisation or env-driven “host prefix” in code yet; operators must align TES `volumes` / WES defaults with their cluster layout. |
++| **Symmetric host-path** vs **“`/work` only”** volume contract between **WES → TES** task JSON and site bind mounts | **Documented** — use **`demo/docker-compose.ga4gh.yml`** + **[GA4GH-DEMO-COMPOSE.md](GA4GH-DEMO-COMPOSE.md)** for a single merge overlay: host paths `FERRUM_WES_WORK_HOST` / `FERRUM_TES_WORK_HOST` → container `FERRUM_WES_WORK_DIR` / `FERRUM_TES_WORK_DIR`. Gateway reads **`FERRUM_TES_BACKEND`**, **`FERRUM_TES_DOCKER_NETWORK`**, **`FERRUM_TES_EXTRA_HOSTS`** (see also Docker executor in `ferrum-tes`). |
+ 
+-Explicit **backlog-style** reference: choosing a single supported pattern (e.g. `FERRUM_TES_WORK_HOST_PATH` or documented “always mount host `X` at `/work`”) would be a follow-up; this iteration does **not** add that configuration.
++**Spelling:** use **`FERRUM_`** (two `R`s) for all documented env vars — do not use the typo **`FERUM_WES_WORK_HOST`**.
+ 
+ ---
+ 

@@ -21,6 +21,7 @@
 | Doc | What it’s for |
 |-----|----------------|
 | [FERRUM-INTEGRATION.md](FERRUM-INTEGRATION.md) | Git pin to `ferrum-core`, **`lab-kit ingest`**, gateway URL / token |
+| [FERRUM-GA4GH-DEMO-OVERLAY.md](FERRUM-GA4GH-DEMO-OVERLAY.md) | Ferrum **GA4GH Compose overlay** (WES/TES Docker, workdirs, Crypt4GH) — mirrors under `contrib/ferrum/` + patch |
 | [ELIXIR-AAI.md](ELIXIR-AAI.md) | LS Login / Passport-oriented notes |
 
 ## Conformance & governance

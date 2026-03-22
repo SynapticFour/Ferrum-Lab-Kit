@@ -21,6 +21,8 @@ Prints the linked `ferrum_core::FerrumError` type name and the pinned revision.
 
 Deploy generators still use **placeholder images** until you point Compose/Helm at Ferrum release images or build from the Ferrum repo. Shared **types, config, and auth** primitives come from `ferrum-core` via `lab-kit-ferrum` for gateways and future glue code.
 
+**GA4GH local demo (WES + TES Docker, workdirs, `docker.sock`, optional Crypt4GH):** upstream merge overlay and env checklist — see [FERRUM-GA4GH-DEMO-OVERLAY.md](FERRUM-GA4GH-DEMO-OVERLAY.md) and `contrib/ferrum/`.
+
 ## Versioned ingest (`/api/v1/ingest/*`)
 
 Ferrum exposes a **stable, scripting-oriented** ingest API on **ferrum-gateway** (same auth as other gateway routes). Upstream specification:

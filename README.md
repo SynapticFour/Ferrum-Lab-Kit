@@ -65,6 +65,7 @@ Details: [docs/GA4GH-STANDARDS.md](docs/GA4GH-STANDARDS.md).
 - **[Documentation index](docs/README.md)** — all guides and examples  
 - [GA4GH workflow primer](docs/GA4GH-WORKFLOW-PRIMER.md) — TRS/WES/TES flow, DRS, engines, nested Docker, `amd64`/`arm64`  
 - [Operations checklist](docs/OPERATIONS-CHECKLIST.md) — env vars, Docker, networking, naming  
+- [Ferrum GA4GH demo overlay](docs/FERRUM-GA4GH-DEMO-OVERLAY.md) — WES/TES Docker Compose merge + `contrib/ferrum/` patch  
 
 Also: [Architecture](docs/ARCHITECTURE.md) · [Ferrum integration](docs/FERRUM-INTEGRATION.md) · [Deployment targets](docs/DEPLOYMENT-TARGETS.md) · [ELIXIR AAI](docs/ELIXIR-AAI.md) · [Bring your own](docs/BRING-YOUR-OWN.md) · [Conformance](docs/CONFORMANCE.md) · [Business model](docs/BUSINESS-MODEL.md)
 
