@@ -62,8 +62,11 @@ Details: [docs/GA4GH-STANDARDS.md](docs/GA4GH-STANDARDS.md).
 
 ## Documentation
 
-- [Architecture](docs/ARCHITECTURE.md) · [Ferrum integration](docs/FERRUM-INTEGRATION.md) · [Deployment targets](docs/DEPLOYMENT-TARGETS.md) · [ELIXIR AAI](docs/ELIXIR-AAI.md)  
-- [Bring your own](docs/BRING-YOUR-OWN.md) · [Conformance](docs/CONFORMANCE.md) · [Business model](docs/BUSINESS-MODEL.md)
+- **[Documentation index](docs/README.md)** — all guides and examples  
+- [GA4GH workflow primer](docs/GA4GH-WORKFLOW-PRIMER.md) — TRS/WES/TES flow, DRS, engines, nested Docker, `amd64`/`arm64`  
+- [Operations checklist](docs/OPERATIONS-CHECKLIST.md) — env vars, Docker, networking, naming  
+
+Also: [Architecture](docs/ARCHITECTURE.md) · [Ferrum integration](docs/FERRUM-INTEGRATION.md) · [Deployment targets](docs/DEPLOYMENT-TARGETS.md) · [ELIXIR AAI](docs/ELIXIR-AAI.md) · [Bring your own](docs/BRING-YOUR-OWN.md) · [Conformance](docs/CONFORMANCE.md) · [Business model](docs/BUSINESS-MODEL.md)
 
 ## Need the full platform?
 

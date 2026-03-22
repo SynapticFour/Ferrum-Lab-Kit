@@ -13,3 +13,9 @@ Lab Kit **selects and wires** Ferrum implementations; version pins follow **Ferr
 | **Passport / AAI** | GA4GH Passport | Controlled access, visas, institutional identity via LS Login |
 
 Exact specification versions are pinned in Ferrum; update this table when Ferrum cuts releases.
+
+## See also
+
+- [Documentation index](README.md)  
+- [GA4GH workflow primer](GA4GH-WORKFLOW-PRIMER.md) — control flow, DRS access patterns, engines, nested execution, platforms  
+- [Operations checklist](OPERATIONS-CHECKLIST.md)

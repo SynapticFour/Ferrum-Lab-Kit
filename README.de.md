@@ -35,6 +35,14 @@ docker compose -f docker-compose.yml up -d
 
 Mehr in [docs/GA4GH-STANDARDS.md](docs/GA4GH-STANDARDS.md).
 
+## Dokumentation (Überblick)
+
+- **[docs/README.md](docs/README.md)** — Index aller Guides und Beispiele  
+- [GA4GH-Workflow-Primer](docs/GA4GH-WORKFLOW-PRIMER.md) — Ablauf TRS/WES/TES, DRS, Engines, verschachtelte Container, Plattformen (`amd64`/`arm64`)  
+- [Operations-Checkliste](docs/OPERATIONS-CHECKLIST.md) — Env-Vars, Docker, Netzwerk, Namenskonventionen  
+
+Weiter: [Architektur](docs/ARCHITECTURE.md) · [Ferrum-Integration](docs/FERRUM-INTEGRATION.md) · [Deployment](docs/DEPLOYMENT-TARGETS.md) · [ELIXIR AAI](docs/ELIXIR-AAI.md) · [Bring your own](docs/BRING-YOUR-OWN.md) · [Konformität](docs/CONFORMANCE.md) · [Business-Modell](docs/BUSINESS-MODEL.md)
+
 ## Für wen ist das gedacht?
 
 - Universitäts- und Institutslabore in **Deutschland, Österreich, der Schweiz** — typischerweise **SLURM**-clusters oder Einzelserver.

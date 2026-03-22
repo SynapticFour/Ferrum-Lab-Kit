@@ -23,6 +23,7 @@ cargo test -p lab-kit-adapters --features integration-tests postgres_metadata_ro
 ## Scope
 
 - **Do not** re-implement GA4GH service logic here — integrate [Ferrum](https://github.com/SynapticFour/Ferrum) crates.
+- **Docs:** tutorials, checklists, architecture explanations, and reference Compose belong here; link to Ferrum for product behaviour. Start from the [documentation index](docs/README.md).
 - Prefer **Rust** for tooling; keep shell to trivial bootstrap only.
 - Open-core boundary: **PDF conformance reports** are license-gated at runtime via `FERRUM_LAB_KIT_LICENSE_KEY`; JSON and GA4GH deployments are not.
 
