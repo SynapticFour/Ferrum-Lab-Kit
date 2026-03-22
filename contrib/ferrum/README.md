@@ -8,7 +8,7 @@ This directory holds **mirrors** and a **unified diff** for changes that belong 
 |------|---------|
 | [`demo-docker-compose.ga4gh.yml`](demo-docker-compose.ga4gh.yml) | Copy to Ferrum **`demo/docker-compose.ga4gh.yml`** (or apply patch). |
 | [`GA4GH-DEMO-COMPOSE.md`](GA4GH-DEMO-COMPOSE.md) | Copy to Ferrum **`docs/GA4GH-DEMO-COMPOSE.md`**. |
-| [`0001-ga4gh-demo-compose-wes-tes-docker.patch`](0001-ga4gh-demo-compose-wes-tes-docker.patch) | Full patch: overlay + docs + **`ferrum-gateway` TES env** + **`ferrum-tes` Docker executor** (`FERRUM_TES_DOCKER_NETWORK`, `FERRUM_TES_EXTRA_HOSTS`) + README / index links. |
+| [`0001-ga4gh-demo-compose-wes-tes-docker.patch`](0001-ga4gh-demo-compose-wes-tes-docker.patch) | Full patch vs Ferrum **`main`**: `FERRUM_TES_BACKEND` (default **noop**), base compose passthrough, **HelixTest `FERRUM_TES_BACKEND=noop`**, GA4GH overlay + **`FERRUM_TES_DOCKER_*`** + **`tes-docker`** build arg. |
 
 **Apply in a Ferrum clone:**
 
@@ -20,4 +20,4 @@ git apply /path/to/Ferrum-Lab-Kit/contrib/ferrum/0001-ga4gh-demo-compose-wes-tes
 
 **Lab Kit doc (operator-oriented):** [docs/FERRUM-GA4GH-DEMO-OVERLAY.md](../../docs/FERRUM-GA4GH-DEMO-OVERLAY.md)
 
-**Env naming:** host-side volume sources use **`FERRUM_WES_WORK_HOST`** / **`FERRUM_TES_WORK_HOST`** (Compose only). The gateway reads **`FERRUM_WES_WORK_DIR`** / **`FERRUM_TES_WORK_DIR`** inside the container. Do **not** use the typo **`FERUM_*`**.
+**Env naming:** host-side volume sources use **`FERRUM_WES_WORK_HOST`** / **`FERRUM_TES_WORK_HOST`** (Compose only). The gateway reads **`FERRUM_WES_WORK_DIR`** / **`FERRUM_TES_WORK_DIR`** inside the container. TES Docker knobs match upstream **`FERRUM_TES_DOCKER_*`** (see Ferrum `docs/TES-DOCKER-BACKEND.md`). Do **not** use the typo **`FERUM_*`**.

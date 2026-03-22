@@ -1,6 +1,6 @@
 # Ferrum GA4GH demo overlay (WES + TES Docker)
 
-Lab Kit **does not** replace Ferrum’s `deploy/docker-compose.yml`. For a **single, documented merge overlay** (WES workdir on a **host-visible** path, **TES via Docker**, **`docker.sock`**, optional **Crypt4GH** keys, **`host.docker.internal`** / `FERRUM_TES_EXTRA_HOSTS`), the canonical spec lives in the **Ferrum** repository:
+Lab Kit **does not** replace Ferrum’s `deploy/docker-compose.yml`. For a **single, documented merge overlay** (WES workdir on a **host-visible** path, **TES via Docker** with **`FERRUM_GATEWAY_FEATURES=tes-docker`**, **`docker.sock`**, optional **Crypt4GH**, **`FERRUM_TES_DOCKER_NETWORK_MODE`** / **`FERRUM_TES_DOCKER_EXTRA_HOSTS`** / **`FERRUM_TES_DOCKER_MOUNT_SOCKET`** per upstream [TES-DOCKER-BACKEND.md](https://github.com/SynapticFour/Ferrum/blob/main/docs/TES-DOCKER-BACKEND.md)), the canonical spec lives in the **Ferrum** repository:
 
 - **`demo/docker-compose.ga4gh.yml`** — merge with `deploy/docker-compose.yml`
 - **`docs/GA4GH-DEMO-COMPOSE.md`** — env checklist and run commands
@@ -13,7 +13,7 @@ In this repo:
 |------|-----|
 | [contrib/ferrum/demo-docker-compose.ga4gh.yml](../contrib/ferrum/demo-docker-compose.ga4gh.yml) | Copy to Ferrum `demo/docker-compose.ga4gh.yml` |
 | [contrib/ferrum/GA4GH-DEMO-COMPOSE.md](../contrib/ferrum/GA4GH-DEMO-COMPOSE.md) | Copy to Ferrum `docs/GA4GH-DEMO-COMPOSE.md` |
-| [contrib/ferrum/0001-ga4gh-demo-compose-wes-tes-docker.patch](../contrib/ferrum/0001-ga4gh-demo-compose-wes-tes-docker.patch) | **`git apply`** — includes Compose + docs + gateway **`FERRUM_TES_*`** wiring + Docker TES executor fixes |
+| [contrib/ferrum/0001-ga4gh-demo-compose-wes-tes-docker.patch](../contrib/ferrum/0001-ga4gh-demo-compose-wes-tes-docker.patch) | **`git apply`** — `FERRUM_TES_BACKEND` env wiring, base **`deploy/docker-compose.yml`**, **HelixTest noop**, overlay + docs |
 
 See [contrib/ferrum/README.md](../contrib/ferrum/README.md).
 
@@ -30,7 +30,7 @@ Rust already used **`FERRUM_WES_WORK_DIR`** (not `…_WORK_HOST`). Use a **disti
 
 ## Lab Kit Compose fragments
 
-Generated files under `deploy/docker-compose/*.yml` follow **Lab Kit** service selection; they are **not** identical to Ferrum’s full stack. When documenting env vars for operators, **align names** with the Ferrum GA4GH overlay (`FERRUM_WES_WORK_HOST`, `FERRUM_TES_*`, `FERRUM_ENCRYPTION__CRYPT4GH_KEY_DIR`) where the same concept applies.
+Generated files under `deploy/docker-compose/*.yml` follow **Lab Kit** service selection; they are **not** identical to Ferrum’s full stack. When documenting env vars for operators, **align names** with the Ferrum GA4GH overlay (`FERRUM_WES_WORK_HOST`, `FERRUM_TES_BACKEND`, **`FERRUM_TES_DOCKER_*`**, `FERRUM_ENCRYPTION__CRYPT4GH_KEY_DIR`) where the same concept applies.
 
 ## Further reading
 

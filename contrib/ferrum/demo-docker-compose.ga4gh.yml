@@ -1,43 +1,44 @@
-# GA4GH local stack overlay: WES workdir on a host-visible path, TES via Docker,
-# optional Crypt4GH key dir, and nested-engine networking (host.docker.internal).
+# GA4GH local overlay: WES workdir on host-visible paths, TES via Docker (Bollard),
+# optional Crypt4GH keys, nested-engine networking.
 #
-# Merge with the main demo Compose file (fixes project name so the default network is predictable):
+# Requires gateway built with Bollard: build arg FERRUM_GATEWAY_FEATURES=tes-docker (set below).
 #
-#   export FERRUM_WES_WORK_HOST=/absolute/path/on/host/wes-runs
-#   export FERRUM_TES_WORK_HOST=/absolute/path/on/host/tes-jobs
+#   export FERRUM_WES_WORK_HOST=/absolute/path/wes-runs
+#   export FERRUM_TES_WORK_HOST=/absolute/path/tes-jobs
+#   mkdir -p "$FERRUM_WES_WORK_HOST" "$FERRUM_TES_WORK_HOST"
 #   docker compose -p ferrum-ga4gh -f deploy/docker-compose.yml -f demo/docker-compose.ga4gh.yml up -d --build
 #
-# Naming (avoid confusion):
-#   * FERRUM_WES_WORK_HOST / FERRUM_TES_WORK_HOST — used ONLY on the host (Compose volume source).
-#     Do not pass them into the container. The historical misspelling FERUM_WES_WORK_HOST is wrong; use FERRUM_*.
-#   * FERRUM_WES_WORK_DIR / FERRUM_TES_WORK_DIR — paths inside the gateway container (must match volume targets below).
+# Naming:
+#   * FERRUM_WES_WORK_HOST / FERRUM_TES_WORK_HOST — host paths for Compose bind mounts only (not read by Rust).
+#   * FERRUM_WES_WORK_DIR / FERRUM_TES_WORK_DIR — in-container paths (must match mount targets).
+#   * Never use the typo FERUM_WES_WORK_HOST (missing R).
 #
-# See: docs/GA4GH-DEMO-COMPOSE.md
+# TES Docker env reference: docs/TES-DOCKER-BACKEND.md
 
 name: ferrum-ga4gh
 
 services:
   ferrum-gateway:
+    build:
+      args:
+        FERRUM_GATEWAY_FEATURES: tes-docker
     environment:
-      # htsget / DRS tickets — use gateway URL reachable from host browsers and nested task containers
       FERRUM_PUBLIC_BASE_URL: ${FERRUM_PUBLIC_BASE_URL:-http://localhost:8080}
-      # WES: directory visible to nested docker runs (symmetric host path — see docs/TES-DOCKER-BACKEND.md)
       FERRUM_WES_WORK_DIR: /wes-runs
       FERRUM_WES_TES_URL: http://ferrum-gateway:8080/ga4gh/tes/v1
-      # TES: Docker executor (gateway image must be built with ferrum-tes "docker" feature — default Dockerfile.gateway)
+      # Inject symmetric host bind into WES→TES tasks (same path on host and in task)
+      FERRUM_WES_TES_WORK_HOST_PREFIX: ${FERRUM_WES_WORK_HOST}
       FERRUM_TES_BACKEND: docker
       FERRUM_TES_WORK_DIR: /tes-jobs
-      # Attach each TES task container to this user-defined network (project name + "_default")
-      FERRUM_TES_DOCKER_NETWORK: ferrum-ga4gh_default
-      # Comma-separated host:ip entries; host-gateway is resolved by the Docker daemon on Linux (Compose 2)
-      FERRUM_TES_EXTRA_HOSTS: host.docker.internal:host-gateway
-      # Optional Crypt4GH node keys for encrypt-at-rest ingest + /stream decrypt (see docs/CRYPT4GH.md)
+      FERRUM_TES_DOCKER_NETWORK_MODE: ferrum-ga4gh_default
+      FERRUM_TES_DOCKER_EXTRA_HOSTS: host.docker.internal:host-gateway
+      # Add docker.sock into each TES task (nested docker); gateway still mounts sock below for Bollard
+      FERRUM_TES_DOCKER_MOUNT_SOCKET: "1"
       FERRUM_ENCRYPTION__CRYPT4GH_KEY_DIR: ${FERRUM_ENCRYPTION__CRYPT4GH_KEY_DIR:-/etc/ferrum/crypt4gh-keys}
     volumes:
       - ${FERRUM_WES_WORK_HOST:?}:/wes-runs
       - ${FERRUM_TES_WORK_HOST:?}:/tes-jobs
       - /var/run/docker.sock:/var/run/docker.sock
-      # Populate on host with {FERRUM_CRYPT4GH_MASTER_KEY_ID:-node}.pub / .sec before enabling encrypt=true ingest
       - ${FERRUM_CRYPT4GH_KEY_HOST_DIR:-./var/ferrum-crypt4gh-keys}:${FERRUM_ENCRYPTION__CRYPT4GH_KEY_DIR:-/etc/ferrum/crypt4gh-keys}:ro
     extra_hosts:
       - "host.docker.internal:host-gateway"
