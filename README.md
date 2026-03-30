@@ -1,6 +1,8 @@
 # Ferrum Lab Kit
 
-**Ferrum Lab Kit** is the **on-ramp** to [Ferrum](https://github.com/SynapticFour/Ferrum): a **deployment and integration layer** for small and mid-size research labs, **ELIXIR node candidates**, **GHGA** data submitters, and **GDI** national-node participants who need **selective GA4GH-compliant services** without running the full Ferrum platform. It is a **separate repository** — not a fork — and **does not duplicate** Ferrum’s GA4GH implementations; it configures and ships them against **your** storage, scheduler, and identity stack.
+**Ferrum Lab Kit** is the **on-ramp** to [Ferrum](https://github.com/SynapticFour/Ferrum): a **deployment and integration layer** for small and mid-size research labs, **ELIXIR node candidates**, **GHGA** data submitters, and **GDI** national-node participants who need **selective GA4GH-aligned services** without running the full Ferrum platform. It is a **separate repository** — not a fork — and **does not duplicate** Ferrum’s GA4GH implementations; it configures and ships them against **your** storage, scheduler, and identity stack.
+
+This repository provides technical deployment and conformance tooling. It does not constitute legal advice or a formal compliance certification for any jurisdiction.
 
 ## Install CLI (optional)
 
@@ -38,7 +40,7 @@ Details: [docs/GA4GH-STANDARDS.md](docs/GA4GH-STANDARDS.md).
 ## Who this is for
 
 - University and institute labs (**DE / AT / CH** and beyond) on **SLURM** or single servers.
-- **ELIXIR node** candidates needing a documented, conformant subset.
+- **ELIXIR node** candidates needing a documented, conformance-tested subset.
 - **GDI** national node and **rare disease** consortia attaching evidence to applications.
 - **NFDI** and related research-data initiatives composing standards-based services.
 
