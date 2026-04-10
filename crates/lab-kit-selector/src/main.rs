@@ -388,7 +388,7 @@ async fn init_wizard(output: &Path) -> anyhow::Result<()> {
 
     let auth_idx = Select::with_theme(&theme)
         .with_prompt("Authentication provider")
-        .items(&["ls-login (ELIXIR LS Login)", "none (demo only)"])
+        .items(["ls-login (ELIXIR LS Login)", "none (demo only)"])
         .default(0)
         .interact()?;
 
