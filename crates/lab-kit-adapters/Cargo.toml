@@ -23,7 +23,7 @@ chrono.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 sqlx.workspace = true
-testcontainers = { version = "0.23", optional = true }
+testcontainers = { version = "0.27", optional = true }
 thiserror.workspace = true
 tokio = { version = "1.40", features = ["fs", "rt-multi-thread", "macros", "process"] }
 tracing.workspace = true
