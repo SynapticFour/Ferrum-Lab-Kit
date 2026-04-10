@@ -1,0 +1,52 @@
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+  - package-ecosystem: "cargo"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+  - package-ecosystem: "cargo"
+    directory: "/crates/lab-kit-ferrum"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+  - package-ecosystem: "cargo"
+    directory: "/crates/lab-kit-core"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+  - package-ecosystem: "cargo"
+    directory: "/crates/lab-kit-adapters"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+  - package-ecosystem: "cargo"
+    directory: "/crates/lab-kit-deploy"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+  - package-ecosystem: "cargo"
+    directory: "/crates/lab-kit-auth"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+  - package-ecosystem: "cargo"
+    directory: "/crates/lab-kit-ingest"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+  - package-ecosystem: "cargo"
+    directory: "/crates/lab-kit-selector"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+  - package-ecosystem: "cargo"
+    directory: "/crates/lab-kit-report"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
