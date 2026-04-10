@@ -21,7 +21,7 @@ rust-version = "1.91.1"
 [workspace.dependencies]
 anyhow = "1.0"
 aws-config = { version = "1.5", default-features = false, features = ["rt-tokio", "rustls"] }
-aws-sdk-s3 = { version = "1.65", default-features = false, features = ["rt-tokio", "rustls"] }
+aws-sdk-s3 = { version = "1.129", default-features = false, features = ["rt-tokio", "rustls"] }
 chrono = { version = "0.4", features = ["serde"] }
 clap = { version = "4.5", features = ["derive", "env"] }
 dialoguer = "0.11"
