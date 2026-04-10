@@ -50,7 +50,7 @@ sqlx = { version = "0.8", default-features = false, features = [
 tempfile = "3.12"
 thiserror = "1.0"
 tokio = { version = "1.40", features = ["rt-multi-thread", "macros"] }
-toml = "0.8"
+toml = "1.1"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 url = { version = "2.5", features = ["serde"] }
