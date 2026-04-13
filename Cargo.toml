@@ -25,8 +25,8 @@ aws-sdk-s3 = { version = "1.129", default-features = false, features = ["rt-toki
 chrono = { version = "0.4", features = ["serde"] }
 clap = { version = "4.5", features = ["derive", "env"] }
 dialoguer = "0.12"
-jsonwebtoken = "9.3"
-printpdf = "0.7"
+jsonwebtoken = "10.3"
+printpdf = "0.9"
 reqwest = { version = "0.12", default-features = false, features = [
     "blocking",
     "json",
@@ -48,9 +48,9 @@ sqlx = { version = "0.8", default-features = false, features = [
     "json",
 ] }
 tempfile = "3.12"
-thiserror = "1.0"
+thiserror = "2.0"
 tokio = { version = "1.51", features = ["rt-multi-thread", "macros"] }
-toml = "0.8"
+toml = "1.1"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 url = { version = "2.5", features = ["serde"] }
