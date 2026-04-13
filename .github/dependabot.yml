@@ -14,6 +14,8 @@ updates:
       include: "scope"
     labels:
       - "dependencies"
+  # Cargo workspace is managed from the repository root.
+  # Per-crate directories are intentionally not listed to avoid workspace-inheritance parse errors.
   - package-ecosystem: "cargo"
     directory: "/"
     schedule:
