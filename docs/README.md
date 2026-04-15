@@ -42,3 +42,5 @@
 ---
 
 **Full platform (implementations, demos, engine details):** upstream **[SynapticFour/Ferrum](https://github.com/SynapticFour/Ferrum)** — e.g. `docs/WORKFLOWS.md`, `docs/INGEST-LAB-KIT.md`.
+
+MII/KDS operations (if needed) are exposed as optional wrappers in Lab Kit (`lab-kit mii ...`) and executed via Ferrum upstream (`ferrum mii ...`).

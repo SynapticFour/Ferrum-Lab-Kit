@@ -61,6 +61,10 @@ Details: [docs/GA4GH-STANDARDS.md](docs/GA4GH-STANDARDS.md).
 | `lab-kit conformance report` | JSON (+ optional licensed PDF) |
 | `lab-kit ferrum check` | Confirms Git-pinned `ferrum-core` from [Ferrum](https://github.com/SynapticFour/Ferrum) resolves |
 | `lab-kit ingest …` | HTTP client for Ferrum **`/api/v1/ingest/*`** (register, upload, job status) — see [Ferrum `docs/INGEST-LAB-KIT.md`](https://github.com/SynapticFour/Ferrum/blob/main/docs/INGEST-LAB-KIT.md) |
+| `lab-kit mii sync-manifest` | Optional wrapper for `ferrum mii sync-manifest` (deterministic manifest regeneration from pinned packages) |
+| `lab-kit mii validate` | Optional wrapper for `ferrum mii validate` (technical MII profile checks) |
+
+MII helpers are intentionally optional. Lab Kit remains GA4GH-centric; MII handling is delegated to upstream Ferrum MII Connect.
 
 ## Documentation
 

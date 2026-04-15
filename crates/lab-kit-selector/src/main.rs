@@ -49,12 +49,55 @@ enum Command {
     },
     /// Call Ferrum **`/api/v1/ingest/*`** (machine ingest). See Ferrum `docs/INGEST-LAB-KIT.md`.
     Ingest(IngestCmd),
+    /// Optional MII Connect helpers (delegates to `ferrum mii ...`).
+    Mii {
+        #[command(subcommand)]
+        action: MiiAction,
+    },
 }
 
 #[derive(Subcommand)]
 enum FerrumAction {
     /// Confirm `ferrum-core` resolves (git pin in `lab-kit-ferrum`).
     Check,
+}
+
+#[derive(Subcommand)]
+enum MiiAction {
+    /// Regenerate MII manifest from pinned packages (`ferrum mii sync-manifest`).
+    SyncManifest {
+        /// Path to Ferrum executable.
+        #[arg(long, env = "FERRUM_BIN", default_value = "ferrum")]
+        ferrum_bin: String,
+        #[arg(long, default_value = "profiles/mii/sync-spec.json")]
+        spec: PathBuf,
+        #[arg(long, default_value = "profiles/mii/manifest.json")]
+        output: PathBuf,
+        #[arg(long, default_value = "profiles/mii/package-cache")]
+        cache_dir: PathBuf,
+        #[arg(long, default_value_t = false)]
+        offline: bool,
+    },
+    /// Validate FHIR payload via Ferrum MII Connect (`ferrum mii validate`).
+    Validate {
+        /// Path to Ferrum executable.
+        #[arg(long, env = "FERRUM_BIN", default_value = "ferrum")]
+        ferrum_bin: String,
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long, default_value = "profiles/mii/manifest.json")]
+        manifest: PathBuf,
+        #[arg(long)]
+        modules: Option<String>,
+        #[arg(long, default_value_t = false)]
+        strict: bool,
+        #[arg(long)]
+        output: Option<PathBuf>,
+        #[arg(long, default_value = "text")]
+        format: String,
+        #[arg(long)]
+        config: Option<PathBuf>,
+    },
 }
 
 #[derive(Parser)]
@@ -262,6 +305,77 @@ async fn main() -> anyhow::Result<()> {
             }
         },
         Command::Ingest(cmd) => run_ingest(cmd).await?,
+        Command::Mii { action } => run_mii(action)?,
+    }
+    Ok(())
+}
+
+fn run_mii(action: MiiAction) -> anyhow::Result<()> {
+    match action {
+        MiiAction::SyncManifest {
+            ferrum_bin,
+            spec,
+            output,
+            cache_dir,
+            offline,
+        } => {
+            let mut cmd = std::process::Command::new(&ferrum_bin);
+            cmd.arg("mii")
+                .arg("sync-manifest")
+                .arg("--spec")
+                .arg(&spec)
+                .arg("--output")
+                .arg(&output)
+                .arg("--cache-dir")
+                .arg(&cache_dir);
+            if offline {
+                cmd.arg("--offline");
+            }
+            let status = cmd
+                .status()
+                .with_context(|| format!("could not run {ferrum_bin} for `mii sync-manifest`"))?;
+            if !status.success() {
+                anyhow::bail!("`{ferrum_bin} mii sync-manifest` exited with {status}");
+            }
+        }
+        MiiAction::Validate {
+            ferrum_bin,
+            input,
+            manifest,
+            modules,
+            strict,
+            output,
+            format,
+            config,
+        } => {
+            let mut cmd = std::process::Command::new(&ferrum_bin);
+            cmd.arg("mii")
+                .arg("validate")
+                .arg("--input")
+                .arg(&input)
+                .arg("--manifest")
+                .arg(&manifest)
+                .arg("--format")
+                .arg(&format);
+            if let Some(m) = modules {
+                cmd.arg("--modules").arg(m);
+            }
+            if strict {
+                cmd.arg("--strict");
+            }
+            if let Some(out) = output {
+                cmd.arg("--output").arg(out);
+            }
+            if let Some(cfg) = config {
+                cmd.arg("--config").arg(cfg);
+            }
+            let status = cmd
+                .status()
+                .with_context(|| format!("could not run {ferrum_bin} for `mii validate`"))?;
+            if !status.success() {
+                anyhow::bail!("`{ferrum_bin} mii validate` exited with {status}");
+            }
+        }
     }
     Ok(())
 }

@@ -1,6 +1,7 @@
 # Conformance & HelixTest
 
 Lab Kit **does not embed** the HelixTest suite; it **invokes** the separate repository [SynapticFour/HelixTest](https://github.com/SynapticFour/HelixTest) as a tool (same pattern as Ferrum).
+HelixTest usage here is GA4GH-centric. Optional MII/KDS checks run separately via `lab-kit mii ...` (delegated to Ferrum MII Connect).
 
 **Pinned revision for CI:** `config/ci/helixtest-revision.txt` (full Git SHA). Bump it in a dedicated PR when upgrading HelixTest. GitHub Actions workflow **Conformance** checks out that revision, builds `helixtest-cli`, and runs a CLI smoke test. A full `--all` run against Compose is available only via **workflow_dispatch** with `run_live_suite` (needs working Ferrum images).
 

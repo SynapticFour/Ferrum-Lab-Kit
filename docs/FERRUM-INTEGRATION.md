@@ -64,3 +64,29 @@ Verify objects with DRS: `GET {gateway}/ga4gh/drs/v1/objects/{id}`.
 ### Library use
 
 Other Rust tools in your workspace can depend on **`lab-kit-ingest`** and call `IngestClient` directly.
+
+## Optional MII Connect wrappers
+
+Lab Kit exposes lightweight passthrough commands to upstream Ferrum MII Connect:
+
+```bash
+# Regenerate manifest from pinned packages (delegates to ferrum)
+lab-kit mii sync-manifest \
+  --spec profiles/mii/sync-spec.json \
+  --output profiles/mii/manifest.json \
+  --cache-dir profiles/mii/package-cache
+
+# Validate payload against vendored manifest (delegates to ferrum)
+lab-kit mii validate \
+  --input ./etl-output/fhir \
+  --manifest profiles/mii/manifest.json \
+  --strict \
+  --format sarif \
+  --output mii-report.sarif
+```
+
+Notes:
+
+- These commands call an installed `ferrum` binary (override via `FERRUM_BIN`).
+- They are optional and do not change Lab Kit's GA4GH-focused scope.
+- Validation output is a technical signal, not legal/compliance certification.
