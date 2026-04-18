@@ -9,7 +9,7 @@ index c89e699d..e1770b78 100644
 +  # Passed into deploy/docker-compose.yml; HelixTest TES checksums assume noop backend (see "Align HelixTest TES checksum" step).
 +  FERRUM_TES_BACKEND: noop
    # Official library mirror on AWS Public ECR — avoids Docker Hub 504/timeouts in CI
-   RUST_BUILDER_IMAGE: public.ecr.aws/docker/library/rust:1-bookworm
+   RUST_BUILDER_IMAGE: public.ecr.aws/docker/library/rust:1.91.1-bookworm
    DEBIAN_RUNTIME_IMAGE: public.ecr.aws/docker/library/debian:bookworm-slim
 diff --git a/README.md b/README.md
 index 6a4e81b2..a655c671 100644
