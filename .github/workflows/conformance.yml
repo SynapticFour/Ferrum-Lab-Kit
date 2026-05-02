@@ -22,7 +22,7 @@ jobs:
   compose-profile:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Read pinned HelixTest revision
         id: helixtest_rev
@@ -30,7 +30,7 @@ jobs:
           REV=$(awk '!/^#/ && NF { print $1; exit }' config/ci/helixtest-revision.txt)
           echo "rev=$REV" >> "$GITHUB_OUTPUT"
 
-      - uses: dtolnay/rust-toolchain@1.91.1
+      - uses: dtolnay/rust-toolchain@1.100.0
 
       - uses: Swatinem/rust-cache@v2
 
@@ -48,7 +48,7 @@ jobs:
         run: head -n 50 generated/docker-compose.yml
 
       - name: Checkout HelixTest (pinned)
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           repository: SynapticFour/HelixTest
           ref: ${{ steps.helixtest_rev.outputs.rev }}
