@@ -17,7 +17,7 @@ index 6a4e81b2..a655c671 100644
 +++ b/README.md
 @@ -118,6 +118,12 @@ ferrum demo start
  
- Open **http://localhost:3000**. The demo includes pre-seeded DRS objects and test users. (Port may vary; run `ferrum status` to confirm.)
+ Open **http://localhost:8082**. The demo includes pre-seeded DRS objects and test users. (Port may vary; run `ferrum demo status` to confirm.)
  
 +### GA4GH WES → TES (Docker Compose overlay)
 +
