@@ -36,6 +36,20 @@ Path prefixes match **[Ferrum `ferrum-gateway`](https://github.com/SynapticFour/
 
 Ferrum services should depend on these traits rather than hard-coding vendors.
 
+## Bring your own hardware (Raspberry Pi / ARM64)
+
+**Ferrum Lab Kit** and **Ferrum** fully support **ARM64** (Raspberry Pi 5, Apple Silicon, ARM cloud instances) and **x86_64**. Use the **`field-edge`** deployment profile for single-board computers and laptops in resource-constrained environments:
+
+```bash
+./install-edge.sh
+# or interactively:
+lab-kit init   # → select "Field / Edge"
+```
+
+This profile uses **SQLite + local filesystem** (no PostgreSQL/MinIO), disables heavyweight services by default, and applies the `deploy/docker-compose/edge.yml` overlay with memory and power limits suitable for Pi-class hardware.
+
+See [Deployment targets — Field / Edge](DEPLOYMENT-TARGETS.md#field-edge) for hardware requirements and operational guidance.
+
 ## Global external shortcuts
 
 ```toml

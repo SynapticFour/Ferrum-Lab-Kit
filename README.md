@@ -43,6 +43,7 @@ Details: [docs/GA4GH-STANDARDS.md](docs/GA4GH-STANDARDS.md).
 - **ELIXIR node** candidates needing a documented, conformance-tested subset.
 - **GDI** national node and **rare disease** consortia attaching evidence to applications.
 - **NFDI** and related research-data initiatives composing standards-based services.
+- **Field labs** in resource-constrained settings (Africa, remote sites) running Nanopore sequencing on Raspberry Pi or laptops — see [Field/Edge deployment](docs/DEPLOYMENT-TARGETS.md#field-edge).
 
 ## Open core
 

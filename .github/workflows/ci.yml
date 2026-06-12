@@ -26,3 +26,45 @@ jobs:
         run: cargo clippy --workspace --all-targets -- -D warnings
       - name: Test
         run: cargo test --workspace
+
+  edge-profile:
+    if: github.actor != 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: dtolnay/rust-toolchain@1.91.1
+      - uses: Swatinem/rust-cache@v2
+      - name: Build lab-kit
+        run: cargo build -p lab-kit-selector --release
+      - name: init field-edge (non-interactive)
+        run: |
+          cargo run -p lab-kit-selector -- init \
+            --profile field-edge \
+            --non-interactive \
+            --output /tmp/lab-kit-field-edge.toml
+      - name: Generate compose from field-edge config
+        run: |
+          cargo run -p lab-kit-selector -- generate compose \
+            --config /tmp/lab-kit-field-edge.toml \
+            --fragments deploy/docker-compose \
+            --output /tmp/docker-compose-edge.yml
+      - name: Validate generated compose YAML
+        run: python3 -c "import yaml; yaml.safe_load(open('/tmp/docker-compose-edge.yml'))"
+      - name: install-edge.sh syntax check
+        run: bash -n install-edge.sh
+
+  build-arm64:
+    if: github.actor != 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: dtolnay/rust-toolchain@1.91.1
+        with:
+          targets: aarch64-unknown-linux-gnu
+      - uses: Swatinem/rust-cache@v2
+      - name: Install aarch64 cross linker
+        run: sudo apt-get update && sudo apt-get install -y gcc-aarch64-linux-gnu
+      - name: Build lab-kit (aarch64 release)
+        run: cargo build -p lab-kit-selector --release --target aarch64-unknown-linux-gnu
+        env:
+          CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: aarch64-linux-gnu-gcc

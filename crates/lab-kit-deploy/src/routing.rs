@@ -211,6 +211,12 @@ mod tests {
             },
             external: ExternalSection::default(),
             ferrum: Default::default(),
+            meta: None,
+            backend: None,
+            africa: None,
+            network: None,
+            resources: None,
+            conformance: None,
         }
     }
 

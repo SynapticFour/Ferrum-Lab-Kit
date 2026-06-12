@@ -5,8 +5,8 @@ use clap::{Parser, Subcommand};
 use dialoguer::{theme::ColorfulTheme, Confirm, Input, MultiSelect, Select};
 use lab_kit_auth::LsLoginOidc;
 use lab_kit_core::{
-    load_config, AuthProviderKind, AuthSection, BeaconAccessLevel, BeaconServiceConfig,
-    LabKitConfig, LabSection, LsLoginConfig, ServiceRegistry, ServicesSection,
+    load_config, load_profile_template, AuthProviderKind, AuthSection, BeaconAccessLevel, BeaconServiceConfig, LabKitConfig, LabSection, LsLoginConfig,
+    ProfileOverrides, ServiceRegistry, ServicesSection,
 };
 use lab_kit_deploy::{generate_compose_file, generate_helm_values, generate_systemd_units};
 use lab_kit_ingest::{IngestClient, RegisterItem, RegisterRequest, UploadOptions};
@@ -28,6 +28,18 @@ enum Command {
     Init {
         #[arg(short, long, default_value = "lab-kit.toml")]
         output: PathBuf,
+        /// Deployment profile preset (e.g. field-edge).
+        #[arg(long)]
+        profile: Option<String>,
+        /// Non-interactive mode (requires --profile for presets).
+        #[arg(long)]
+        non_interactive: bool,
+        /// Expected RAM in GB (field-edge profile).
+        #[arg(long)]
+        ram_gb: Option<u32>,
+        /// Data directory (field-edge profile).
+        #[arg(long)]
+        data_dir: Option<String>,
     },
     Generate {
         #[command(subcommand)]
@@ -214,7 +226,19 @@ async fn main() -> anyhow::Result<()> {
 
     let cli = Cli::parse();
     match cli.command {
-        Command::Init { output } => init_wizard(&output).await?,
+        Command::Init {
+            output,
+            profile,
+            non_interactive,
+            ram_gb,
+            data_dir,
+        } => {
+            if non_interactive {
+                init_non_interactive(&output, profile.as_deref(), ram_gb, data_dir).await?;
+            } else {
+                init_wizard(&output, profile.as_deref()).await?;
+            }
+        }
         Command::Generate { target } => match target {
             GenerateTarget::Compose {
                 config,
@@ -486,34 +510,290 @@ async fn run_ingest(cmd: IngestCmd) -> anyhow::Result<()> {
     Ok(())
 }
 
-async fn init_wizard(output: &Path) -> anyhow::Result<()> {
+async fn init_non_interactive(
+    output: &Path,
+    profile: Option<&str>,
+    ram_gb: Option<u32>,
+    data_dir: Option<String>,
+) -> anyhow::Result<()> {
+    let name = profile.ok_or_else(|| anyhow::anyhow!("--non-interactive requires --profile"))?;
+    if name != "field-edge" {
+        anyhow::bail!("--non-interactive requires --profile field-edge (got {name})");
+    }
+
+    let template = load_profile_template("field-edge").context("load field-edge profile")?;
+    let ram = ram_gb.unwrap_or(4);
+    let max_memory_mb = ram.saturating_mul(768); // leave ~25% for OS on Pi
+    let data = data_dir.unwrap_or_else(|| "~/.ferrum".into());
+
+    let cfg = template.into_lab_kit_config(
+        "Field Lab",
+        "production",
+        "field-cohort-001",
+        ProfileOverrides {
+            max_memory_mb: Some(max_memory_mb),
+            data_dir: Some(data),
+            ..Default::default()
+        },
+    )?;
+
+    write_config(output, &cfg)?;
+    Ok(())
+}
+
+fn write_config(output: &Path, cfg: &LabKitConfig) -> anyhow::Result<()> {
+    cfg.validate()?;
+    let toml = toml::to_string_pretty(cfg)?;
+    std::fs::write(output, toml)?;
+    println!("Wrote {}", output.display());
+    Ok(())
+}
+
+async fn init_wizard(output: &Path, preset: Option<&str>) -> anyhow::Result<()> {
     let theme = ColorfulTheme::default();
-    let name: String = Input::with_theme(&theme)
+
+    let profile_idx = if let Some(p) = preset {
+        match p {
+            "standard" => 0,
+            "elixir-node" => 1,
+            "gdi-national-node" => 2,
+            "field-edge" => 3,
+            "custom" => 4,
+            other => anyhow::bail!("unknown profile preset: {other}"),
+        }
+    } else {
+        Select::with_theme(&theme)
+            .with_prompt("Select deployment profile")
+            .items([
+                "Standard (server/cloud)",
+                "ELIXIR Node candidate",
+                "GDI National Node",
+                "Field / Edge (Raspberry Pi, laptop, offline-capable)",
+                "Custom",
+            ])
+            .default(0)
+            .interact()?
+    };
+
+    if profile_idx == 3 {
+        return init_field_edge_wizard(output, &theme).await;
+    }
+
+    if profile_idx == 1 {
+        let mut cfg = load_config("config/profiles/full-elixir-node.toml")
+            .or_else(|_| load_config("../config/profiles/full-elixir-node.toml"))
+            .context("load full-elixir-node profile")?;
+        customize_lab_name(&theme, &mut cfg.lab)?;
+        write_config(output, &cfg)?;
+        return Ok(());
+    }
+
+    if profile_idx == 2 {
+        let mut cfg = load_config("config/profiles/full-elixir-node.toml")
+            .or_else(|_| load_config("../config/profiles/full-elixir-node.toml"))
+            .context("load full-elixir-node profile")?;
+        if let Some(beacon) = cfg.services.beacon.as_mut() {
+            beacon.access_level = BeaconAccessLevel::Controlled;
+        }
+        customize_lab_name(&theme, &mut cfg.lab)?;
+        write_config(output, &cfg)?;
+        return Ok(());
+    }
+
+    if profile_idx == 4 {
+        return init_custom_wizard(output, &theme).await;
+    }
+
+    // Standard (server/cloud): LS Login + Beacon by default.
+    init_standard_wizard(output, &theme).await
+}
+
+fn customize_lab_name(theme: &ColorfulTheme, lab: &mut LabSection) -> anyhow::Result<()> {
+    let name: String = Input::with_theme(theme)
+        .with_prompt("Lab / institute name")
+        .default(lab.name.clone())
+        .interact_text()?;
+    lab.name = name;
+    Ok(())
+}
+
+async fn init_field_edge_wizard(output: &Path, theme: &ColorfulTheme) -> anyhow::Result<()> {
+    let template = load_profile_template("field-edge").context("load field-edge profile")?;
+
+    let service_labels = vec![
+        "Beacon v2 (required)",
+        "DRS (required)",
+        "htsget (optional)",
+        "WES/TES (optional, requires local compute)",
+    ];
+    let defaults = vec![true, true, false, false];
+    let chosen = MultiSelect::with_theme(theme)
+        .with_prompt("What services do you need?")
+        .items(&service_labels)
+        .defaults(&defaults)
+        .interact()?;
+
+    let enable_htsget = chosen.contains(&2);
+    let enable_wes_tes = chosen.contains(&3);
+
+    let auth_idx = Select::with_theme(theme)
+        .with_prompt("Authentication mode?")
+        .items([
+            "Local (offline-capable, no external IdP)",
+            "LS Login / ELIXIR AAI (requires internet)",
+        ])
+        .default(0)
+        .interact()?;
+
+    let ls_login = if auth_idx == 1 {
+        let client_id: String = Input::with_theme(theme)
+            .with_prompt("OIDC client_id")
+            .interact_text()?;
+        let client_secret: String = Input::with_theme(theme)
+            .with_prompt("OIDC client_secret")
+            .interact_text()?;
+        Some(LsLoginConfig {
+            client_id,
+            client_secret,
+            issuer: "https://login.elixir-czech.org/oidc/".into(),
+            redirect_uri: None,
+            scopes: LsLoginOidc::default_scopes()
+                .into_iter()
+                .map(String::from)
+                .collect(),
+        })
+    } else {
+        None
+    };
+
+    let ram_gb: u32 = Input::with_theme(theme)
+        .with_prompt("Expected RAM (GB)?")
+        .default(4)
+        .interact_text()?;
+    let max_memory_mb = ram_gb.saturating_mul(768);
+
+    let data_dir: String = Input::with_theme(theme)
+        .with_prompt("Data directory?")
+        .default("~/.ferrum".into())
+        .interact_text()?;
+
+    let name: String = Input::with_theme(theme)
+        .with_prompt("Lab / institute name")
+        .default("Field Lab".into())
+        .interact_text()?;
+
+    let dataset_id: String = Input::with_theme(theme)
+        .with_prompt("Beacon dataset_id")
+        .default("field-cohort-001".into())
+        .interact_text()?;
+
+    let mut overrides = ProfileOverrides {
+        max_memory_mb: Some(max_memory_mb),
+        data_dir: Some(data_dir),
+        enable_htsget,
+        enable_wes: enable_wes_tes,
+        enable_tes: enable_wes_tes,
+        ls_login,
+        ..Default::default()
+    };
+    overrides.enable_beacon = true;
+    overrides.enable_drs = true;
+
+    let cfg = template.into_lab_kit_config(&name, "production", &dataset_id, overrides)?;
+    write_config(output, &cfg)?;
+    Ok(())
+}
+
+async fn init_standard_wizard(output: &Path, theme: &ColorfulTheme) -> anyhow::Result<()> {
+    let name: String = Input::with_theme(theme)
         .with_prompt("Lab / institute name")
         .interact_text()?;
-    let contact: String = Input::with_theme(&theme)
-        .with_prompt("Contact email (optional)")
-        .allow_empty(true)
-        .interact_text()?;
-    let environment: String = Input::with_theme(&theme)
+    let environment: String = Input::with_theme(theme)
         .with_prompt("Environment")
         .default("production".into())
         .interact_text()?;
 
-    let auth_idx = Select::with_theme(&theme)
+    let client_id: String = Input::with_theme(theme)
+        .with_prompt("OIDC client_id")
+        .interact_text()?;
+    let client_secret: String = Input::with_theme(theme)
+        .with_prompt("OIDC client_secret")
+        .interact_text()?;
+
+    let dataset_id: String = Input::with_theme(theme)
+        .with_prompt("Beacon dataset_id")
+        .interact_text()?;
+
+    let cfg = LabKitConfig {
+        schema_version: 1,
+        lab: LabSection {
+            name,
+            contact: None,
+            environment,
+        },
+        auth: AuthSection {
+            provider: AuthProviderKind::LsLogin,
+            ls_login: Some(LsLoginConfig {
+                client_id,
+                client_secret,
+                issuer: "https://login.elixir-czech.org/oidc/".into(),
+                redirect_uri: None,
+                scopes: LsLoginOidc::default_scopes()
+                    .into_iter()
+                    .map(String::from)
+                    .collect(),
+            }),
+            keycloak: None,
+            ldap: None,
+        },
+        services: ServicesSection {
+            beacon: Some(BeaconServiceConfig {
+                external_url: None,
+                dataset_id,
+                access_level: BeaconAccessLevel::Registered,
+            }),
+            ..Default::default()
+        },
+        external: Default::default(),
+        ferrum: Default::default(),
+        meta: None,
+        backend: None,
+        africa: None,
+        network: None,
+        resources: None,
+        conformance: None,
+    };
+    write_config(output, &cfg)?;
+    Ok(())
+}
+
+async fn init_custom_wizard(output: &Path, theme: &ColorfulTheme) -> anyhow::Result<()> {
+    let name: String = Input::with_theme(theme)
+        .with_prompt("Lab / institute name")
+        .interact_text()?;
+    let contact: String = Input::with_theme(theme)
+        .with_prompt("Contact email (optional)")
+        .allow_empty(true)
+        .interact_text()?;
+    let environment: String = Input::with_theme(theme)
+        .with_prompt("Environment")
+        .default("production".into())
+        .interact_text()?;
+
+    let auth_idx = Select::with_theme(theme)
         .with_prompt("Authentication provider")
         .items(["ls-login (ELIXIR LS Login)", "none (demo only)"])
         .default(0)
         .interact()?;
 
     let (auth_section, ls_login) = if auth_idx == 0 {
-        let client_id: String = Input::with_theme(&theme)
+        let client_id: String = Input::with_theme(theme)
             .with_prompt("OIDC client_id")
             .interact_text()?;
-        let client_secret: String = Input::with_theme(&theme)
+        let client_secret: String = Input::with_theme(theme)
             .with_prompt("OIDC client_secret")
             .interact_text()?;
-        let issuer: String = Input::with_theme(&theme)
+        let issuer: String = Input::with_theme(theme)
             .with_prompt("Issuer base URL")
             .default("https://login.elixir-czech.org/oidc/".into())
             .interact_text()?;
@@ -549,7 +829,7 @@ async fn init_wizard(output: &Path) -> anyhow::Result<()> {
 
     let service_labels = vec!["Beacon v2", "DRS", "WES", "TES", "TRS", "htsget"];
     let defaults = vec![true, false, false, false, false, false];
-    let chosen = MultiSelect::with_theme(&theme)
+    let chosen = MultiSelect::with_theme(theme)
         .with_prompt("Which GA4GH services should Lab Kit deploy?")
         .items(&service_labels)
         .defaults(&defaults)
@@ -559,7 +839,7 @@ async fn init_wizard(output: &Path) -> anyhow::Result<()> {
     for i in chosen {
         match i {
             0 => {
-                let dataset_id: String = Input::with_theme(&theme)
+                let dataset_id: String = Input::with_theme(theme)
                     .with_prompt("Beacon dataset_id")
                     .interact_text()?;
                 services.beacon = Some(BeaconServiceConfig {
@@ -578,7 +858,7 @@ async fn init_wizard(output: &Path) -> anyhow::Result<()> {
     }
 
     if !ls_login && services.beacon.is_some() {
-        let _ = Confirm::with_theme(&theme)
+        let _ = Confirm::with_theme(theme)
             .with_prompt("Beacon without LS Login is OK for public tiers only — continue?")
             .default(true)
             .interact()?;
@@ -599,10 +879,13 @@ async fn init_wizard(output: &Path) -> anyhow::Result<()> {
         services,
         external: Default::default(),
         ferrum: Default::default(),
+        meta: None,
+        backend: None,
+        africa: None,
+        network: None,
+        resources: None,
+        conformance: None,
     };
-    cfg.validate()?;
-    let toml = toml::to_string_pretty(&cfg)?;
-    std::fs::write(output, toml)?;
-    println!("Wrote {}", output.display());
+    write_config(output, &cfg)?;
     Ok(())
 }

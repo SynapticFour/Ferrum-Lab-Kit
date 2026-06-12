@@ -49,6 +49,10 @@ pub fn generate_compose_file(
         }
     }
 
+    if lab_kit_core::is_field_edge(cfg) {
+        add("edge.yml")?;
+    }
+
     if let Some(parent) = output_path.parent() {
         fs::create_dir_all(parent)?;
     }
@@ -57,6 +61,27 @@ pub fn generate_compose_file(
     write_external_upstreams_next_to_compose(cfg, output_path)?;
     write_traefik_dynamic_proxy_next_to_compose(cfg, output_path)?;
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use lab_kit_core::parse_config;
+
+    use super::*;
+
+    #[test]
+    fn field_edge_compose_includes_gateway_overlay() {
+        let raw = include_str!("../../../config/profiles/field-edge.toml");
+        let cfg = parse_config(raw).unwrap();
+        let fragments = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../deploy/docker-compose");
+        let dir = tempfile::tempdir().unwrap();
+        let out = dir.path().join("docker-compose.yml");
+        generate_compose_file(&cfg, &fragments, &out).unwrap();
+        let merged = std::fs::read_to_string(&out).unwrap();
+        assert!(merged.contains("ferrum-gateway"));
+        assert!(merged.contains("FERRUM_AFRICA__OFFLINE_FIRST"));
+        serde_yaml::from_str::<serde_yaml::Value>(&merged).expect("valid YAML");
+    }
 }
 
 fn merge_yaml(base: &mut Value, patch: Value) {

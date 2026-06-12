@@ -19,6 +19,19 @@ pub struct LabKitConfig {
     /// Optional **ferrum-gateway** base URL for CLI helpers (e.g. `lab-kit ingest`).
     #[serde(default)]
     pub ferrum: FerrumSection,
+    /// Set when generated from a deployment profile (e.g. field-edge).
+    #[serde(default)]
+    pub meta: Option<MetaSection>,
+    #[serde(default)]
+    pub backend: Option<BackendSection>,
+    #[serde(default)]
+    pub africa: Option<ProfileAfricaSection>,
+    #[serde(default)]
+    pub network: Option<ProfileNetworkSection>,
+    #[serde(default)]
+    pub resources: Option<ProfileResourcesSection>,
+    #[serde(default)]
+    pub conformance: Option<ConformanceSection>,
 }
 
 fn default_schema_version() -> u32 {
@@ -56,7 +69,7 @@ impl LabKitConfig {
                     ));
                 }
             }
-            AuthProvider::None => {}
+            AuthProvider::Local | AuthProvider::None => {}
         }
 
         if !self.services.any_configured() && self.external.is_empty() {
@@ -84,6 +97,8 @@ pub enum AuthProvider {
     LsLogin,
     Keycloak,
     Ldap,
+    /// Local Passport validation (offline-capable; no external IdP).
+    Local,
     None,
 }
 
@@ -111,8 +126,142 @@ pub struct LsLoginConfig {
     pub scopes: Vec<String>,
 }
 
-fn default_ls_login_issuer() -> String {
+pub fn default_ls_login_issuer() -> String {
     "https://login.elixir-czech.org/oidc/".to_string()
+}
+
+/// Deployment profile metadata (from `config/profiles/*.toml`).
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MetaSection {
+    pub profile: String,
+    #[serde(default)]
+    pub description: Option<String>,
+    #[serde(default)]
+    pub target_hardware: Vec<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct BackendSection {
+    #[serde(default = "default_backend_database")]
+    pub database: String,
+    #[serde(default = "default_backend_storage")]
+    pub storage: String,
+    #[serde(default = "default_sqlite_path")]
+    pub sqlite_path: String,
+    #[serde(default = "default_objects_path")]
+    pub objects_path: String,
+}
+
+fn default_backend_database() -> String {
+    "sqlite".into()
+}
+fn default_backend_storage() -> String {
+    "local-filesystem".into()
+}
+fn default_sqlite_path() -> String {
+    "~/.ferrum/ferrum.db".into()
+}
+fn default_objects_path() -> String {
+    "~/.ferrum/objects".into()
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct ProfileAfricaSection {
+    #[serde(default = "default_true")]
+    pub offline_first: bool,
+    #[serde(default = "default_max_memory_mb")]
+    pub max_memory_mb: u32,
+    #[serde(default = "default_true")]
+    pub power_monitor: bool,
+    #[serde(default = "default_low_power")]
+    pub low_power_threshold: u32,
+    #[serde(default = "default_emergency")]
+    pub emergency_threshold: u32,
+}
+
+fn default_true() -> bool {
+    true
+}
+fn default_max_memory_mb() -> u32 {
+    3072
+}
+fn default_low_power() -> u32 {
+    40
+}
+fn default_emergency() -> u32 {
+    10
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct ProfileAuthSection {
+    #[serde(default = "default_auth_mode")]
+    pub mode: String,
+    #[serde(default)]
+    pub client_id: Option<String>,
+    #[serde(default)]
+    pub client_secret: Option<String>,
+    #[serde(default)]
+    pub issuer: Option<String>,
+}
+
+fn default_auth_mode() -> String {
+    "local".into()
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct ProfileNetworkSection {
+    #[serde(default = "default_true")]
+    pub bandwidth_adaptive: bool,
+    #[serde(default = "default_sync_schedule")]
+    pub opportunistic_sync_schedule: String,
+    #[serde(default = "default_chunk_kb")]
+    pub chunk_size_low_bandwidth_kb: u32,
+}
+
+fn default_sync_schedule() -> String {
+    "0 2 * * *".into()
+}
+fn default_chunk_kb() -> u32 {
+    512
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct ProfileResourcesSection {
+    #[serde(default = "default_max_concurrent")]
+    pub max_concurrent_requests: u32,
+    #[serde(default)]
+    pub background_indexing: bool,
+}
+
+fn default_max_concurrent() -> u32 {
+    4
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct ConformanceSection {
+    #[serde(default = "default_helixtest_timeout")]
+    pub helixtest_timeout_seconds: u32,
+}
+
+fn default_helixtest_timeout() -> u32 {
+    120
+}
+
+/// Boolean service flags in profile templates (distinct from `[services.*]` blocks).
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct ProfileServicesFlags {
+    #[serde(default)]
+    pub beacon: bool,
+    #[serde(default)]
+    pub drs: bool,
+    #[serde(default)]
+    pub htsget: bool,
+    #[serde(default)]
+    pub wes: bool,
+    #[serde(default)]
+    pub tes: bool,
+    #[serde(default)]
+    pub trs: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

@@ -6,16 +6,23 @@
 mod config;
 mod error;
 mod health;
+mod profile;
 mod registry;
 
 pub use config::{
-    AuthProvider as AuthProviderKind, AuthSection, BeaconAccessLevel, BeaconServiceConfig,
-    DrsServiceConfig, ExternalSection, FerrumSection, HtsgetServiceConfig, KeycloakConfig,
-    LabKitConfig, LabSection, LdapAuthConfig, LsLoginConfig, ServicesSection, TesServiceConfig,
+    AuthProvider as AuthProviderKind, AuthSection, BackendSection, BeaconAccessLevel,
+    BeaconServiceConfig, ConformanceSection, DrsServiceConfig, ExternalSection, FerrumSection,
+    HtsgetServiceConfig, KeycloakConfig, LabKitConfig, LabSection, LdapAuthConfig, LsLoginConfig,
+    MetaSection, ProfileAfricaSection, ProfileAuthSection, ProfileNetworkSection,
+    ProfileResourcesSection, ProfileServicesFlags, ServicesSection, TesServiceConfig,
     TrsServiceConfig, WesServiceConfig,
 };
 pub use error::CoreError;
 pub use health::{HealthAggregator, ServiceHealth};
+pub use profile::{
+    is_field_edge, load_profile_template, parse_config_or_profile, ProfileOverrides,
+    ProfileTemplate,
+};
 pub use registry::{ServiceId, ServiceRegistry, ServiceRegistryEntry};
 
 use std::path::Path;
@@ -26,9 +33,7 @@ pub fn load_config(path: impl AsRef<Path>) -> Result<LabKitConfig, CoreError> {
     parse_config(&raw)
 }
 
-/// Parse TOML configuration.
+/// Parse TOML configuration (canonical `lab-kit.toml` or profile template).
 pub fn parse_config(raw: &str) -> Result<LabKitConfig, CoreError> {
-    let cfg: LabKitConfig = toml::from_str(raw)?;
-    cfg.validate()?;
-    Ok(cfg)
+    parse_config_or_profile(raw)
 }

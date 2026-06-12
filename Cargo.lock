@@ -2116,6 +2116,7 @@ dependencies = [
  "lab-kit-core",
  "serde",
  "serde_yaml",
+ "tempfile",
  "thiserror 1.0.69",
  "tracing",
  "url",

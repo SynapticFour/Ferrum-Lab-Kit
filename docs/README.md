@@ -36,7 +36,7 @@
 | Path | What it’s for |
 |------|----------------|
 | `config/lab-kit.example.toml` | Annotated full config template |
-| `config/profiles/*.toml` | Ready-made service selections |
+| `config/profiles/*.toml` | Ready-made service selections (`field-edge` for Pi/laptop/offline) |
 | `config/examples/ingest-register.json` | Sample body for **`lab-kit ingest register`** |
 
 ---

@@ -44,6 +44,26 @@ jobs:
             --fragments deploy/docker-compose \
             --output generated/docker-compose.yml
 
+      - name: Generate compose (field-edge profile)
+        run: |
+          cargo run -p lab-kit-selector -- init \
+            --profile field-edge \
+            --non-interactive \
+            --output generated/lab-kit-field-edge.toml
+          cargo run -p lab-kit-selector -- generate compose \
+            --config generated/lab-kit-field-edge.toml \
+            --fragments deploy/docker-compose \
+            --output generated/docker-compose-field-edge.yml
+
+      - name: Validate field-edge compose YAML
+        run: python3 -c "import yaml; yaml.safe_load(open('generated/docker-compose-field-edge.yml'))"
+
+      - name: Assert field-edge uses same GA4GH surfaces as beacon-only
+        run: |
+          grep -q 'beacon:' generated/docker-compose-field-edge.yml
+          grep -q 'ferrum-gateway:' generated/docker-compose-field-edge.yml
+          echo "field-edge profile: Beacon v2 + DRS + edge overlay (same HelixTest GA4GH compliance, SQLite/local backend)"
+
       - name: Show merged compose (head)
         run: head -n 50 generated/docker-compose.yml
 
