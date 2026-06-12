@@ -63,6 +63,21 @@ pub fn generate_compose_file(
     Ok(())
 }
 
+fn merge_yaml(base: &mut Value, patch: Value) {
+    match (base, patch) {
+        (Value::Mapping(bm), Value::Mapping(pm)) => {
+            for (k, v) in pm {
+                if let Some(existing) = bm.get_mut(&k) {
+                    merge_yaml(existing, v);
+                } else {
+                    bm.insert(k, v);
+                }
+            }
+        }
+        (b, p) => *b = p,
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use lab_kit_core::parse_config;
@@ -81,20 +96,5 @@ mod tests {
         assert!(merged.contains("ferrum-gateway"));
         assert!(merged.contains("FERRUM_AFRICA__OFFLINE_FIRST"));
         serde_yaml::from_str::<serde_yaml::Value>(&merged).expect("valid YAML");
-    }
-}
-
-fn merge_yaml(base: &mut Value, patch: Value) {
-    match (base, patch) {
-        (Value::Mapping(bm), Value::Mapping(pm)) => {
-            for (k, v) in pm {
-                if let Some(existing) = bm.get_mut(&k) {
-                    merge_yaml(existing, v);
-                } else {
-                    bm.insert(k, v);
-                }
-            }
-        }
-        (b, p) => *b = p,
     }
 }
