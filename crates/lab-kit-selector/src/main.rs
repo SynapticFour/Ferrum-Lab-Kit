@@ -5,8 +5,9 @@ use clap::{Parser, Subcommand};
 use dialoguer::{theme::ColorfulTheme, Confirm, Input, MultiSelect, Select};
 use lab_kit_auth::LsLoginOidc;
 use lab_kit_core::{
-    load_config, load_profile_template, AuthProviderKind, AuthSection, BeaconAccessLevel, BeaconServiceConfig, LabKitConfig, LabSection, LsLoginConfig,
-    ProfileOverrides, ServiceRegistry, ServicesSection,
+    load_config, load_profile_template, AuthProviderKind, AuthSection, BeaconAccessLevel,
+    BeaconServiceConfig, LabKitConfig, LabSection, LsLoginConfig, ProfileOverrides,
+    ServiceRegistry, ServicesSection,
 };
 use lab_kit_deploy::{generate_compose_file, generate_helm_values, generate_systemd_units};
 use lab_kit_ingest::{IngestClient, RegisterItem, RegisterRequest, UploadOptions};
