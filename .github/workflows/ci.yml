@@ -55,16 +55,10 @@ jobs:
 
   build-arm64:
     if: github.actor != 'dependabot[bot]'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
     steps:
       - uses: actions/checkout@v6
       - uses: dtolnay/rust-toolchain@1.91.1
-        with:
-          targets: aarch64-unknown-linux-gnu
       - uses: Swatinem/rust-cache@v2
-      - name: Install aarch64 cross linker
-        run: sudo apt-get update && sudo apt-get install -y gcc-aarch64-linux-gnu
       - name: Build lab-kit (aarch64 release)
-        run: cargo build -p lab-kit-selector --release --target aarch64-unknown-linux-gnu
-        env:
-          CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: aarch64-linux-gnu-gcc
+        run: cargo build -p lab-kit-selector --release
