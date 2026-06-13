@@ -41,6 +41,14 @@ For field or institute nodes that need **Passport broker + service registry** al
 
 See [docs/ECOSYSTEM.md](docs/ECOSYSTEM.md) and [FERRUM-INTEGRATION.md](docs/FERRUM-INTEGRATION.md).
 
+### Local lifecycle (Make)
+
+| Goal | Standalone | Co-deploy with ga4gh-infra |
+|------|------------|----------------------------|
+| Start | `make up` or `./install-edge.sh` | `make up-with-infra` or `./install-edge.sh --with-infra` |
+| Stop (keep data) | `make down` | `make down` |
+| Remove volumes | `make destroy` | `make destroy` |
+
 ## Service selection (what to enable)
 
 | GA4GH surface | What it enables (examples) |
