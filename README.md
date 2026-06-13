@@ -4,6 +4,10 @@
 
 > **Legal notice:** This repository documents technical capabilities and operating guidance. It is not legal advice and does not by itself provide regulatory certification or compliance guarantees. Compliance outcomes depend on operator configuration, contracts, and organisational controls.
 
+## SynapticFour GA4GH stack
+
+Lab Kit is the **deployment on-ramp**. See **[docs/ECOSYSTEM.md](docs/ECOSYSTEM.md)** for Ferrum, ga4gh-infra, Demo, and HelixTest.
+
 ## Install CLI (optional)
 
 From a clone, build or install the `lab-kit` binary (needs [Rust](https://rustup.rs)):
@@ -24,6 +28,18 @@ cargo run -p lab-kit-selector -- generate compose --config lab-kit.toml --fragme
 docker compose -f docker-compose.yml up -d
 # When Ferrum images are available — until then, images in compose are placeholders.
 ```
+
+## Co-deploy with ga4gh-infra
+
+For field or institute nodes that need **Passport broker + service registry** alongside Ferrum:
+
+```bash
+./install-edge.sh --with-infra
+# Profiles: config/profiles/field-edge+infra.toml, institute.toml
+# Compose: deploy/docker-compose/co-deploy.yml + deploy/docker-compose/infra.yml
+```
+
+See [docs/ECOSYSTEM.md](docs/ECOSYSTEM.md) and [FERRUM-INTEGRATION.md](docs/FERRUM-INTEGRATION.md).
 
 ## Service selection (what to enable)
 
