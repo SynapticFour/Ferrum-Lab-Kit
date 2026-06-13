@@ -6,9 +6,9 @@ use serde::Deserialize;
 use crate::config::{
     AuthProvider, AuthSection, BackendSection, BeaconAccessLevel, BeaconServiceConfig,
     ConformanceSection, DrsServiceConfig, Ga4ghInfraMode, Ga4ghInfraSection, HtsgetServiceConfig,
-    LabKitConfig, LabSection, LsLoginConfig, MetaSection, PosixNestedConfig,
-    ProfileAfricaSection, ProfileAuthSection, ProfileNetworkSection, ProfileResourcesSection,
-    ProfileServicesFlags, ServicesSection, TesServiceConfig, TrsServiceConfig, WesServiceConfig,
+    LabKitConfig, LabSection, LsLoginConfig, MetaSection, PosixNestedConfig, ProfileAfricaSection,
+    ProfileAuthSection, ProfileNetworkSection, ProfileResourcesSection, ProfileServicesFlags,
+    ServicesSection, TesServiceConfig, TrsServiceConfig, WesServiceConfig,
 };
 use crate::CoreError;
 

@@ -1,9 +1,7 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use lab_kit_core::{
-    Ga4ghInfraMode, LabKitConfig, ServiceId, ServiceRegistry, is_co_deploy,
-};
+use lab_kit_core::{is_co_deploy, Ga4ghInfraMode, LabKitConfig, ServiceId, ServiceRegistry};
 use serde_yaml::Value;
 
 use crate::routing::{
