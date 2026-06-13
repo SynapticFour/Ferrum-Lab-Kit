@@ -4,6 +4,7 @@
 
 | Doc | What it’s for |
 |-----|----------------|
+| [ECOSYSTEM.md](ECOSYSTEM.md) | **Five-repo stack** — roles, ports, quick starts (mirrored in each SynapticFour GA4GH repo) |
 | [GA4GH-WORKFLOW-PRIMER.md](GA4GH-WORKFLOW-PRIMER.md) | **TRS → WES → TES → engine** control flow, **DRS** metadata vs bytes, **nested Docker** paths, **WDL / CWL / Nextflow** at a glance, **amd64 vs arm64**, happy-path steps — patterns + links to **[Ferrum `GA4GH.md`](https://github.com/SynapticFour/Ferrum/blob/main/docs/GA4GH.md)** (authoritative endpoints) |
 | [GA4GH-STANDARDS.md](GA4GH-STANDARDS.md) | Short mapping of GA4GH surfaces to lab use cases |
 | [OPERATIONS-CHECKLIST.md](OPERATIONS-CHECKLIST.md) | **Runbook checklist**: env vars, Docker, network, storage, naming |

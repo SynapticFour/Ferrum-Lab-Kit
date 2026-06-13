@@ -90,3 +90,17 @@ Notes:
 - These commands call an installed `ferrum` binary (override via `FERRUM_BIN`).
 - They are optional and do not change Lab Kit's GA4GH-focused scope.
 - Validation output is a technical signal, not legal/compliance certification.
+
+## Co-deploy with ga4gh-infra
+
+Lab Kit can generate compose that merges Ferrum with a local **ga4gh-infra** auth plane:
+
+| Piece | Location |
+|-------|----------|
+| Profiles | `config/profiles/field-edge+infra.toml`, `institute.toml` |
+| Compose fragments | `deploy/docker-compose/co-deploy.yml`, `infra.yml` |
+| ga4gh-infra TOML | `deploy/docker-compose/ga4gh-infra-config/` |
+| Edge installer | `./install-edge.sh --with-infra` |
+| CLI flag | `lab-kit generate compose --with-ga4gh-infra` |
+
+Set `[ga4gh_infra].mode = "co-deploy"` in `lab-kit.toml` (see `config/lab-kit.example.toml`). Stack overview: [ECOSYSTEM.md](ECOSYSTEM.md).
