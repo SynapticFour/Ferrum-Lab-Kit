@@ -217,6 +217,7 @@ mod tests {
             network: None,
             resources: None,
             conformance: None,
+            ga4gh_infra: None,
         }
     }
 

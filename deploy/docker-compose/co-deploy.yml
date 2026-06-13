@@ -1,0 +1,24 @@
+# Ferrum gateway overlay when co-deployed with ga4gh-infra (external auth plane).
+# Merged by `lab-kit generate compose` when [ga4gh_infra] is enabled or --with-ga4gh-infra.
+#
+# Ferrum gateway: 8080 · ga4gh-infra broker: 8180 (host) / aai-broker:8080 (container)
+
+services:
+  ferrum-gateway:
+    environment:
+      FERRUM_AUTH__MODE: external
+      FERRUM_AUTH__JWKS_URL: http://aai-broker:8080/jwks.json
+      FERRUM_AUTH__ISSUER: http://127.0.0.1:8180
+      FERRUM_AUTH__CLEARINGHOUSE: "true"
+      FERRUM_SERVICES__ENABLE_PASSPORTS: "false"
+      FERRUM_DISCOVERY__ENABLED: "true"
+      FERRUM_DISCOVERY__AUTO_REGISTER: "true"
+      FERRUM_DISCOVERY__SERVICE_REGISTRY_URL: http://service-registry:8083
+      FERRUM_DISCOVERY__REGISTRATION_BASE_URL: http://ferrum-gateway:8080
+      FERRUM_DISCOVERY__REGISTRATION_API_KEY_ENV: SERVICE_REGISTRY_REGISTRATION_KEY
+      SERVICE_REGISTRY_REGISTRATION_KEY: dev-service-registry-key
+    depends_on:
+      aai-broker:
+        condition: service_healthy
+      service-registry:
+        condition: service_healthy

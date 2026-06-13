@@ -181,6 +181,9 @@ enum GenerateTarget {
         fragments: PathBuf,
         #[arg(short, long, default_value = "docker-compose.yml")]
         output: PathBuf,
+        /// Merge ga4gh-infra stack (`infra.yml` + `co-deploy.yml`) even when `[ga4gh_infra]` is unset.
+        #[arg(long)]
+        with_ga4gh_infra: bool,
         /// Write merged compose to stdout instead of a file.
         #[arg(long, default_value_t = false)]
         stdout: bool,
@@ -245,6 +248,7 @@ async fn main() -> anyhow::Result<()> {
                 config,
                 fragments,
                 output,
+                with_ga4gh_infra,
                 stdout,
             } => {
                 let cfg =
@@ -252,10 +256,10 @@ async fn main() -> anyhow::Result<()> {
                 if stdout {
                     let tmp = tempfile::tempdir()?;
                     let p = tmp.path().join("out.yml");
-                    generate_compose_file(&cfg, &fragments, &p)?;
+                    generate_compose_file(&cfg, &fragments, &p, with_ga4gh_infra)?;
                     print!("{}", std::fs::read_to_string(&p)?);
                 } else {
-                    generate_compose_file(&cfg, &fragments, &output)?;
+                    generate_compose_file(&cfg, &fragments, &output, with_ga4gh_infra)?;
                     tracing::info!(path = %output.display(), "wrote compose file");
                 }
             }
@@ -518,19 +522,27 @@ async fn init_non_interactive(
     data_dir: Option<String>,
 ) -> anyhow::Result<()> {
     let name = profile.ok_or_else(|| anyhow::anyhow!("--non-interactive requires --profile"))?;
-    if name != "field-edge" {
-        anyhow::bail!("--non-interactive requires --profile field-edge (got {name})");
+    const NON_INTERACTIVE_PROFILES: &[&str] = &["field-edge", "field-edge+infra", "institute"];
+    if !NON_INTERACTIVE_PROFILES.contains(&name) {
+        anyhow::bail!(
+            "--non-interactive requires --profile field-edge, field-edge+infra, or institute (got {name})"
+        );
     }
 
-    let template = load_profile_template("field-edge").context("load field-edge profile")?;
+    let template = load_profile_template(name).context("load profile template")?;
     let ram = ram_gb.unwrap_or(4);
     let max_memory_mb = ram.saturating_mul(768); // leave ~25% for OS on Pi
     let data = data_dir.unwrap_or_else(|| "~/.ferrum".into());
 
+    let (lab_name, dataset_id) = match name {
+        "institute" => ("Institute Lab", "institute-cohort-001"),
+        _ => ("Field Lab", "field-cohort-001"),
+    };
+
     let cfg = template.into_lab_kit_config(
-        "Field Lab",
+        lab_name,
         "production",
-        "field-cohort-001",
+        dataset_id,
         ProfileOverrides {
             max_memory_mb: Some(max_memory_mb),
             data_dir: Some(data),
@@ -559,7 +571,9 @@ async fn init_wizard(output: &Path, preset: Option<&str>) -> anyhow::Result<()> 
             "elixir-node" => 1,
             "gdi-national-node" => 2,
             "field-edge" => 3,
-            "custom" => 4,
+            "field-edge+infra" => 4,
+            "institute" => 5,
+            "custom" => 6,
             other => anyhow::bail!("unknown profile preset: {other}"),
         }
     } else {
@@ -570,6 +584,8 @@ async fn init_wizard(output: &Path, preset: Option<&str>) -> anyhow::Result<()> 
                 "ELIXIR Node candidate",
                 "GDI National Node",
                 "Field / Edge (Raspberry Pi, laptop, offline-capable)",
+                "Field / Edge + ga4gh-infra (co-deploy auth plane)",
+                "Institute node + ga4gh-infra (co-deploy)",
                 "Custom",
             ])
             .default(0)
@@ -577,7 +593,15 @@ async fn init_wizard(output: &Path, preset: Option<&str>) -> anyhow::Result<()> 
     };
 
     if profile_idx == 3 {
-        return init_field_edge_wizard(output, &theme).await;
+        return init_field_edge_wizard(output, &theme, "field-edge").await;
+    }
+
+    if profile_idx == 4 {
+        return init_field_edge_wizard(output, &theme, "field-edge+infra").await;
+    }
+
+    if profile_idx == 5 {
+        return init_institute_wizard(output, &theme).await;
     }
 
     if profile_idx == 1 {
@@ -601,7 +625,7 @@ async fn init_wizard(output: &Path, preset: Option<&str>) -> anyhow::Result<()> 
         return Ok(());
     }
 
-    if profile_idx == 4 {
+    if profile_idx == 6 {
         return init_custom_wizard(output, &theme).await;
     }
 
@@ -618,8 +642,13 @@ fn customize_lab_name(theme: &ColorfulTheme, lab: &mut LabSection) -> anyhow::Re
     Ok(())
 }
 
-async fn init_field_edge_wizard(output: &Path, theme: &ColorfulTheme) -> anyhow::Result<()> {
-    let template = load_profile_template("field-edge").context("load field-edge profile")?;
+async fn init_field_edge_wizard(
+    output: &Path,
+    theme: &ColorfulTheme,
+    profile_name: &str,
+) -> anyhow::Result<()> {
+    let template = load_profile_template(profile_name)
+        .with_context(|| format!("load {profile_name} profile"))?;
 
     let service_labels = vec![
         "Beacon v2 (required)",
@@ -705,6 +734,43 @@ async fn init_field_edge_wizard(output: &Path, theme: &ColorfulTheme) -> anyhow:
     Ok(())
 }
 
+async fn init_institute_wizard(output: &Path, theme: &ColorfulTheme) -> anyhow::Result<()> {
+    let template = load_profile_template("institute").context("load institute profile")?;
+
+    let name: String = Input::with_theme(theme)
+        .with_prompt("Lab / institute name")
+        .default("Institute Lab".into())
+        .interact_text()?;
+
+    let dataset_id: String = Input::with_theme(theme)
+        .with_prompt("Beacon dataset_id")
+        .default("institute-cohort-001".into())
+        .interact_text()?;
+
+    let data_dir: String = Input::with_theme(theme)
+        .with_prompt("Data directory?")
+        .default("/srv/ferrum".into())
+        .interact_text()?;
+
+    let cfg = template.into_lab_kit_config(
+        &name,
+        "production",
+        &dataset_id,
+        ProfileOverrides {
+            data_dir: Some(data_dir),
+            enable_beacon: true,
+            enable_drs: true,
+            enable_htsget: true,
+            enable_wes: true,
+            enable_tes: true,
+            enable_trs: true,
+            ..Default::default()
+        },
+    )?;
+    write_config(output, &cfg)?;
+    Ok(())
+}
+
 async fn init_standard_wizard(output: &Path, theme: &ColorfulTheme) -> anyhow::Result<()> {
     let name: String = Input::with_theme(theme)
         .with_prompt("Lab / institute name")
@@ -763,6 +829,7 @@ async fn init_standard_wizard(output: &Path, theme: &ColorfulTheme) -> anyhow::R
         network: None,
         resources: None,
         conformance: None,
+        ga4gh_infra: None,
     };
     write_config(output, &cfg)?;
     Ok(())
@@ -886,6 +953,7 @@ async fn init_custom_wizard(output: &Path, theme: &ColorfulTheme) -> anyhow::Res
         network: None,
         resources: None,
         conformance: None,
+        ga4gh_infra: None,
     };
     write_config(output, &cfg)?;
     Ok(())

@@ -1,0 +1,51 @@
+# Ferrum Lab Kit — Field/Edge profile with co-deployed ga4gh-infra auth plane.
+# Ferrum gateway: 8080 · ga4gh-infra: broker 8180, visa 8181, duo 8182, registry 8183, ADS 8190, mock-idp 9100.
+
+[meta]
+profile = "field-edge+infra"
+description = "Minimal GA4GH node with local ga4gh-infra broker and service registry"
+target_hardware = ["raspberry-pi-5", "laptop-arm64", "laptop-x86_64"]
+
+[ga4gh_infra]
+enabled = true
+mode = "co-deploy"
+africa = true
+broker_port = 8180
+service_registry_url = "http://localhost:8183"
+registration_api_key_env = "SERVICE_REGISTRY_REGISTRATION_KEY"
+
+[services]
+beacon = true
+drs = true
+htsget = false
+wes = false
+tes = false
+trs = false
+
+[backend]
+database = "sqlite"
+storage = "local-filesystem"
+sqlite_path = "~/.ferrum/ferrum.db"
+objects_path = "~/.ferrum/objects"
+
+[africa]
+offline_first = true
+max_memory_mb = 3072
+power_monitor = true
+low_power_threshold = 40
+emergency_threshold = 10
+
+[auth]
+mode = "local"
+
+[network]
+bandwidth_adaptive = true
+opportunistic_sync_schedule = "0 2 * * *"
+chunk_size_low_bandwidth_kb = 512
+
+[resources]
+max_concurrent_requests = 4
+background_indexing = false
+
+[conformance]
+helixtest_timeout_seconds = 120

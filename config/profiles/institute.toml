@@ -1,0 +1,44 @@
+# Ferrum Lab Kit — Institute single-node with co-deployed ga4gh-infra.
+# Full GA4GH surface + local auth plane (broker, visa-registry, ADS, service-registry).
+
+[meta]
+profile = "institute"
+description = "Institute lab node with co-deployed ga4gh-infra and full GA4GH services"
+target_hardware = ["server", "institute-vm", "hpc-login"]
+
+[ga4gh_infra]
+enabled = true
+mode = "co-deploy"
+africa = false
+broker_port = 8180
+service_registry_url = "http://localhost:8183"
+registration_api_key_env = "SERVICE_REGISTRY_REGISTRATION_KEY"
+
+[services]
+beacon = true
+drs = true
+htsget = true
+wes = true
+tes = true
+trs = true
+
+[backend]
+database = "sqlite"
+storage = "local-filesystem"
+sqlite_path = "/srv/ferrum/ferrum.db"
+objects_path = "/srv/ferrum/objects"
+
+[auth]
+mode = "local"
+
+[network]
+bandwidth_adaptive = false
+opportunistic_sync_schedule = "0 2 * * *"
+chunk_size_low_bandwidth_kb = 1024
+
+[resources]
+max_concurrent_requests = 16
+background_indexing = true
+
+[conformance]
+helixtest_timeout_seconds = 180
