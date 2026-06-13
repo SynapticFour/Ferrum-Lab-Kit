@@ -32,6 +32,9 @@ pub struct LabKitConfig {
     pub resources: Option<ProfileResourcesSection>,
     #[serde(default)]
     pub conformance: Option<ConformanceSection>,
+    /// Optional co-deployed **ga4gh-infra** auth plane (broker, visa-registry, ADS, …).
+    #[serde(default)]
+    pub ga4gh_infra: Option<Ga4ghInfraSection>,
 }
 
 fn default_schema_version() -> u32 {
@@ -423,6 +426,60 @@ impl ExternalSection {
     pub fn is_empty(&self) -> bool {
         self.htsget_url.is_none() && self.beacon_network_url.is_none()
     }
+}
+
+/// Co-deploy or external **ga4gh-infra** integration (see `deploy/docker-compose/infra.yml`).
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Ga4ghInfraSection {
+    #[serde(default)]
+    pub enabled: bool,
+    #[serde(default)]
+    pub mode: Ga4ghInfraMode,
+    /// When true, use SQLite-backed ga4gh-infra images (lighter / field-edge stacks).
+    #[serde(default)]
+    pub africa: bool,
+    #[serde(default = "default_broker_port")]
+    pub broker_port: u16,
+    /// External service-registry base URL (no trailing slash). Used when `mode = "external"`.
+    #[serde(default)]
+    pub service_registry_url: Option<String>,
+    /// Environment variable holding the registry registration API key.
+    #[serde(default = "default_registration_api_key_env")]
+    pub registration_api_key_env: String,
+}
+
+fn default_broker_port() -> u16 {
+    8180
+}
+
+fn default_registration_api_key_env() -> String {
+    "SERVICE_REGISTRY_REGISTRATION_KEY".into()
+}
+
+impl Default for Ga4ghInfraSection {
+    fn default() -> Self {
+        Self {
+            enabled: false,
+            mode: Ga4ghInfraMode::Disabled,
+            africa: false,
+            broker_port: default_broker_port(),
+            service_registry_url: None,
+            registration_api_key_env: default_registration_api_key_env(),
+        }
+    }
+}
+
+/// How Ferrum Lab Kit wires ga4gh-infra relative to Ferrum.
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Default)]
+#[serde(rename_all = "kebab-case")]
+pub enum Ga4ghInfraMode {
+    /// Do not deploy or configure ga4gh-infra.
+    #[default]
+    Disabled,
+    /// Deploy ga4gh-infra alongside Ferrum (ports 8180–8190, mock-idp 9100).
+    CoDeploy,
+    /// Point Ferrum at an existing ga4gh-infra deployment (no `infra.yml` merge).
+    External,
 }
 
 #[cfg(test)]

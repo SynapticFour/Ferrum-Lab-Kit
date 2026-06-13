@@ -56,3 +56,12 @@ scopes = ["openid", "profile", "email", "offline_access", "ga4gh_passport_v1"]
 # --- Optional: ferrum-gateway base URL for `lab-kit ingest` (overridden by --gateway / FERRUM_GATEWAY_URL) ---
 # [ferrum]
 # gateway_url = "http://localhost:8080"
+
+# --- Optional: co-deploy or external ga4gh-infra auth plane ---
+# [ga4gh_infra]
+# enabled = true
+# mode = "co-deploy" # co-deploy | external | disabled
+# africa = false     # SQLite-backed ga4gh-infra images (field / edge)
+# broker_port = 8180
+# service_registry_url = "http://localhost:8183"
+# registration_api_key_env = "SERVICE_REGISTRY_REGISTRATION_KEY"

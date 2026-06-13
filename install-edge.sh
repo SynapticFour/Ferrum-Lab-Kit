@@ -13,6 +13,33 @@ BEACON_PORT="${BEACON_PORT:-8080}"
 DATA_DIR="${FERRUM_DATA_DIR:-$HOME/.ferrum}"
 CONFIG="${LAB_KIT_CONFIG:-lab-kit.toml}"
 COMPOSE_OUT="${COMPOSE_OUT:-docker-compose.yml}"
+WITH_INFRA=0
+
+usage() {
+  cat <<'EOF'
+Usage: install-edge.sh [--with-infra]
+
+  --with-infra   Co-deploy ga4gh-infra auth plane (broker 8180, registry 8183, mock-idp 9100)
+EOF
+}
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --with-infra)
+      WITH_INFRA=1
+      shift
+      ;;
+    -h|--help)
+      usage
+      exit 0
+      ;;
+    *)
+      echo "error: unknown option: $1" >&2
+      usage >&2
+      exit 1
+      ;;
+  esac
+done
 
 echo "╔══════════════════════════════════════════════╗"
 echo "║  Ferrum Lab Kit — Field/Edge Setup           ║"
@@ -179,14 +206,25 @@ main() {
   lab_kit="$(install_lab_kit_binary)"
   export PATH="$(dirname "$lab_kit"):$PATH"
 
-  echo "==> Initializing field-edge profile..."
-  "$lab_kit" init --profile field-edge --non-interactive --output "$CONFIG" --data-dir "$DATA_DIR"
+  if [[ "$WITH_INFRA" -eq 1 ]]; then
+    echo "==> Initializing field-edge+infra profile (Ferrum + ga4gh-infra co-deploy)..."
+    "$lab_kit" init --profile field-edge+infra --non-interactive --output "$CONFIG" --data-dir "$DATA_DIR"
+  else
+    echo "==> Initializing field-edge profile..."
+    "$lab_kit" init --profile field-edge --non-interactive --output "$CONFIG" --data-dir "$DATA_DIR"
+  fi
 
   echo "==> Generating docker-compose.yml..."
-  "$lab_kit" generate compose \
-    --config "$CONFIG" \
-    --fragments deploy/docker-compose \
+  compose_args=(
+    generate compose
+    --config "$CONFIG"
+    --fragments deploy/docker-compose
     --output "$COMPOSE_OUT"
+  )
+  if [[ "$WITH_INFRA" -eq 1 ]]; then
+    compose_args+=(--with-ga4gh-infra)
+  fi
+  "$lab_kit" "${compose_args[@]}"
 
   echo "==> Starting Ferrum Lab Kit stack..."
   "${COMPOSE[@]}" -f "$COMPOSE_OUT" up -d
@@ -213,4 +251,4 @@ main() {
   fi
 }
 
-main "$@"
+main

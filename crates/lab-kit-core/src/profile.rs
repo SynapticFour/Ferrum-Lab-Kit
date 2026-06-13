@@ -5,10 +5,10 @@ use serde::Deserialize;
 
 use crate::config::{
     AuthProvider, AuthSection, BackendSection, BeaconAccessLevel, BeaconServiceConfig,
-    ConformanceSection, DrsServiceConfig, HtsgetServiceConfig, LabKitConfig, LabSection,
-    LsLoginConfig, MetaSection, PosixNestedConfig, ProfileAfricaSection, ProfileAuthSection,
-    ProfileNetworkSection, ProfileResourcesSection, ProfileServicesFlags, ServicesSection,
-    TesServiceConfig, TrsServiceConfig, WesServiceConfig,
+    ConformanceSection, DrsServiceConfig, Ga4ghInfraMode, Ga4ghInfraSection, HtsgetServiceConfig,
+    LabKitConfig, LabSection, LsLoginConfig, MetaSection, PosixNestedConfig, ProfileAfricaSection,
+    ProfileAuthSection, ProfileNetworkSection, ProfileResourcesSection, ProfileServicesFlags,
+    ServicesSection, TesServiceConfig, TrsServiceConfig, WesServiceConfig,
 };
 use crate::CoreError;
 
@@ -30,6 +30,8 @@ pub struct ProfileTemplate {
     pub resources: ProfileResourcesSection,
     #[serde(default)]
     pub conformance: ConformanceSection,
+    #[serde(default)]
+    pub ga4gh_infra: Ga4ghInfraSection,
 }
 
 impl ProfileTemplate {
@@ -116,9 +118,18 @@ impl ProfileTemplate {
             network: Some(self.network),
             resources: Some(self.resources),
             conformance: Some(self.conformance),
+            ga4gh_infra: ga4gh_infra_from_profile(&self.ga4gh_infra),
         };
         cfg.validate()?;
         Ok(cfg)
+    }
+}
+
+fn ga4gh_infra_from_profile(section: &Ga4ghInfraSection) -> Option<Ga4ghInfraSection> {
+    if section.enabled && section.mode != Ga4ghInfraMode::Disabled {
+        Some(section.clone())
+    } else {
+        None
     }
 }
 
@@ -230,8 +241,15 @@ pub fn parse_config_or_profile(raw: &str) -> Result<LabKitConfig, CoreError> {
 pub fn is_field_edge(cfg: &LabKitConfig) -> bool {
     cfg.meta
         .as_ref()
-        .map(|m| m.profile == "field-edge")
+        .map(|m| m.profile == "field-edge" || m.profile == "field-edge+infra")
         .unwrap_or(false)
+}
+
+/// Whether Ferrum and ga4gh-infra are co-deployed on the same host (local infra stack).
+pub fn is_co_deploy(cfg: &LabKitConfig) -> bool {
+    cfg.ga4gh_infra
+        .as_ref()
+        .is_some_and(|g| g.enabled && g.mode == Ga4ghInfraMode::CoDeploy)
 }
 
 #[cfg(test)]

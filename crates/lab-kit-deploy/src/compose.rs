@@ -1,7 +1,7 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use lab_kit_core::{LabKitConfig, ServiceId, ServiceRegistry};
+use lab_kit_core::{is_co_deploy, Ga4ghInfraMode, LabKitConfig, ServiceId, ServiceRegistry};
 use serde_yaml::Value;
 
 use crate::routing::{
@@ -18,6 +18,7 @@ pub fn generate_compose_file(
     cfg: &LabKitConfig,
     fragments_dir: &Path,
     output_path: &Path,
+    with_ga4gh_infra: bool,
 ) -> Result<(), DeployError> {
     let registry = ServiceRegistry::from_config(cfg);
     let base_raw = fs::read_to_string(fragment_path(fragments_dir, "docker-compose.base.yml"))?;
@@ -51,6 +52,20 @@ pub fn generate_compose_file(
 
     if lab_kit_core::is_field_edge(cfg) {
         add("edge.yml")?;
+    }
+
+    let deploy_infra = with_ga4gh_infra || is_co_deploy(cfg);
+    let apply_co_deploy_overlay = with_ga4gh_infra
+        || cfg
+            .ga4gh_infra
+            .as_ref()
+            .is_some_and(|g| g.enabled && g.mode != Ga4ghInfraMode::Disabled);
+
+    if deploy_infra {
+        add("infra.yml")?;
+    }
+    if apply_co_deploy_overlay {
+        add("co-deploy.yml")?;
     }
 
     if let Some(parent) = output_path.parent() {
@@ -91,10 +106,44 @@ mod tests {
         let fragments = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../deploy/docker-compose");
         let dir = tempfile::tempdir().unwrap();
         let out = dir.path().join("docker-compose.yml");
-        generate_compose_file(&cfg, &fragments, &out).unwrap();
+        generate_compose_file(&cfg, &fragments, &out, false).unwrap();
         let merged = std::fs::read_to_string(&out).unwrap();
         assert!(merged.contains("ferrum-gateway"));
         assert!(merged.contains("FERRUM_AFRICA__OFFLINE_FIRST"));
+        serde_yaml::from_str::<serde_yaml::Value>(&merged).expect("valid YAML");
+    }
+
+    #[test]
+    fn field_edge_infra_profile_merges_ga4gh_stack() {
+        let raw = include_str!("../../../config/profiles/field-edge+infra.toml");
+        let cfg = parse_config(raw).unwrap();
+        assert!(lab_kit_core::is_co_deploy(&cfg));
+        let fragments = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../deploy/docker-compose");
+        let dir = tempfile::tempdir().unwrap();
+        let out = dir.path().join("docker-compose.yml");
+        generate_compose_file(&cfg, &fragments, &out, false).unwrap();
+        let merged = std::fs::read_to_string(&out).unwrap();
+        assert!(merged.contains("aai-broker"));
+        assert!(merged.contains("mock-idp"));
+        assert!(merged.contains("FERRUM_AUTH__JWKS_URL"));
+        assert!(merged.contains("FERRUM_SERVICES__ENABLE_PASSPORTS"));
+        assert!(merged.contains("FERRUM_DISCOVERY__ENABLED"));
+        assert!(merged.contains("8180:8080"));
+        serde_yaml::from_str::<serde_yaml::Value>(&merged).expect("valid YAML");
+    }
+
+    #[test]
+    fn cli_with_ga4gh_infra_flag_merges_infra_without_config() {
+        let raw = include_str!("../../../config/profiles/field-edge.toml");
+        let cfg = parse_config(raw).unwrap();
+        assert!(!lab_kit_core::is_co_deploy(&cfg));
+        let fragments = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../deploy/docker-compose");
+        let dir = tempfile::tempdir().unwrap();
+        let out = dir.path().join("docker-compose.yml");
+        generate_compose_file(&cfg, &fragments, &out, true).unwrap();
+        let merged = std::fs::read_to_string(&out).unwrap();
+        assert!(merged.contains("aai-broker"));
+        assert!(merged.contains("FERRUM_AUTH__JWKS_URL"));
         serde_yaml::from_str::<serde_yaml::Value>(&merged).expect("valid YAML");
     }
 }

@@ -12,15 +12,15 @@ mod registry;
 pub use config::{
     AuthProvider as AuthProviderKind, AuthSection, BackendSection, BeaconAccessLevel,
     BeaconServiceConfig, ConformanceSection, DrsServiceConfig, ExternalSection, FerrumSection,
-    HtsgetServiceConfig, KeycloakConfig, LabKitConfig, LabSection, LdapAuthConfig, LsLoginConfig,
-    MetaSection, ProfileAfricaSection, ProfileAuthSection, ProfileNetworkSection,
-    ProfileResourcesSection, ProfileServicesFlags, ServicesSection, TesServiceConfig,
-    TrsServiceConfig, WesServiceConfig,
+    Ga4ghInfraMode, Ga4ghInfraSection, HtsgetServiceConfig, KeycloakConfig, LabKitConfig,
+    LabSection, LdapAuthConfig, LsLoginConfig, MetaSection, ProfileAfricaSection,
+    ProfileAuthSection, ProfileNetworkSection, ProfileResourcesSection, ProfileServicesFlags,
+    ServicesSection, TesServiceConfig, TrsServiceConfig, WesServiceConfig,
 };
 pub use error::CoreError;
 pub use health::{HealthAggregator, ServiceHealth};
 pub use profile::{
-    is_field_edge, load_profile_template, parse_config_or_profile, ProfileOverrides,
+    is_co_deploy, is_field_edge, load_profile_template, parse_config_or_profile, ProfileOverrides,
     ProfileTemplate,
 };
 pub use registry::{ServiceId, ServiceRegistry, ServiceRegistryEntry};
