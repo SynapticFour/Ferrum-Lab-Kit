@@ -36,8 +36,8 @@ updates:
     ignore:
       # No patched release on crates.io (PAX header desync; upstream tracking issue).
       - dependency-name: "tokio-tar"
-      # Transitive via pinned ferrum-core git rev; workspace uses jsonwebtoken 10.
-      - dependency-name: "jsonwebtoken"
-        update-types: ["version-update:semver-major"]
+      # Legacy rustls 0.21 → webpki 0.101.x via aws-sdk; cannot jump to 0.103.x line.
+      - dependency-name: "rustls-webpki"
+        update-types: ["version-update:semver-patch", "version-update:semver-minor"]
       - dependency-name: "aws-lc-sys"
         update-types: ["version-update:semver-patch"]
