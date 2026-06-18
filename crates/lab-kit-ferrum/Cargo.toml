@@ -9,4 +9,4 @@ rust-version.workspace = true
 
 [dependencies]
 # Pin must stay in sync with config/ci/ferrum-revision.txt (full git SHA recommended).
-ferrum-core = { git = "https://github.com/SynapticFour/Ferrum.git", rev = "6bee3495b8347d5ef914fdae97fc7214070604f3" }
+ferrum-core = { git = "https://github.com/SynapticFour/Ferrum.git", rev = "73eb93360bd30073018d394cf455e25d10fc64c9" }
