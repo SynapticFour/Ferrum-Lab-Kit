@@ -1,0 +1,65 @@
+name: Bump ferrum-core pin
+
+on:
+  schedule:
+    # Weekly Monday 09:00 UTC — align Lab Kit with Ferrum main.
+    - cron: "0 9 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  bump:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: dtolnay/rust-toolchain@1.91.1
+
+      - name: Resolve Ferrum main SHA
+        id: ferrum
+        run: |
+          remote="$(git ls-remote https://github.com/SynapticFour/Ferrum.git refs/heads/main | awk '{print $1; exit}')"
+          current="$(grep -E 'rev = "[0-9a-f]{40}"' crates/lab-kit-ferrum/Cargo.toml | sed -E 's/.*"([0-9a-f]{40})".*/\1/')"
+          echo "remote=$remote" >> "$GITHUB_OUTPUT"
+          echo "current=$current" >> "$GITHUB_OUTPUT"
+          if [[ "$remote" == "$current" ]]; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "Ferrum pin already at main ($current)"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "Bump needed: $current -> $remote"
+          fi
+
+      - name: Stop if already aligned
+        if: steps.ferrum.outputs.changed != 'true'
+        run: echo "No bump required."
+
+      - name: Bump pin and verify
+        if: steps.ferrum.outputs.changed == 'true'
+        run: |
+          ./scripts/bump-ferrum.sh "${{ steps.ferrum.outputs.remote }}"
+          cargo update -p ferrum-core
+          cargo fmt --all
+          cargo clippy --workspace --all-targets -- -D warnings
+          cargo test --workspace
+
+      - name: Create pull request
+        if: steps.ferrum.outputs.changed == 'true'
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: automation/bump-ferrum-core
+          delete-branch: true
+          title: "chore(ferrum): bump ferrum-core pin to Ferrum main"
+          body: |
+            Automated weekly sync with [SynapticFour/Ferrum](https://github.com/SynapticFour/Ferrum) `main`.
+
+            Remote SHA: `${{ steps.ferrum.outputs.remote }}`
+            Previous pin: `${{ steps.ferrum.outputs.current }}`
+
+            Run `./scripts/bump-ferrum.sh` locally to reproduce.
+          commit-message: "chore(ferrum): bump ferrum-core pin to Ferrum main"
+          labels: dependencies
