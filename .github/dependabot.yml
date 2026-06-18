@@ -22,3 +22,22 @@ updates:
             "version-update:semver-minor",
             "version-update:semver-patch",
           ]
+
+  - package-ecosystem: "cargo"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 3
+    commit-message:
+      prefix: "deps"
+      include: "scope"
+    labels:
+      - "dependencies"
+    ignore:
+      # No patched release on crates.io (PAX header desync; upstream tracking issue).
+      - dependency-name: "tokio-tar"
+      # Transitive via pinned ferrum-core git rev; workspace uses jsonwebtoken 10.
+      - dependency-name: "jsonwebtoken"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "aws-lc-sys"
+        update-types: ["version-update:semver-patch"]
