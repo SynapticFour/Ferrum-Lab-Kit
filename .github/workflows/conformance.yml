@@ -18,6 +18,11 @@ on:
       - "deploy/helm/**"
       - ".github/workflows/conformance.yml"
 
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   compose-profile:
     runs-on: ubuntu-latest
