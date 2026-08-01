@@ -1,5 +1,10 @@
 # Always merged first by `lab-kit generate compose`.
-# Replace image placeholders with Ferrum release images from github.com/SynapticFour/Ferrum.
+#
+# PLACEHOLDER IMAGES: per-service fragments use synapticfour/ferrum-*:latest names that
+# are NOT published on GHCR today. Ferrum publishes monolith packages only:
+#   ghcr.io/synapticfour/ferrum
+#   ghcr.io/synapticfour/ferrum-ui
+# See docs/FERRUM-INTEGRATION.md — override or rebuild before expecting `docker compose up` to pull.
 name: ferrum-lab-kit
 
 services: {}

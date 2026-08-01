@@ -139,3 +139,40 @@ struct AuthVals {
 struct LsLoginVals {
     issuer: String,
 }
+
+#[cfg(test)]
+mod tests {
+    use lab_kit_core::parse_config;
+    use tempfile::tempdir;
+
+    use super::*;
+
+    #[test]
+    fn helm_values_enable_beacon_only() {
+        let raw = r#"
+schema_version = 1
+
+[lab]
+name = "Helm Lab"
+environment = "demo"
+
+[auth]
+provider = "local"
+
+[services.beacon]
+dataset_id = "ds1"
+"#;
+        let cfg = parse_config(raw).unwrap();
+        let dir = tempdir().unwrap();
+        let out = dir.path().join("values.yaml");
+        generate_helm_values(&cfg, &out).unwrap();
+        let yaml = fs::read_to_string(&out).unwrap();
+        assert!(yaml.contains("name: Helm Lab"));
+        assert!(yaml.contains("beacon:"));
+        assert!(yaml.contains("enabled: true"));
+        assert!(yaml.contains("synapticfour/ferrum-beacon:latest"));
+        // Other services default to disabled placeholders
+        assert!(yaml.contains("ferrum-drs"));
+        assert!(yaml.contains("enabled: false"));
+    }
+}

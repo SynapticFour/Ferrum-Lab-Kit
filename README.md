@@ -26,8 +26,20 @@ cp config/profiles/beacon-only.toml lab-kit.toml
 # Edit lab-kit.toml: set real [auth.ls-login] client_id / client_secret
 cargo run -p lab-kit-selector -- generate compose --config lab-kit.toml --fragments deploy/docker-compose --output docker-compose.yml
 docker compose -f docker-compose.yml up -d
-# When Ferrum images are available — until then, images in compose are placeholders.
 ```
+
+### Container images (placeholders)
+
+Generated Compose/Helm fragments use **placeholder** per-service names such as `synapticfour/ferrum-beacon:latest`. Those tags are **not** published today.
+
+Ferrum’s documented GHCR packages (from [Ferrum `ghcr.yml`](https://github.com/SynapticFour/Ferrum/blob/main/.github/workflows/ghcr.yml) / demo compose) are the **monolith** images only:
+
+| Image | Notes |
+|-------|--------|
+| `ghcr.io/synapticfour/ferrum` | Gateway / platform image (`latest` on `main`, commit SHA, `v*` tags) |
+| `ghcr.io/synapticfour/ferrum-ui` | UI image (same tag scheme) |
+
+Lab Kit’s selective per-service Compose model does **not** yet map 1:1 onto those packages. Prefer building from the Ferrum repo or pointing fragments at real tags you control — do not treat the `synapticfour/ferrum-*` placeholders as pinned releases. Details: [docs/FERRUM-INTEGRATION.md](docs/FERRUM-INTEGRATION.md).
 
 ## Co-deploy with ga4gh-infra
 
@@ -93,10 +105,10 @@ MII helpers are intentionally optional. Lab Kit remains GA4GH-centric; MII handl
 
 ## Documentation
 
-- **[Documentation index](docs/README.md)** — all guides and examples  
-- [GA4GH workflow primer](docs/GA4GH-WORKFLOW-PRIMER.md) — TRS/WES/TES flow, DRS, engines, nested Docker, `amd64`/`arm64`  
-- [Operations checklist](docs/OPERATIONS-CHECKLIST.md) — env vars, Docker, networking, naming  
-- [Ferrum GA4GH demo overlay](docs/FERRUM-GA4GH-DEMO-OVERLAY.md) — WES/TES Docker Compose merge + `contrib/ferrum/` patch  
+- **[Documentation index](docs/README.md)** — all guides and examples
+- [GA4GH workflow primer](docs/GA4GH-WORKFLOW-PRIMER.md) — TRS/WES/TES flow, DRS, engines, nested Docker, `amd64`/`arm64`
+- [Operations checklist](docs/OPERATIONS-CHECKLIST.md) — env vars, Docker, networking, naming
+- [Ferrum GA4GH demo overlay](docs/FERRUM-GA4GH-DEMO-OVERLAY.md) — WES/TES Docker Compose merge + `contrib/ferrum/` patch
 
 Also: [Architecture](docs/ARCHITECTURE.md) · [Ferrum integration](docs/FERRUM-INTEGRATION.md) · [Deployment targets](docs/DEPLOYMENT-TARGETS.md) · [ELIXIR AAI](docs/ELIXIR-AAI.md) · [Bring your own](docs/BRING-YOUR-OWN.md) · [Conformance](docs/CONFORMANCE.md) · [Business model](docs/BUSINESS-MODEL.md)
 
@@ -121,4 +133,3 @@ For responsible disclosure or commercial support inquiries, contact [contact@syn
 Built by **Synaptic Four** for transparent, standards-based scientific infrastructure.
 Developed by a neurodiverse team, including autistic engineers, with a focus on precision, clarity, and reliable operations.
 Contact: [contact@synapticfour.com](mailto:contact@synapticfour.com) · [synapticfour.com](https://synapticfour.com)
-

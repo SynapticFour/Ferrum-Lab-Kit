@@ -484,6 +484,9 @@ pub enum Ga4ghInfraMode {
 
 #[cfg(test)]
 mod tests {
+    use super::*;
+    use crate::parse_config;
+
     #[test]
     fn minimal_beacon_ls_login() {
         let raw = r#"
@@ -505,7 +508,85 @@ issuer = "https://login.elixir-czech.org/oidc/"
 dataset_id = "ds1"
 access_level = "registered"
 "#;
-        let c = crate::parse_config(raw).unwrap();
+        let c = parse_config(raw).unwrap();
         assert_eq!(c.services.beacon.as_ref().unwrap().dataset_id, "ds1");
+    }
+
+    #[test]
+    fn rejects_unsupported_schema_version() {
+        let raw = r#"
+schema_version = 99
+
+[lab]
+name = "Test Lab"
+environment = "demo"
+
+[auth]
+provider = "none"
+
+[services.beacon]
+dataset_id = "ds1"
+"#;
+        let err = parse_config(raw).unwrap_err();
+        assert!(err.to_string().contains("schema_version"));
+    }
+
+    #[test]
+    fn rejects_ls_login_without_block() {
+        let raw = r#"
+schema_version = 1
+
+[lab]
+name = "Test Lab"
+environment = "demo"
+
+[auth]
+provider = "ls-login"
+
+[services.beacon]
+dataset_id = "ds1"
+"#;
+        let err = parse_config(raw).unwrap_err();
+        assert!(err.to_string().contains("ls-login"));
+    }
+
+    #[test]
+    fn rejects_config_with_no_services_or_external() {
+        let raw = r#"
+schema_version = 1
+
+[lab]
+name = "Test Lab"
+environment = "demo"
+
+[auth]
+provider = "none"
+"#;
+        let err = parse_config(raw).unwrap_err();
+        assert!(err.to_string().contains("at least one"));
+    }
+
+    #[test]
+    fn accepts_local_auth_with_beacon() {
+        let raw = r#"
+schema_version = 1
+
+[lab]
+name = "Edge"
+environment = "production"
+
+[auth]
+provider = "local"
+
+[services.beacon]
+dataset_id = "cohort-1"
+access_level = "public"
+"#;
+        let c = parse_config(raw).unwrap();
+        assert_eq!(c.auth.provider, AuthProvider::Local);
+        assert_eq!(
+            c.services.beacon.as_ref().unwrap().access_level,
+            BeaconAccessLevel::Public
+        );
     }
 }

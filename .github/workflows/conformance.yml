@@ -89,11 +89,14 @@ jobs:
           ./target/release/helixtest --version
           ./target/release/helixtest | grep -q "Nothing to do"
 
-      - name: Live suite (optional — needs real Ferrum images)
+      - name: Live suite (opt-in — fails job on HelixTest failure)
         if: github.event_name == 'workflow_dispatch' && github.event.inputs.run_live_suite == 'true'
         run: |
+          set -euo pipefail
           docker compose -f generated/docker-compose.yml up -d
           sleep 15
+          status=0
           ./helixtest-upstream/target/release/helixtest \
-            --all --mode ferrum --report json --only beacon || true
-          docker compose -f generated/docker-compose.yml down -v
+            --all --mode ferrum --report json --only beacon || status=$?
+          docker compose -f generated/docker-compose.yml down -v || true
+          exit "$status"

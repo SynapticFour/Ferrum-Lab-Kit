@@ -22,7 +22,7 @@ Lab Kit targets three environments equally (see `lab-kit generate …`).
 - **Gateway:** `deploy/slurm/ferrum-gateway.service` documents the **ferrum-slurm-proxy** pattern (WES/TES → SLURM).
 - **Remote login node:** Ferrum integrations can use `SlurmSshComputeBackend` in `lab-kit-adapters` to run `sbatch`/`squeue` over **SSH** (key or agent; `BatchMode=yes`). Handy when the gateway runs on a VM/container without a local SLURM client.
 
-Ferrum images and binaries are **placeholders** until wired to real Ferrum releases.
+Compose/Helm per-service image names are **placeholders**. Ferrum GHCR today publishes `ghcr.io/synapticfour/ferrum` and `ghcr.io/synapticfour/ferrum-ui` only — see [FERRUM-INTEGRATION.md](FERRUM-INTEGRATION.md).
 
 ## 4. Field / Edge Deployment {#field-edge}
 

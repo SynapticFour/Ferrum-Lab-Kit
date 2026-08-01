@@ -266,4 +266,13 @@ mod tests {
         assert!(cfg.services.wes.is_none());
         assert_eq!(cfg.auth.provider, AuthProvider::Local);
     }
+
+    #[test]
+    fn field_edge_infra_profile_is_co_deploy() {
+        let raw = include_str!("../../../config/profiles/field-edge+infra.toml");
+        let cfg = parse_config_or_profile(raw).unwrap();
+        assert!(is_field_edge(&cfg));
+        assert!(is_co_deploy(&cfg));
+        assert!(cfg.ga4gh_infra.as_ref().is_some_and(|g| g.enabled));
+    }
 }

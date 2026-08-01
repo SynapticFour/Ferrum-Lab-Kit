@@ -4,7 +4,7 @@ Lab Kit depends on the **[Ferrum](https://github.com/SynapticFour/Ferrum)** plat
 
 ## Git pin (`ferrum-core`)
 
-- Crate: **`lab-kit-ferrum`** → `ferrum-core` from  
+- Crate: **`lab-kit-ferrum`** → `ferrum-core` from
   `https://github.com/SynapticFour/Ferrum.git` pinned by **full git `rev`** (see `crates/lab-kit-ferrum/Cargo.toml`).
 - **Bump procedure:** pick a Ferrum commit (often `main` HEAD), set the same SHA in `Cargo.toml` and **`config/ci/ferrum-revision.txt`**, then `cargo update -p ferrum-core` and run tests.
 - **Script:** `./scripts/bump-ferrum.sh` updates `Cargo.toml`, `FERRUM_GIT_REV`, and `ferrum-revision.txt` from **`refs/heads/main`** (or pass an explicit 40-char SHA). Use `./scripts/bump-ferrum.sh --dry-run` to preview. Then run `cargo update -p ferrum-core` and `cargo test --workspace`.
@@ -17,9 +17,26 @@ cargo run -p lab-kit-selector -- ferrum check
 
 Prints the linked `ferrum_core::FerrumError` type name and the pinned revision.
 
-## Runtime wiring
+## Runtime wiring / container images
 
-Deploy generators still use **placeholder images** until you point Compose/Helm at Ferrum release images or build from the Ferrum repo. Shared **types, config, and auth** primitives come from `ferrum-core` via `lab-kit-ferrum` for gateways and future glue code.
+Shared **types, config, and auth** primitives come from `ferrum-core` via `lab-kit-ferrum`. Deploy generators emit Compose/Helm that still list **placeholder per-service images** (`synapticfour/ferrum-beacon:latest`, `ferrum-drs`, `ferrum-wes`, …, and matching Helm defaults). Those names are scaffolding for a selective multi-service layout — **they are not Ferrum GHCR tags**.
+
+### What Ferrum publishes on GHCR today
+
+From Ferrum’s [`.github/workflows/ghcr.yml`](https://github.com/SynapticFour/Ferrum/blob/main/.github/workflows/ghcr.yml) and [`demo/docker-compose.demo.yml`](https://github.com/SynapticFour/Ferrum/blob/main/demo/docker-compose.demo.yml):
+
+| Package | Typical tags |
+|---------|----------------|
+| `ghcr.io/synapticfour/ferrum` | `latest` (default branch), git SHA, release `v*` |
+| `ghcr.io/synapticfour/ferrum-ui` | same scheme |
+
+There are **no** documented per-service GHCR images (`ferrum-beacon`, `ferrum-drs`, …). Wiring Lab Kit fragments to invent those pins would be dishonest; keep placeholders until Ferrum publishes matching packages **or** Lab Kit switches generators to the monolith gateway image and documents the trade-off.
+
+**Practical options today**
+
+1. Build Ferrum from source / use Ferrum’s own demo compose (`ghcr.io/synapticfour/ferrum` + UI).
+2. Override image names in generated Compose/Helm to images you build and push.
+3. When Ferrum adds per-service packages (or Lab Kit adopts the monolith ref), replace placeholders with those GHCR tags explicitly.
 
 **GA4GH local demo (WES + TES Docker, workdirs, `docker.sock`, optional Crypt4GH):** upstream merge overlay and env checklist — see [FERRUM-GA4GH-DEMO-OVERLAY.md](FERRUM-GA4GH-DEMO-OVERLAY.md) and `contrib/ferrum/`.
 

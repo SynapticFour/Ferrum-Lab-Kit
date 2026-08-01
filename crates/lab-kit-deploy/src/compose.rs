@@ -146,4 +146,45 @@ mod tests {
         assert!(merged.contains("FERRUM_AUTH__JWKS_URL"));
         serde_yaml::from_str::<serde_yaml::Value>(&merged).expect("valid YAML");
     }
+
+    #[test]
+    fn beacon_only_compose_includes_beacon_service() {
+        let raw = include_str!("../../../config/profiles/beacon-only.toml");
+        let cfg = parse_config(raw).unwrap();
+        let fragments = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../deploy/docker-compose");
+        let dir = tempfile::tempdir().unwrap();
+        let out = dir.path().join("docker-compose.yml");
+        generate_compose_file(&cfg, &fragments, &out, false).unwrap();
+        let merged = std::fs::read_to_string(&out).unwrap();
+        assert!(merged.contains("beacon:"));
+        assert!(merged.contains("synapticfour/ferrum-beacon"));
+        assert!(!merged.contains("aai-broker"));
+        serde_yaml::from_str::<serde_yaml::Value>(&merged).expect("valid YAML");
+    }
+
+    #[test]
+    fn disabled_services_are_omitted_from_compose() {
+        let raw = r#"
+schema_version = 1
+
+[lab]
+name = "Beacon Only"
+environment = "demo"
+
+[auth]
+provider = "local"
+
+[services.beacon]
+dataset_id = "ds1"
+"#;
+        let cfg = parse_config(raw).unwrap();
+        let fragments = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../deploy/docker-compose");
+        let dir = tempfile::tempdir().unwrap();
+        let out = dir.path().join("docker-compose.yml");
+        generate_compose_file(&cfg, &fragments, &out, false).unwrap();
+        let merged = std::fs::read_to_string(&out).unwrap();
+        assert!(merged.contains("beacon:"));
+        assert!(!merged.contains("\n  drs:"));
+        assert!(!merged.contains("\n  wes:"));
+    }
 }
