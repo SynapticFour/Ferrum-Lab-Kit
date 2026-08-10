@@ -1,3 +1,3 @@
 # Git revision on https://github.com/SynapticFour/Ferrum.git (must match lab-kit-ferrum/Cargo.toml).
 # Use the full commit SHA to track Ferrum main between releases; bump in a dedicated PR.
-fd6c9ee49cbe356e7986bf174d8710023a0c1c4f
+21cce6364f1413fe9c74a15b30710645817d44de

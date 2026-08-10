@@ -7,7 +7,7 @@
 pub use ferrum_core;
 
 /// Git revision pinned in `Cargo.toml` (mirror `config/ci/ferrum-revision.txt`).
-pub const FERRUM_GIT_REV: &str = "fd6c9ee49cbe356e7986bf174d8710023a0c1c4f";
+pub const FERRUM_GIT_REV: &str = "21cce6364f1413fe9c74a15b30710645817d44de";
 
 /// Upstream repository URL.
 pub const FERRUM_GIT_URL: &str = "https://github.com/SynapticFour/Ferrum.git";
