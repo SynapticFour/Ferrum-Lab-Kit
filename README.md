@@ -18,48 +18,72 @@ From a clone, build or install the `lab-kit` binary (needs [Rust](https://rustup
 ./install.sh --install --prefix "$HOME/.local"   # → ~/.local/bin
 ```
 
-## Shortest path: Beacon v2 + ELIXIR LS Login (~5 commands)
+## Shortest path: Beacon v2 + DRS (~5 commands)
 
 ```bash
 git clone https://github.com/SynapticFour/Ferrum-Lab-Kit.git && cd Ferrum-Lab-Kit
-cp config/profiles/beacon-only.toml lab-kit.toml
-# Edit lab-kit.toml: set real [auth.ls-login] client_id / client_secret
-cargo run -p lab-kit-selector -- generate compose --config lab-kit.toml --fragments deploy/docker-compose --output docker-compose.yml
+cp .env.example .env
+lab-kit init --profile field-edge --non-interactive   # or: cargo run -p lab-kit-selector -- …
+lab-kit generate compose --config lab-kit.toml --fragments deploy/docker-compose -o docker-compose.yml
 docker compose -f docker-compose.yml up -d
+# Gateway: http://127.0.0.1:8080/health
+# Beacon:  http://127.0.0.1:8080/ga4gh/beacon/v2/info
 ```
 
-### Container images (placeholders)
+Or one-shot: `./install-edge.sh` / `make up`.
 
-Generated Compose/Helm fragments use **placeholder** per-service names such as `synapticfour/ferrum-beacon:latest`. Those tags are **not** published today.
+### Raspberry Pi kit
 
-Ferrum’s documented GHCR packages (from [Ferrum `ghcr.yml`](https://github.com/SynapticFour/Ferrum/blob/main/.github/workflows/ghcr.yml) / demo compose) are the **monolith** images only:
+```bash
+lab-kit generate raspberry-pi --output ./pi-kit          # or: make pi-kit
+# On the Pi: cd pi-kit && ./install-on-pi.sh
+lab-kit generate pi --with-solum --ram-gb 8 -o ./pi-kit  # Ferrum + Solum
+```
+
+Full guide: [docs/RASPBERRY-PI.md](docs/RASPBERRY-PI.md).
+
+### How selective deploy works
+
+`lab-kit.toml` / profiles choose GA4GH surfaces. Generators emit a **single monolith** service (`ferrum-gateway` → `ghcr.io/synapticfour/ferrum`) and set:
+
+`FERRUM_SERVICES__ENABLE_BEACON|DRS|HTSGET|WES|TES|TRS`
 
 | Image | Notes |
 |-------|--------|
-| `ghcr.io/synapticfour/ferrum` | Gateway / platform image (`latest` on `main`, commit SHA, `v*` tags) |
-| `ghcr.io/synapticfour/ferrum-ui` | UI image (same tag scheme) |
+| `ghcr.io/synapticfour/ferrum` | Gateway / platform (`latest`, `latest-arm64`, SHA, `v*`) |
+| `ghcr.io/synapticfour/ferrum-ui` | Optional UI (not required by Lab Kit) |
 
-Lab Kit’s selective per-service Compose model does **not** yet map 1:1 onto those packages. Prefer building from the Ferrum repo or pointing fragments at real tags you control — do not treat the `synapticfour/ferrum-*` placeholders as pinned releases. Details: [docs/FERRUM-INTEGRATION.md](docs/FERRUM-INTEGRATION.md).
+Override with `FERRUM_IMAGE` in `.env`. Details: [docs/FERRUM-INTEGRATION.md](docs/FERRUM-INTEGRATION.md).
 
 ## Co-deploy with ga4gh-infra
 
-For field or institute nodes that need **Passport broker + service registry** alongside Ferrum:
+Ferrum and [ga4gh-infra](https://github.com/SynapticFour/ga4gh-infra) belong together for Passport broker + service registry:
 
 ```bash
 ./install-edge.sh --with-infra
-# Profiles: config/profiles/field-edge+infra.toml, institute.toml
-# Compose: deploy/docker-compose/co-deploy.yml + deploy/docker-compose/infra.yml
+# or: make up-with-infra
+# Profiles: field-edge+infra.toml, institute.toml
 ```
 
-See [docs/ECOSYSTEM.md](docs/ECOSYSTEM.md) and [FERRUM-INTEGRATION.md](docs/FERRUM-INTEGRATION.md).
+## Optional Solum companion
+
+Purpose-bound consent checks (Ferrum polls Solum) without moving clinical product ownership into Lab Kit:
+
+```bash
+./install-edge.sh --with-solum
+# or: make up-with-solum / make up-with-infra-solum
+```
+
+See [docs/SOLUM-CO-DEPLOY.md](docs/SOLUM-CO-DEPLOY.md).
 
 ### Local lifecycle (Make)
 
-| Goal | Standalone | Co-deploy with ga4gh-infra |
-|------|------------|----------------------------|
-| Start | `make up` or `./install-edge.sh` | `make up-with-infra` or `./install-edge.sh --with-infra` |
-| Stop (keep data) | `make down` | `make down` |
-| Remove volumes | `make destroy` | `make destroy` |
+| Goal | Standalone | + ga4gh-infra | + Solum |
+|------|------------|---------------|---------|
+| Start | `make up` | `make up-with-infra` | `make up-with-solum` |
+| Both companions | | `make up-with-infra-solum` | |
+| Stop (keep data) | `make down` | same | same |
+| Remove volumes | `make destroy` | same | same |
 
 ## Service selection (what to enable)
 
@@ -90,16 +114,19 @@ Details: [docs/GA4GH-STANDARDS.md](docs/GA4GH-STANDARDS.md).
 | Command | Purpose |
 |---------|---------|
 | `lab-kit init` | Interactive wizard → `lab-kit.toml` |
-| `lab-kit generate compose` | Merge `deploy/docker-compose/*.yml` |
-| `lab-kit generate helm` | Emit values overlay |
-| `lab-kit generate systemd` | Emit `ferrum-*.service` stubs |
+| `lab-kit generate compose` | Merge compose fragments (monolith + optional infra/Solum) |
+| `lab-kit generate compose --with-ga4gh-infra` | Force ga4gh-infra co-deploy |
+| `lab-kit generate compose --with-solum` | Force Solum sidecar companion |
+| `lab-kit generate raspberry-pi` / `pi` | Portable Pi field kit (`pi-kit/` + `install-on-pi.sh`) |
+| `lab-kit generate helm` | Emit values overlay (`gateway.enable.*`) |
+| `lab-kit generate systemd` | Emit `ferrum-gateway.service` (+ optional Solum) |
 | `lab-kit status` | Health table for enabled services |
 | `lab-kit conformance run` | Invoke external **HelixTest** CLI |
 | `lab-kit conformance report` | JSON (+ optional licensed PDF) |
 | `lab-kit ferrum check` | Confirms Git-pinned `ferrum-core` from [Ferrum](https://github.com/SynapticFour/Ferrum) resolves |
-| `lab-kit ingest …` | HTTP client for Ferrum **`/api/v1/ingest/*`** (register, upload, job status) — see [Ferrum `docs/INGEST-LAB-KIT.md`](https://github.com/SynapticFour/Ferrum/blob/main/docs/INGEST-LAB-KIT.md) |
-| `lab-kit mii sync-manifest` | Optional wrapper for `ferrum mii sync-manifest` (deterministic manifest regeneration from pinned packages) |
-| `lab-kit mii validate` | Optional wrapper for `ferrum mii validate` (technical MII profile checks) |
+| `lab-kit ingest …` | HTTP client for Ferrum **`/api/v1/ingest/*`** — see [Ferrum `docs/INGEST-LAB-KIT.md`](https://github.com/SynapticFour/Ferrum/blob/main/docs/INGEST-LAB-KIT.md) |
+| `lab-kit mii sync-manifest` | Optional wrapper for `ferrum mii sync-manifest` |
+| `lab-kit mii validate` | Optional wrapper for `ferrum mii validate` |
 
 MII helpers are intentionally optional. Lab Kit remains GA4GH-centric; MII handling is delegated to upstream Ferrum MII Connect.
 
@@ -108,6 +135,8 @@ MII helpers are intentionally optional. Lab Kit remains GA4GH-centric; MII handl
 - **[Documentation index](docs/README.md)** — all guides and examples
 - [GA4GH workflow primer](docs/GA4GH-WORKFLOW-PRIMER.md) — TRS/WES/TES flow, DRS, engines, nested Docker, `amd64`/`arm64`
 - [Operations checklist](docs/OPERATIONS-CHECKLIST.md) — env vars, Docker, networking, naming
+- [Solum co-deploy](docs/SOLUM-CO-DEPLOY.md) — optional consent companion
+- [Raspberry Pi](docs/RASPBERRY-PI.md) — field kit + on-device install
 - [Ferrum GA4GH demo overlay](docs/FERRUM-GA4GH-DEMO-OVERLAY.md) — WES/TES Docker Compose merge + `contrib/ferrum/` patch
 
 Also: [Architecture](docs/ARCHITECTURE.md) · [Ferrum integration](docs/FERRUM-INTEGRATION.md) · [Deployment targets](docs/DEPLOYMENT-TARGETS.md) · [ELIXIR AAI](docs/ELIXIR-AAI.md) · [Bring your own](docs/BRING-YOUR-OWN.md) · [Conformance](docs/CONFORMANCE.md) · [Business model](docs/BUSINESS-MODEL.md)
@@ -123,13 +152,3 @@ See [README.de.md](README.de.md).
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md).
-
-## Support
-
-For responsible disclosure or commercial support inquiries, contact [contact@synapticfour.com](mailto:contact@synapticfour.com).
-
----
-
-Built by **Synaptic Four** for transparent, standards-based scientific infrastructure.
-Developed by a neurodiverse team, including autistic engineers, with a focus on precision, clarity, and reliable operations.
-Contact: [contact@synapticfour.com](mailto:contact@synapticfour.com) · [synapticfour.com](https://synapticfour.com)

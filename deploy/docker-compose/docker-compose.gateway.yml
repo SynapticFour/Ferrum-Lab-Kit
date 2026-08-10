@@ -1,0 +1,30 @@
+# Monolith Ferrum gateway — default Lab Kit runtime path.
+# Selective GA4GH surfaces are enabled via FERRUM_SERVICES__ENABLE_* (injected by
+# `lab-kit generate compose` from lab-kit.toml / profiles).
+#
+# Published image: ghcr.io/synapticfour/ferrum (+ optional :latest-arm64 on Pi).
+# Override: FERRUM_IMAGE / FERRUM_PORT in .env (see .env.example).
+
+services:
+  ferrum-gateway:
+    image: ${FERRUM_IMAGE:-ghcr.io/synapticfour/ferrum:latest}
+    networks: [lab]
+    ports:
+      - "${FERRUM_PORT:-8080}:8080"
+    environment:
+      FERRUM_BIND: "0.0.0.0:8080"
+      # Defaults; generator overwrites true/false per selected services.
+      FERRUM_SERVICES__ENABLE_DRS: "false"
+      FERRUM_SERVICES__ENABLE_HTSGET: "false"
+      FERRUM_SERVICES__ENABLE_WES: "false"
+      FERRUM_SERVICES__ENABLE_TES: "false"
+      FERRUM_SERVICES__ENABLE_BEACON: "false"
+      FERRUM_SERVICES__ENABLE_TRS: "false"
+      FERRUM_SERVICES__ENABLE_PASSPORTS: "true"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s

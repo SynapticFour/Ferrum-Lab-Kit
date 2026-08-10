@@ -9,25 +9,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Deployment CLI (`lab-kit`) for profile init, Compose/Helm/systemd generation, status, ingest helpers, and HelixTest conformance wrappers.
-- Deployment profiles (`beacon-only`, `field-edge`, `field-edge+infra`, `institute`) and co-deploy fragments for local **ga4gh-infra**.
-- Git-pinned `ferrum-core` integration via `lab-kit-ferrum` with bump script and scheduled CI pin workflow.
-- Conformance workflow: compose generation for beacon-only / field-edge, HelixTest CLI smoke, and opt-in live suite via `workflow_dispatch`.
-- Local pre-commit / `scripts/hooks/ci-check.sh` mirroring primary GitHub CI checks.
+- **Monolith runtime path** — `docker-compose.gateway.yml` pulls `ghcr.io/synapticfour/ferrum` and injects `FERRUM_SERVICES__ENABLE_*` from the selected profile (usable `docker compose up`).
+- **Solum companion** — `[solum]` config, `solum.yml` + `Dockerfile.solum-sidecar`, CLI `--with-solum`, profiles `field-edge+solum` / `field-edge+infra+solum`, `make up-with-solum` / `up-with-infra-solum`, [docs/SOLUM-CO-DEPLOY.md](docs/SOLUM-CO-DEPLOY.md).
+- **Raspberry Pi field kit** — `lab-kit generate raspberry-pi` (alias `pi`) writes a portable `pi-kit/` (compose, `.env` ARM64, `install-on-pi.sh`); `make pi-kit`; [docs/RASPBERRY-PI.md](docs/RASPBERRY-PI.md).
+- **ga4gh-infra external mode** — `co-deploy-external.yml` (no local broker containers); broker port applied to co-deploy compose.- **`.env.example`** — Ferrum / ga4gh-infra / Solum variables for compose and CLI.
+- Helm `deployment-gateway.yaml` / `deployment-solum.yaml`; systemd emits `ferrum-gateway.service` (+ optional Solum).
 
 ### Changed
 
-- Document Compose/Helm service images as **placeholders**; Ferrum GHCR currently publishes monolith gateway/UI images only (see README and `docs/FERRUM-INTEGRATION.md`).
-- Conformance live HelixTest step no longer masks failures with `|| true` when the opt-in suite is run.
-- `TESTING.md` and `RELEASING.md` describe what CI actually gates and the intended first SemVer tag.
+- Default compose/Helm/systemd no longer depend on unpublished per-service images; `--legacy-per-service` retains the old fragments.
+- Health checks and edge installer wait on gateway port **8080**.
+- Docs (EN/DE README, integration, deployment, operations, ecosystem) aligned with the monolith + companion model.
 
 ### Fixed
 
-- Ship-hygiene documentation no longer claims aspirational quality gates that do not exist.
-
-### Security
-
-- Secret-scan and dependency-review workflows retained; stub quality-gate workflow removed in favor of real checks.
+- Edge / co-deploy overlays now apply to a real `ferrum-gateway` service (previously orphaned patches).
 
 ## [0.1.0-alpha] — unreleased tag
 

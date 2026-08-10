@@ -35,6 +35,9 @@ pub struct LabKitConfig {
     /// Optional co-deployed **ga4gh-infra** auth plane (broker, visa-registry, ADS, …).
     #[serde(default)]
     pub ga4gh_infra: Option<Ga4ghInfraSection>,
+    /// Optional **Solum** sidecar consent plane (companion only — product stays in Solum).
+    #[serde(default)]
+    pub solum: Option<SolumSection>,
 }
 
 fn default_schema_version() -> u32 {
@@ -480,6 +483,57 @@ pub enum Ga4ghInfraMode {
     CoDeploy,
     /// Point Ferrum at an existing ga4gh-infra deployment (no `infra.yml` merge).
     External,
+}
+
+/// Optional Solum sidecar co-deploy (consent status for Ferrum H2.1 teeth).
+///
+/// Lab Kit only wires Compose/env; jurisdiction profiles and Solum product logic
+/// remain in [Solum](https://github.com/SynapticFour/Solum).
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SolumSection {
+    #[serde(default)]
+    pub enabled: bool,
+    /// Host port published for the sidecar (container always listens on 8787).
+    #[serde(default = "default_solum_port")]
+    pub port: u16,
+    /// Shared with Ferrum `FERRUM_SOLUM__SIDECAR_TOKEN` / `SOLUM_SIDECAR_TOKEN`.
+    #[serde(default)]
+    pub sidecar_token: Option<String>,
+    #[serde(default)]
+    pub default_subject: Option<String>,
+    #[serde(default)]
+    pub default_purpose: Option<String>,
+    #[serde(default = "default_solum_timeout")]
+    pub timeout_secs: u64,
+    /// Git tag / branch for `Dockerfile.solum-sidecar` build (when not using `SOLUM_IMAGE`).
+    #[serde(default = "default_solum_tag")]
+    pub solum_tag: String,
+}
+
+fn default_solum_port() -> u16 {
+    8787
+}
+
+fn default_solum_timeout() -> u64 {
+    5
+}
+
+fn default_solum_tag() -> String {
+    "stage1-baseline-sidecar-custody-2026-08-01".into()
+}
+
+impl Default for SolumSection {
+    fn default() -> Self {
+        Self {
+            enabled: false,
+            port: default_solum_port(),
+            sidecar_token: None,
+            default_subject: None,
+            default_purpose: None,
+            timeout_secs: default_solum_timeout(),
+            solum_tag: default_solum_tag(),
+        }
+    }
 }
 
 #[cfg(test)]

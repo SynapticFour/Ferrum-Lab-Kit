@@ -65,3 +65,14 @@ scopes = ["openid", "profile", "email", "offline_access", "ga4gh_passport_v1"]
 # broker_port = 8180
 # service_registry_url = "http://localhost:8183"
 # registration_api_key_env = "SERVICE_REGISTRY_REGISTRATION_KEY"
+
+# --- Optional: Solum sidecar companion (consent status for Ferrum H2.1) ---
+# Product ownership stays in Solum — see docs/SOLUM-CO-DEPLOY.md
+# [solum]
+# enabled = true
+# port = 8787
+# # Prefer SOLUM_SIDECAR_TOKEN in .env for the shared token
+# default_subject = ""
+# default_purpose = ""
+# timeout_secs = 5
+# solum_tag = "stage1-baseline-sidecar-custody-2026-08-01"

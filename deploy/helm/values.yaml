@@ -1,11 +1,32 @@
-# Default: all workloads off. `lab-kit generate helm` sets enabled + optional externalUrl.
+# Default: gateway off until `lab-kit generate helm` enables surfaces.
+# Prefer the monolith gateway + gateway.enable.* flags (published GHCR image).
+# Legacy per-service templates remain for operators who publish their own images.
+
 global:
-  imageRegistry: ""
+  imageRegistry: "ghcr.io/synapticfour"
 
 lab:
   name: ""
   environment: production
 
+gateway:
+  enabled: false
+  image: ghcr.io/synapticfour/ferrum:latest
+  port: 8080
+  enable:
+    drs: false
+    htsget: false
+    wes: false
+    tes: false
+    beacon: false
+    trs: false
+
+solum:
+  enabled: false
+  image: synapticfour/solum-sidecar:lab-kit
+  port: 8787
+
+# Legacy placeholders (unpublished) — not used by the default gateway chart path.
 services:
   drs:
     enabled: false

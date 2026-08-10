@@ -15,13 +15,15 @@
 |-----|----------------|
 | [ARCHITECTURE.md](ARCHITECTURE.md) | Lab Kit crates and how config drives deploy artefacts |
 | [DEPLOYMENT-TARGETS.md](DEPLOYMENT-TARGETS.md) | Where Lab Kit aims to run (compose, K8s, systemd, …) |
+| [RASPBERRY-PI.md](RASPBERRY-PI.md) | **Pi field kit** — `lab-kit generate raspberry-pi`, on-device install, Solum/hub boundaries |
 | [BRING-YOUR-OWN.md](BRING-YOUR-OWN.md) | External endpoints vs generated stacks |
 
 ## Integration & identity
 
 | Doc | What it’s for |
 |-----|----------------|
-| [FERRUM-INTEGRATION.md](FERRUM-INTEGRATION.md) | Git pin to `ferrum-core`, **`lab-kit ingest`**, gateway URL / token |
+| [FERRUM-INTEGRATION.md](FERRUM-INTEGRATION.md) | Git pin to `ferrum-core`, monolith images, **`lab-kit ingest`**, ga4gh-infra / Solum wiring |
+| [SOLUM-CO-DEPLOY.md](SOLUM-CO-DEPLOY.md) | Optional Solum sidecar companion (consent teeth) |
 | [FERRUM-GA4GH-DEMO-OVERLAY.md](FERRUM-GA4GH-DEMO-OVERLAY.md) | Ferrum **GA4GH Compose overlay** (WES/TES Docker, workdirs, Crypt4GH) — mirrors under `contrib/ferrum/` + patch |
 | [ELIXIR-AAI.md](ELIXIR-AAI.md) | LS Login / Passport-oriented notes |
 
@@ -37,7 +39,8 @@
 | Path | What it’s for |
 |------|----------------|
 | `config/lab-kit.example.toml` | Annotated full config template |
-| `config/profiles/*.toml` | Ready-made service selections (`field-edge` for Pi/laptop/offline) |
+| `config/profiles/*.toml` | Ready-made selections (`field-edge`, `+infra`, `+solum`, …) |
+| `.env.example` | Compose / CLI environment variables |
 | `config/examples/ingest-register.json` | Sample body for **`lab-kit ingest register`** |
 
 ---

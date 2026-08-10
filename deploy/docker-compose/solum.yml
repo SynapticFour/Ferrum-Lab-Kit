@@ -1,0 +1,45 @@
+# Optional Solum sidecar (clinical consent plane) co-deployed with Ferrum.
+# Merged when [solum].enabled or `lab-kit generate compose --with-solum`.
+#
+# Product ownership stays in Solum — Lab Kit only wires the companion container
+# and FERRUM_SOLUM__* on ferrum-gateway (see docs/SOLUM-CO-DEPLOY.md).
+#
+# Default: build from Dockerfile.solum-sidecar (pins a Solum tag).
+# Override with a prebuilt image: SOLUM_IMAGE=… (skips build when set via compose).
+
+services:
+  solum-sidecar:
+    build:
+      context: ${SOLUM_DOCKER_CONTEXT:-deploy/docker-compose}
+      dockerfile: Dockerfile.solum-sidecar
+      args:
+        SOLUM_TAG: ${SOLUM_TAG:-stage1-baseline-sidecar-custody-2026-08-01}
+        RUST_VERSION: ${SOLUM_RUST_VERSION:-1.91.1}
+    image: ${SOLUM_IMAGE:-synapticfour/solum-sidecar:lab-kit}
+    networks: [lab]
+    environment:
+      SOLUM_SIDECAR_TOKEN: ${SOLUM_SIDECAR_TOKEN:-solum-lab-kit-local-token-change-me}
+      SOLUM_ALLOW_EPHEMERAL: ${SOLUM_ALLOW_EPHEMERAL:-1}
+      SOLUM_PROFILE: /etc/solum/dev-local.toml
+      SOLUM_AUDIT: /data/audit.jsonl
+      SOLUM_CONSENT_STORE: /data/consent.jsonl
+      SOLUM_SIDECAR_BIND: 0.0.0.0:8787
+      RUST_LOG: ${SOLUM_LOG:-info}
+    ports:
+      - "${SOLUM_PORT:-8787}:8787"
+    volumes:
+      - solum-sidecar-data:/data
+    restart: unless-stopped
+
+  ferrum-gateway:
+    environment:
+      FERRUM_SOLUM__BASE_URL: http://solum-sidecar:8787
+      FERRUM_SOLUM__SIDECAR_TOKEN: ${SOLUM_SIDECAR_TOKEN:-solum-lab-kit-local-token-change-me}
+      FERRUM_SOLUM__TIMEOUT_SECS: ${FERRUM_SOLUM_TIMEOUT_SECS:-5}
+      # Optional defaults for unbound objects/runs (operator may leave empty):
+      # FERRUM_SOLUM__DEFAULT_SUBJECT: ""
+      # FERRUM_SOLUM__DEFAULT_PURPOSE: ""
+    # depends_on is merged in the generator so co-deploy infra deps are preserved.
+
+volumes:
+  solum-sidecar-data:

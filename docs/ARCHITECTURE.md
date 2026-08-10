@@ -19,8 +19,8 @@
 
 ## Data flow
 
-Configuration drives a **service registry** (deploy vs external URL). Generators emit artifacts; **Ferrum** binaries/images perform protocol work at runtime.
+Configuration drives a **service registry** (deploy vs external URL). Generators emit a **monolith** Ferrum gateway with `FERRUM_SERVICES__ENABLE_*` (optional ga4gh-infra / Solum companions). **Ferrum** images perform protocol work at runtime.
 
-For a **GA4GH-oriented narrative** (TRS → WES → TES, DRS bytes vs metadata, nested containers, engines), see [GA4GH-WORKFLOW-PRIMER.md](GA4GH-WORKFLOW-PRIMER.md). For operator runbooks, see [OPERATIONS-CHECKLIST.md](OPERATIONS-CHECKLIST.md).
+For a **GA4GH-oriented narrative** (TRS → WES → TES, DRS bytes vs metadata, nested containers, engines), see [GA4GH-WORKFLOW-PRIMER.md](GA4GH-WORKFLOW-PRIMER.md). For operator runbooks, see [OPERATIONS-CHECKLIST.md](OPERATIONS-CHECKLIST.md). Solum companion: [SOLUM-CO-DEPLOY.md](SOLUM-CO-DEPLOY.md).
 
 See also [BUSINESS-MODEL.md](BUSINESS-MODEL.md) for the open-core boundary.

@@ -63,11 +63,39 @@ jobs:
       - name: Validate field-edge compose YAML
         run: python3 -c "import yaml; yaml.safe_load(open('generated/docker-compose-field-edge.yml'))"
 
-      - name: Assert field-edge uses same GA4GH surfaces as beacon-only
+      - name: Assert field-edge uses monolith gateway + Beacon enable
         run: |
-          grep -q 'beacon:' generated/docker-compose-field-edge.yml
           grep -q 'ferrum-gateway:' generated/docker-compose-field-edge.yml
-          echo "field-edge profile: Beacon v2 + DRS + edge overlay (same HelixTest GA4GH compliance, SQLite/local backend)"
+          grep -q 'ghcr.io/synapticfour/ferrum' generated/docker-compose-field-edge.yml
+          grep -q 'FERRUM_SERVICES__ENABLE_BEACON' generated/docker-compose-field-edge.yml
+          grep -q 'FERRUM_AFRICA__OFFLINE_FIRST' generated/docker-compose-field-edge.yml
+          echo "field-edge profile: monolith gateway + Beacon/DRS ENABLE flags + edge overlay"
+
+      - name: Generate compose (field-edge+infra)
+        run: |
+          cargo run -p lab-kit-selector -- init \
+            --profile field-edge+infra \
+            --non-interactive \
+            --output generated/lab-kit-field-edge-infra.toml
+          cargo run -p lab-kit-selector -- generate compose \
+            --config generated/lab-kit-field-edge-infra.toml \
+            --fragments deploy/docker-compose \
+            --output generated/docker-compose-field-edge-infra.yml
+          grep -q 'aai-broker' generated/docker-compose-field-edge-infra.yml
+          grep -q 'ferrum-gateway:' generated/docker-compose-field-edge-infra.yml
+
+      - name: Generate compose (field-edge+solum)
+        run: |
+          cargo run -p lab-kit-selector -- init \
+            --profile field-edge+solum \
+            --non-interactive \
+            --output generated/lab-kit-field-edge-solum.toml
+          cargo run -p lab-kit-selector -- generate compose \
+            --config generated/lab-kit-field-edge-solum.toml \
+            --fragments deploy/docker-compose \
+            --output generated/docker-compose-field-edge-solum.yml
+          grep -q 'solum-sidecar' generated/docker-compose-field-edge-solum.yml
+          grep -q 'FERRUM_SOLUM__BASE_URL' generated/docker-compose-field-edge-solum.yml
 
       - name: Show merged compose (head)
         run: head -n 50 generated/docker-compose.yml

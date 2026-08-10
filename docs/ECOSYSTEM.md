@@ -52,7 +52,7 @@ Repos that run a **local Docker stack** share the same verbs:
 |------------|--------|------|---------|-------|
 | **ga4gh-infra** | `make up` / `just up` | `make down` | `make destroy` | Native binary: [ga4gh-infra getting-started](https://github.com/SynapticFour/ga4gh-infra/blob/main/docs/getting-started.md) |
 | **Ferrum** | `make up` / `ferrum demo start` | `make down` | `make destroy` | Laptop: `ferrum demo start --offline` |
-| **Ferrum-Lab-Kit** | `make up` | `make down` | `make destroy` | Co-deploy: `make up-with-infra` |
+| **Ferrum-Lab-Kit** | `make up` | `make down` | `make destroy` | Co-deploy: `make up-with-infra` · Solum: `make up-with-solum` |
 | **Ferrum-GA4GH-Demo** | `make up` / `./run` | `make down` | `make destroy` | Co-deploy: `make up-with-infra` |
 | **HelixTest** | — | — | — | Conformance runner (needs a running target) |
 
@@ -87,6 +87,13 @@ cd Ferrum-GA4GH-Demo && ./run --with-infra
 # or: lab-kit init → profile field-edge+infra → lab-kit generate compose --with-ga4gh-infra
 ```
 
+**Field edge + Solum companion:**
+
+```bash
+./install-edge.sh --with-solum
+# docs: docs/SOLUM-CO-DEPLOY.md
+```
+
 **Conformance:**
 
 ```bash
@@ -100,7 +107,7 @@ helixtest --all --mode ferrum+infra --profile ferrum-infra
 |-------|----------|
 | Ferrum ↔ ga4gh-infra wiring | [Ferrum GA4GH-INFRA-INTEGRATION.md](https://github.com/SynapticFour/Ferrum/blob/main/docs/GA4GH-INFRA-INTEGRATION.md) |
 | Demo compose merge order | [Ferrum-GA4GH-Demo architecture.md](https://github.com/SynapticFour/Ferrum-GA4GH-Demo/blob/main/docs/architecture.md) |
-| Co-deploy profiles | [config/profiles/field-edge+infra.toml](../config/profiles/field-edge+infra.toml), [institute.toml](../config/profiles/institute.toml) |
+| Co-deploy profiles | [field-edge+infra.toml](../config/profiles/field-edge+infra.toml), [field-edge+solum.toml](../config/profiles/field-edge+solum.toml), [institute.toml](../config/profiles/institute.toml) |
 | HelixTest co-deploy mode | [helixtest/docs/ferrum.md](https://github.com/SynapticFour/HelixTest/blob/main/helixtest/docs/ferrum.md) |
 | Africa-Mode (SQLite) | [ga4gh-infra AFRICA-DEPLOYMENT](https://github.com/SynapticFour/ga4gh-infra/blob/main/docs/AFRICA-DEPLOYMENT.md) |
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Ferrum Lab Kit — Field/Edge one-shot installer.
 # Targets Raspberry Pi OS (ARM64), Ubuntu 22.04/24.04 (x86_64 / ARM64).
-# Minimal GA4GH node: Beacon v2 + DRS, SQLite + local filesystem (no PostgreSQL/MinIO).
+# Minimal GA4GH node: Beacon v2 + DRS on the Ferrum monolith (port 8080).
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -9,17 +9,26 @@ cd "$ROOT"
 
 LAB_KIT_VERSION="${LAB_KIT_VERSION:-latest}"
 LAB_KIT_REPO="${LAB_KIT_REPO:-SynapticFour/Ferrum-Lab-Kit}"
-BEACON_PORT="${BEACON_PORT:-8080}"
+FERRUM_PORT="${FERRUM_PORT:-8080}"
+BEACON_PORT="${BEACON_PORT:-$FERRUM_PORT}"
 DATA_DIR="${FERRUM_DATA_DIR:-$HOME/.ferrum}"
 CONFIG="${LAB_KIT_CONFIG:-lab-kit.toml}"
 COMPOSE_OUT="${COMPOSE_OUT:-docker-compose.yml}"
 WITH_INFRA=0
+WITH_SOLUM=0
 
 usage() {
   cat <<'EOF'
-Usage: install-edge.sh [--with-infra]
+Usage: install-edge.sh [--with-infra] [--with-solum]
 
   --with-infra   Co-deploy ga4gh-infra auth plane (broker 8180, registry 8183, mock-idp 9100)
+  --with-solum   Co-deploy Solum sidecar (consent companion on 8787)
+
+Environment:
+  FERRUM_IMAGE   Override monolith image (default: ghcr.io/synapticfour/ferrum:latest
+                 or :latest-arm64 on aarch64)
+  FERRUM_PORT    Gateway host port (default: 8080)
+  FERRUM_DATA_DIR  Persistent data (default: ~/.ferrum)
 EOF
 }
 
@@ -27,6 +36,10 @@ while [[ $# -gt 0 ]]; do
   case "$1" in
     --with-infra)
       WITH_INFRA=1
+      shift
+      ;;
+    --with-solum)
+      WITH_SOLUM=1
       shift
       ;;
     -h|--help)
@@ -47,7 +60,7 @@ echo "║  Synaptic Four · synapticfour.com            ║"
 echo "╚══════════════════════════════════════════════╝"
 echo ""
 echo "This script installs a minimal GA4GH-compatible local node"
-echo "(Beacon v2 + DRS) on this machine. No cloud required."
+echo "(Beacon v2 + DRS via Ferrum monolith) on this machine."
 echo ""
 
 require_root_for_docker() {
@@ -70,6 +83,13 @@ detect_arch() {
       echo "error: unsupported architecture: $machine (need x86_64 or aarch64)" >&2
       exit 1
       ;;
+  esac
+}
+
+default_ferrum_image() {
+  case "$(detect_arch)" in
+    aarch64) echo "ghcr.io/synapticfour/ferrum:latest-arm64" ;;
+    *) echo "ghcr.io/synapticfour/ferrum:latest" ;;
   esac
 }
 
@@ -101,7 +121,6 @@ install_docker_apt() {
     codename="jammy"
   fi
 
-  # Raspberry Pi OS reports debian; map to bookworm for Docker CE repo when needed.
   if [[ "$distro" == "raspbian" || "$distro" == "debian" ]]; then
     distro="debian"
     codename="${VERSION_CODENAME:-bookworm}"
@@ -124,7 +143,6 @@ install_lab_kit_binary() {
 
   mkdir -p "$(dirname "$dest")"
 
-  # Offline / bundled binary next to this script (e.g. USB stick deployment).
   if [[ -x "$ROOT/bin/lab-kit" ]]; then
     echo "==> Using bundled lab-kit: $ROOT/bin/lab-kit"
     install -m 0755 "$ROOT/bin/lab-kit" "$dest"
@@ -138,7 +156,6 @@ install_lab_kit_binary() {
     return 0
   fi
 
-  # Build from source when cargo is available (developer / air-gapped clone).
   if command -v cargo >/dev/null 2>&1 && [[ -f "$ROOT/Cargo.toml" ]]; then
     echo "==> Building lab-kit from source..."
     cargo build --release -p lab-kit-selector --locked
@@ -179,20 +196,31 @@ ensure_compose_cmd() {
   fi
 }
 
-wait_for_beacon() {
+wait_for_gateway() {
   local url="http://127.0.0.1:${BEACON_PORT}/ga4gh/beacon/v2/info"
   local i
-  for i in $(seq 1 30); do
+  for i in $(seq 1 45); do
     if curl -fsS "$url" >/dev/null 2>&1; then
+      return 0
+    fi
+    if curl -fsS "http://127.0.0.1:${BEACON_PORT}/health" >/dev/null 2>&1; then
       return 0
     fi
     sleep 2
   done
-  # Fallback: gateway health on same port (edge overlay).
-  if curl -fsS "http://127.0.0.1:${BEACON_PORT}/health" >/dev/null 2>&1; then
-    return 0
-  fi
   return 1
+}
+
+pick_profile() {
+  if [[ "$WITH_INFRA" -eq 1 && "$WITH_SOLUM" -eq 1 ]]; then
+    echo "field-edge+infra+solum"
+  elif [[ "$WITH_INFRA" -eq 1 ]]; then
+    echo "field-edge+infra"
+  elif [[ "$WITH_SOLUM" -eq 1 ]]; then
+    echo "field-edge+solum"
+  else
+    echo "field-edge"
+  fi
 }
 
 main() {
@@ -200,21 +228,25 @@ main() {
   ensure_compose_cmd
 
   export FERRUM_DATA_DIR="$DATA_DIR"
+  export FERRUM_PORT
+  export FERRUM_IMAGE="${FERRUM_IMAGE:-$(default_ferrum_image)}"
   mkdir -p "$DATA_DIR/objects"
 
-  local lab_kit
-  lab_kit="$(install_lab_kit_binary)"
-  export PATH="$(dirname "$lab_kit"):$PATH"
-
-  if [[ "$WITH_INFRA" -eq 1 ]]; then
-    echo "==> Initializing field-edge+infra profile (Ferrum + ga4gh-infra co-deploy)..."
-    "$lab_kit" init --profile field-edge+infra --non-interactive --output "$CONFIG" --data-dir "$DATA_DIR"
-  else
-    echo "==> Initializing field-edge profile..."
-    "$lab_kit" init --profile field-edge --non-interactive --output "$CONFIG" --data-dir "$DATA_DIR"
+  if [[ -f "$ROOT/.env.example" && ! -f "$ROOT/.env" ]]; then
+    echo "==> Creating .env from .env.example (edit tokens before production use)"
+    cp "$ROOT/.env.example" "$ROOT/.env"
   fi
 
-  echo "==> Generating docker-compose.yml..."
+  local lab_kit profile
+  lab_kit="$(install_lab_kit_binary)"
+  export PATH="$(dirname "$lab_kit"):$PATH"
+  profile="$(pick_profile)"
+
+  echo "==> Initializing profile: ${profile}"
+  echo "    FERRUM_IMAGE=${FERRUM_IMAGE}"
+  "$lab_kit" init --profile "$profile" --non-interactive --output "$CONFIG" --data-dir "$DATA_DIR"
+
+  echo "==> Generating docker-compose.yml (monolith + selected surfaces)..."
   compose_args=(
     generate compose
     --config "$CONFIG"
@@ -224,29 +256,40 @@ main() {
   if [[ "$WITH_INFRA" -eq 1 ]]; then
     compose_args+=(--with-ga4gh-infra)
   fi
+  if [[ "$WITH_SOLUM" -eq 1 ]]; then
+    compose_args+=(--with-solum)
+  fi
   "$lab_kit" "${compose_args[@]}"
 
   echo "==> Starting Ferrum Lab Kit stack..."
-  "${COMPOSE[@]}" -f "$COMPOSE_OUT" up -d
+  "${COMPOSE[@]}" -f "$COMPOSE_OUT" up -d --build
 
-  echo "==> Waiting for Beacon v2 on port ${BEACON_PORT}..."
-  if wait_for_beacon; then
+  echo "==> Waiting for Ferrum gateway on port ${BEACON_PORT}..."
+  if wait_for_gateway; then
     echo ""
     echo "╔══════════════════════════════════════════════╗"
     echo "║  Field/Edge node is running                  ║"
     echo "╚══════════════════════════════════════════════╝"
     echo ""
+    echo "  Gateway health:  http://127.0.0.1:${BEACON_PORT}/health"
     echo "  Beacon v2 info:  http://127.0.0.1:${BEACON_PORT}/ga4gh/beacon/v2/info"
     echo "  Data directory:  ${DATA_DIR}"
     echo "  Config:          ${ROOT}/${CONFIG}"
+    echo "  Image:           ${FERRUM_IMAGE}"
+    if [[ "$WITH_INFRA" -eq 1 ]]; then
+      echo "  AAI broker:      http://127.0.0.1:8180"
+    fi
+    if [[ "$WITH_SOLUM" -eq 1 ]]; then
+      echo "  Solum sidecar:   http://127.0.0.1:8787"
+    fi
     echo ""
     echo "  Conformance:  lab-kit conformance run --config ${CONFIG}"
     echo "  Status:       lab-kit status --config ${CONFIG}"
     echo ""
   else
     echo ""
-    echo "Stack started but Beacon did not respond on port ${BEACON_PORT} within 60s." >&2
-    echo "Images may still be placeholders — check: ${COMPOSE[*]} -f ${COMPOSE_OUT} ps" >&2
+    echo "Stack started but gateway did not respond on port ${BEACON_PORT} within ~90s." >&2
+    echo "Check: ${COMPOSE[*]} -f ${COMPOSE_OUT} ps && ${COMPOSE[*]} -f ${COMPOSE_OUT} logs ferrum-gateway" >&2
     exit 1
   fi
 }

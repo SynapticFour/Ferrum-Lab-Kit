@@ -1,0 +1,55 @@
+# Builds solum-sidecar from a pinned Solum tag (same pattern as Solum-Demo).
+# Lab Kit does not vendor Solum source — clone happens at image build time.
+#
+# Reproducibility: pin SOLUM_TAG; do not track Solum main from Lab Kit.
+
+ARG SOLUM_TAG=stage1-baseline-sidecar-custody-2026-08-01
+ARG RUST_VERSION=1.91.1
+
+FROM rust:${RUST_VERSION}-bookworm AS builder
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        ca-certificates \
+        git \
+        libsodium-dev \
+        pkg-config \
+    && rm -rf /var/lib/apt/lists/*
+
+ARG SOLUM_TAG
+WORKDIR /build
+
+RUN git clone --depth 1 --branch "${SOLUM_TAG}" \
+    https://github.com/SynapticFour/Solum.git .
+
+RUN cargo build --release -p solum-sidecar \
+    && strip target/release/solum-sidecar
+
+FROM debian:bookworm-slim AS runtime
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        ca-certificates \
+        libsodium23 \
+    && rm -rf /var/lib/apt/lists/* \
+    && useradd --system --uid 10001 --home /nonexistent --shell /usr/sbin/nologin solum
+
+COPY --from=builder /build/target/release/solum-sidecar /usr/local/bin/solum-sidecar
+COPY --from=builder /build/config/profiles/dev-local.toml /etc/solum/dev-local.toml
+
+RUN mkdir -p /data && chown solum:solum /data
+
+USER solum
+WORKDIR /data
+
+ENV SOLUM_PROFILE=/etc/solum/dev-local.toml \
+    SOLUM_AUDIT=/data/audit.jsonl \
+    SOLUM_CONSENT_STORE=/data/consent.jsonl \
+    SOLUM_SIDECAR_BIND=0.0.0.0:8787 \
+    SOLUM_ALLOW_EPHEMERAL=1 \
+    RUST_LOG=info
+
+EXPOSE 8787
+
+ENTRYPOINT ["solum-sidecar"]
+CMD ["--ephemeral", "--bind", "0.0.0.0:8787"]

@@ -61,12 +61,19 @@ Use this as a **runbook scaffold** when bringing up or handing over an environme
 
 | Variable | Purpose |
 |----------|---------|
+| `FERRUM_IMAGE` | Monolith image for generated compose (default `ghcr.io/synapticfour/ferrum:latest`). |
+| `FERRUM_PORT` | Host port for `ferrum-gateway` (default **8080**). |
+| `FERRUM_DATA_DIR` | Edge data bind mount (default `~/.ferrum`). |
 | `FERRUM_GATEWAY_URL` | Base URL of ferrum-gateway for **`lab-kit ingest`**. |
 | `FERRUM_TOKEN` | Optional Bearer token for authenticated ingest. |
 | `FERRUM_LAB_KIT_LICENSE_KEY` | Optional; enables **PDF** conformance reports (`lab-kit-report`). |
 | `HELIXTEST_BIN` | Override path to **HelixTest** binary for `lab-kit conformance run`. |
+| `GA4GH_IMAGE_PREFIX` / `*_VERSION` | ga4gh-infra image pins (see `.env.example`). |
+| `SOLUM_SIDECAR_TOKEN` / `SOLUM_IMAGE` / `SOLUM_TAG` | Solum companion (see [SOLUM-CO-DEPLOY.md](SOLUM-CO-DEPLOY.md)). |
 
-**Ferrum server / deployment:** Many settings come from **`config.toml`** and env overlays documented in **[Ferrum `INSTALLATION.md`](https://github.com/SynapticFour/Ferrum/blob/main/docs/INSTALLATION.md)** and **[`GA4GH.md`](https://github.com/SynapticFour/Ferrum/blob/main/docs/GA4GH.md)**. **Do not guess** `FERRUM_*` names in runbooks — copy from the version you deploy.
+**Selective surfaces (injected by `lab-kit generate compose`):** `FERRUM_SERVICES__ENABLE_{DRS,HTSGET,WES,TES,BEACON,TRS}`.
+
+**Ferrum server / deployment:** Many settings come from **`config.toml`** and env overlays documented in **[Ferrum `INSTALLATION.md`](https://github.com/SynapticFour/Ferrum/blob/main/docs/INSTALLATION.md)** and **[`GA4GH.md`](https://github.com/SynapticFour/Ferrum/blob/main/docs/GA4GH.md)**. Copy from the Ferrum version you deploy — see also [`.env.example`](../.env.example).
 
 ---
 
@@ -76,6 +83,10 @@ Commands match `crates/lab-kit-selector` (binary name **`lab-kit`**). From repo 
 
 | Step | Command |
 |------|---------|
+| Init profile | `lab-kit init --profile field-edge --non-interactive` |
+| Generate compose | `lab-kit generate compose --config lab-kit.toml -o docker-compose.yml` |
+| + ga4gh-infra | `… --with-ga4gh-infra` or `make up-with-infra` |
+| + Solum | `… --with-solum` or `make up-with-solum` |
 | Config load + health poll | `lab-kit status --config lab-kit.toml` |
 | Ferrum `ferrum-core` git pin | `lab-kit ferrum check` |
 | Ingest smoke (gateway running) | `lab-kit ingest --gateway <GATEWAY_URL> register-url https://example.com/f.txt --name demo` |
@@ -88,7 +99,8 @@ Commands match `crates/lab-kit-selector` (binary name **`lab-kit`**). From repo 
 
 ## G. Assumptions
 
-- Generated **Compose / Helm** files are **templates**; operators must fill images, secrets, and volumes.  
+- Default **Compose / Helm** use the **published monolith** image + `ENABLE_*` flags. Fill secrets (LS Login, Solum token, registry keys) before production.
+- **`--legacy-per-service`** still emits unpublished placeholder images — do not expect those to pull from GHCR.
 - **Conformance** tooling (HelixTest) is **external** to this repo — see [CONFORMANCE.md](CONFORMANCE.md).
 
 ---

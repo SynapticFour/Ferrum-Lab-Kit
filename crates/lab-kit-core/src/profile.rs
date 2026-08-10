@@ -8,7 +8,7 @@ use crate::config::{
     ConformanceSection, DrsServiceConfig, Ga4ghInfraMode, Ga4ghInfraSection, HtsgetServiceConfig,
     LabKitConfig, LabSection, LsLoginConfig, MetaSection, PosixNestedConfig, ProfileAfricaSection,
     ProfileAuthSection, ProfileNetworkSection, ProfileResourcesSection, ProfileServicesFlags,
-    ServicesSection, TesServiceConfig, TrsServiceConfig, WesServiceConfig,
+    ServicesSection, SolumSection, TesServiceConfig, TrsServiceConfig, WesServiceConfig,
 };
 use crate::CoreError;
 
@@ -32,6 +32,8 @@ pub struct ProfileTemplate {
     pub conformance: ConformanceSection,
     #[serde(default)]
     pub ga4gh_infra: Ga4ghInfraSection,
+    #[serde(default)]
+    pub solum: SolumSection,
 }
 
 impl ProfileTemplate {
@@ -119,9 +121,18 @@ impl ProfileTemplate {
             resources: Some(self.resources),
             conformance: Some(self.conformance),
             ga4gh_infra: ga4gh_infra_from_profile(&self.ga4gh_infra),
+            solum: solum_from_profile(&self.solum),
         };
         cfg.validate()?;
         Ok(cfg)
+    }
+}
+
+fn solum_from_profile(section: &SolumSection) -> Option<SolumSection> {
+    if section.enabled {
+        Some(section.clone())
+    } else {
+        None
     }
 }
 
@@ -237,11 +248,16 @@ pub fn parse_config_or_profile(raw: &str) -> Result<LabKitConfig, CoreError> {
     Ok(cfg)
 }
 
-/// Whether the config was generated from the field-edge profile.
+/// Whether the config was generated from a field-edge family profile.
 pub fn is_field_edge(cfg: &LabKitConfig) -> bool {
     cfg.meta
         .as_ref()
-        .map(|m| m.profile == "field-edge" || m.profile == "field-edge+infra")
+        .map(|m| {
+            matches!(
+                m.profile.as_str(),
+                "field-edge" | "field-edge+infra" | "field-edge+solum" | "field-edge+infra+solum"
+            )
+        })
         .unwrap_or(false)
 }
 
@@ -250,6 +266,11 @@ pub fn is_co_deploy(cfg: &LabKitConfig) -> bool {
     cfg.ga4gh_infra
         .as_ref()
         .is_some_and(|g| g.enabled && g.mode == Ga4ghInfraMode::CoDeploy)
+}
+
+/// Whether Solum sidecar co-deploy is enabled in config.
+pub fn is_solum_enabled(cfg: &LabKitConfig) -> bool {
+    cfg.solum.as_ref().is_some_and(|s| s.enabled)
 }
 
 #[cfg(test)]

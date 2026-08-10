@@ -9,7 +9,10 @@ use lab_kit_core::{
     BeaconServiceConfig, LabKitConfig, LabSection, LsLoginConfig, ProfileOverrides,
     ServiceRegistry, ServicesSection,
 };
-use lab_kit_deploy::{generate_compose_file, generate_helm_values, generate_systemd_units};
+use lab_kit_deploy::{
+    generate_compose_file, generate_helm_values, generate_raspberry_pi_bundle,
+    generate_systemd_units, ComposeOptions, RaspberryPiBundleOptions,
+};
 use lab_kit_ingest::{IngestClient, RegisterItem, RegisterRequest, UploadOptions};
 use lab_kit_report::generate_reports;
 use tracing_subscriber::EnvFilter;
@@ -184,6 +187,12 @@ enum GenerateTarget {
         /// Merge ga4gh-infra stack (`infra.yml` + `co-deploy.yml`) even when `[ga4gh_infra]` is unset.
         #[arg(long)]
         with_ga4gh_infra: bool,
+        /// Merge Solum sidecar (`solum.yml`) even when `[solum]` is unset.
+        #[arg(long)]
+        with_solum: bool,
+        /// Emit unpublished per-service image fragments instead of the monolith gateway.
+        #[arg(long)]
+        legacy_per_service: bool,
         /// Write merged compose to stdout instead of a file.
         #[arg(long, default_value_t = false)]
         stdout: bool,
@@ -201,6 +210,29 @@ enum GenerateTarget {
         config: PathBuf,
         #[arg(long, default_value = "generated/systemd")]
         output_dir: PathBuf,
+    },
+    /// Portable Raspberry Pi field-edge kit (compose + .env + install-on-pi.sh).
+    #[command(visible_alias = "pi")]
+    RaspberryPi {
+        /// Existing lab-kit.toml (optional if --profile is set).
+        #[arg(short, long)]
+        config: Option<PathBuf>,
+        /// Profile when --config is omitted (default: field-edge).
+        #[arg(long, default_value = "field-edge")]
+        profile: String,
+        #[arg(long, default_value = "deploy/docker-compose")]
+        fragments: PathBuf,
+        /// Output directory for the kit (USB-stick friendly).
+        #[arg(short, long, default_value = "pi-kit")]
+        output: PathBuf,
+        #[arg(long)]
+        with_ga4gh_infra: bool,
+        #[arg(long)]
+        with_solum: bool,
+        #[arg(long, default_value_t = 4)]
+        ram_gb: u32,
+        #[arg(long)]
+        data_dir: Option<String>,
     },
 }
 
@@ -249,17 +281,24 @@ async fn main() -> anyhow::Result<()> {
                 fragments,
                 output,
                 with_ga4gh_infra,
+                with_solum,
+                legacy_per_service,
                 stdout,
             } => {
                 let cfg =
                     load_config(&config).with_context(|| format!("load {}", config.display()))?;
+                let options = ComposeOptions {
+                    with_ga4gh_infra,
+                    with_solum,
+                    legacy_per_service,
+                };
                 if stdout {
                     let tmp = tempfile::tempdir()?;
                     let p = tmp.path().join("out.yml");
-                    generate_compose_file(&cfg, &fragments, &p, with_ga4gh_infra)?;
+                    generate_compose_file(&cfg, &fragments, &p, &options)?;
                     print!("{}", std::fs::read_to_string(&p)?);
                 } else {
-                    generate_compose_file(&cfg, &fragments, &output, with_ga4gh_infra)?;
+                    generate_compose_file(&cfg, &fragments, &output, &options)?;
                     tracing::info!(path = %output.display(), "wrote compose file");
                 }
             }
@@ -285,6 +324,48 @@ async fn main() -> anyhow::Result<()> {
                     load_config(&config).with_context(|| format!("load {}", config.display()))?;
                 generate_systemd_units(&cfg, &output_dir)?;
                 tracing::info!(dir = %output_dir.display(), "wrote systemd units");
+            }
+            GenerateTarget::RaspberryPi {
+                config,
+                profile,
+                fragments,
+                output,
+                with_ga4gh_infra,
+                with_solum,
+                ram_gb,
+                data_dir,
+            } => {
+                let data = data_dir.clone().unwrap_or_else(|| "~/.ferrum".into());
+                let mut cfg = resolve_pi_config(config.as_ref(), &profile, ram_gb, data_dir)?;
+                if with_ga4gh_infra && !lab_kit_core::is_co_deploy(&cfg) {
+                    cfg.ga4gh_infra = Some(lab_kit_core::Ga4ghInfraSection {
+                        enabled: true,
+                        mode: lab_kit_core::Ga4ghInfraMode::CoDeploy,
+                        africa: true,
+                        ..Default::default()
+                    });
+                }
+                if with_solum && !lab_kit_core::is_solum_enabled(&cfg) {
+                    cfg.solum = Some(lab_kit_core::SolumSection {
+                        enabled: true,
+                        ..Default::default()
+                    });
+                }
+                let compose = ComposeOptions {
+                    with_ga4gh_infra: with_ga4gh_infra || lab_kit_core::is_co_deploy(&cfg),
+                    with_solum: with_solum || lab_kit_core::is_solum_enabled(&cfg),
+                    legacy_per_service: false,
+                };
+                let opts = RaspberryPiBundleOptions {
+                    compose,
+                    data_dir: data,
+                    ram_gb,
+                };
+                generate_raspberry_pi_bundle(&cfg, &fragments, &output, &opts)?;
+                println!(
+                    "Wrote Raspberry Pi kit to {} — copy to the Pi and run ./install-on-pi.sh",
+                    output.display()
+                );
             }
         },
         Command::Status { config } => {
@@ -522,10 +603,16 @@ async fn init_non_interactive(
     data_dir: Option<String>,
 ) -> anyhow::Result<()> {
     let name = profile.ok_or_else(|| anyhow::anyhow!("--non-interactive requires --profile"))?;
-    const NON_INTERACTIVE_PROFILES: &[&str] = &["field-edge", "field-edge+infra", "institute"];
+    const NON_INTERACTIVE_PROFILES: &[&str] = &[
+        "field-edge",
+        "field-edge+infra",
+        "field-edge+solum",
+        "field-edge+infra+solum",
+        "institute",
+    ];
     if !NON_INTERACTIVE_PROFILES.contains(&name) {
         anyhow::bail!(
-            "--non-interactive requires --profile field-edge, field-edge+infra, or institute (got {name})"
+            "--non-interactive requires --profile field-edge, field-edge+infra, field-edge+solum, field-edge+infra+solum, or institute (got {name})"
         );
     }
 
@@ -554,6 +641,46 @@ async fn init_non_interactive(
     Ok(())
 }
 
+fn resolve_pi_config(
+    config: Option<&PathBuf>,
+    profile: &str,
+    ram_gb: u32,
+    data_dir: Option<String>,
+) -> anyhow::Result<LabKitConfig> {
+    if let Some(path) = config {
+        return load_config(path).with_context(|| format!("load {}", path.display()));
+    }
+
+    const PI_PROFILES: &[&str] = &[
+        "field-edge",
+        "field-edge+infra",
+        "field-edge+solum",
+        "field-edge+infra+solum",
+    ];
+    if !PI_PROFILES.contains(&profile) {
+        anyhow::bail!(
+            "raspberry-pi kit profile must be one of {}; got {profile}",
+            PI_PROFILES.join(", ")
+        );
+    }
+
+    let template = load_profile_template(profile).context("load profile template")?;
+    let max_memory_mb = ram_gb.saturating_mul(768);
+    let data = data_dir.unwrap_or_else(|| "~/.ferrum".into());
+    template
+        .into_lab_kit_config(
+            "Field Lab",
+            "production",
+            "field-cohort-001",
+            ProfileOverrides {
+                max_memory_mb: Some(max_memory_mb),
+                data_dir: Some(data),
+                ..Default::default()
+            },
+        )
+        .context("expand profile to lab-kit.toml")
+}
+
 fn write_config(output: &Path, cfg: &LabKitConfig) -> anyhow::Result<()> {
     cfg.validate()?;
     let toml = toml::to_string_pretty(cfg)?;
@@ -572,8 +699,10 @@ async fn init_wizard(output: &Path, preset: Option<&str>) -> anyhow::Result<()> 
             "gdi-national-node" => 2,
             "field-edge" => 3,
             "field-edge+infra" => 4,
-            "institute" => 5,
-            "custom" => 6,
+            "field-edge+solum" => 5,
+            "field-edge+infra+solum" => 6,
+            "institute" => 7,
+            "custom" => 8,
             other => anyhow::bail!("unknown profile preset: {other}"),
         }
     } else {
@@ -585,6 +714,8 @@ async fn init_wizard(output: &Path, preset: Option<&str>) -> anyhow::Result<()> 
                 "GDI National Node",
                 "Field / Edge (Raspberry Pi, laptop, offline-capable)",
                 "Field / Edge + ga4gh-infra (co-deploy auth plane)",
+                "Field / Edge + Solum (consent companion)",
+                "Field / Edge + ga4gh-infra + Solum",
                 "Institute node + ga4gh-infra (co-deploy)",
                 "Custom",
             ])
@@ -601,6 +732,14 @@ async fn init_wizard(output: &Path, preset: Option<&str>) -> anyhow::Result<()> 
     }
 
     if profile_idx == 5 {
+        return init_field_edge_wizard(output, &theme, "field-edge+solum").await;
+    }
+
+    if profile_idx == 6 {
+        return init_field_edge_wizard(output, &theme, "field-edge+infra+solum").await;
+    }
+
+    if profile_idx == 7 {
         return init_institute_wizard(output, &theme).await;
     }
 
@@ -625,7 +764,7 @@ async fn init_wizard(output: &Path, preset: Option<&str>) -> anyhow::Result<()> 
         return Ok(());
     }
 
-    if profile_idx == 6 {
+    if profile_idx == 8 {
         return init_custom_wizard(output, &theme).await;
     }
 
@@ -830,6 +969,7 @@ async fn init_standard_wizard(output: &Path, theme: &ColorfulTheme) -> anyhow::R
         resources: None,
         conformance: None,
         ga4gh_infra: None,
+        solum: None,
     };
     write_config(output, &cfg)?;
     Ok(())
@@ -954,6 +1094,7 @@ async fn init_custom_wizard(output: &Path, theme: &ColorfulTheme) -> anyhow::Res
         resources: None,
         conformance: None,
         ga4gh_infra: None,
+        solum: None,
     };
     write_config(output, &cfg)?;
     Ok(())

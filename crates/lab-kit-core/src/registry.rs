@@ -88,6 +88,8 @@ impl ServiceRegistry {
                 .map(|c| (c.external_url.clone(), default_health(ServiceId::Trs))),
         );
 
+        // Identity providers are configured on the monolith gateway. `deploy: true`
+        // only matters for `--legacy-per-service` (auth-proxy fragment).
         if matches!(
             cfg.auth.provider,
             crate::config::AuthProvider::LsLogin | crate::config::AuthProvider::Keycloak
@@ -96,7 +98,7 @@ impl ServiceRegistry {
                 id: ServiceId::Auth,
                 deploy: true,
                 external_base: None,
-                health_url: default_health(ServiceId::Auth),
+                health_url: gateway_health(),
             });
         }
 
@@ -126,16 +128,11 @@ fn push_service(
     });
 }
 
-/// Default localhost health checks for generated Compose stacks (Ferrum images expose `/health`).
-fn default_health(id: ServiceId) -> Option<Url> {
-    let port = match id {
-        ServiceId::Drs => 8081,
-        ServiceId::Htsget => 8082,
-        ServiceId::Wes => 8083,
-        ServiceId::Tes => 8084,
-        ServiceId::Beacon => 8085,
-        ServiceId::Trs => 8086,
-        ServiceId::Auth => 8090,
-    };
-    Url::parse(&format!("http://127.0.0.1:{port}/health")).ok()
+/// Default health checks for the monolith gateway (all surfaces share port 8080).
+fn default_health(_id: ServiceId) -> Option<Url> {
+    gateway_health()
+}
+
+fn gateway_health() -> Option<Url> {
+    Url::parse("http://127.0.0.1:8080/health").ok()
 }

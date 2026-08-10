@@ -15,13 +15,13 @@ pub use config::{
     Ga4ghInfraMode, Ga4ghInfraSection, HtsgetServiceConfig, KeycloakConfig, LabKitConfig,
     LabSection, LdapAuthConfig, LsLoginConfig, MetaSection, ProfileAfricaSection,
     ProfileAuthSection, ProfileNetworkSection, ProfileResourcesSection, ProfileServicesFlags,
-    ServicesSection, TesServiceConfig, TrsServiceConfig, WesServiceConfig,
+    ServicesSection, SolumSection, TesServiceConfig, TrsServiceConfig, WesServiceConfig,
 };
 pub use error::CoreError;
 pub use health::{HealthAggregator, ServiceHealth};
 pub use profile::{
-    is_co_deploy, is_field_edge, load_profile_template, parse_config_or_profile, ProfileOverrides,
-    ProfileTemplate,
+    is_co_deploy, is_field_edge, is_solum_enabled, load_profile_template, parse_config_or_profile,
+    ProfileOverrides, ProfileTemplate,
 };
 pub use registry::{ServiceId, ServiceRegistry, ServiceRegistryEntry};
 

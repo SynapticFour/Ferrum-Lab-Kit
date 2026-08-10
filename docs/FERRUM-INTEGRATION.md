@@ -19,26 +19,38 @@ Prints the linked `ferrum_core::FerrumError` type name and the pinned revision.
 
 ## Runtime wiring / container images
 
-Shared **types, config, and auth** primitives come from `ferrum-core` via `lab-kit-ferrum`. Deploy generators emit Compose/Helm that still list **placeholder per-service images** (`synapticfour/ferrum-beacon:latest`, `ferrum-drs`, `ferrum-wes`, …, and matching Helm defaults). Those names are scaffolding for a selective multi-service layout — **they are not Ferrum GHCR tags**.
+**Default path (usable today):** `lab-kit generate compose` merges the **monolith** gateway fragment and sets selective surfaces with Ferrum env flags:
 
-### What Ferrum publishes on GHCR today
-
-From Ferrum’s [`.github/workflows/ghcr.yml`](https://github.com/SynapticFour/Ferrum/blob/main/.github/workflows/ghcr.yml) and [`demo/docker-compose.demo.yml`](https://github.com/SynapticFour/Ferrum/blob/main/demo/docker-compose.demo.yml):
+| Lab Kit selection | Injected env |
+|-------------------|--------------|
+| `[services.beacon]` | `FERRUM_SERVICES__ENABLE_BEACON=true` |
+| `[services.drs]` | `FERRUM_SERVICES__ENABLE_DRS=true` |
+| … | `ENABLE_HTSGET` / `WES` / `TES` / `TRS` |
 
 | Package | Typical tags |
 |---------|----------------|
-| `ghcr.io/synapticfour/ferrum` | `latest` (default branch), git SHA, release `v*` |
-| `ghcr.io/synapticfour/ferrum-ui` | same scheme |
+| `ghcr.io/synapticfour/ferrum` | `latest`, `latest-arm64`, git SHA, `v*` |
+| `ghcr.io/synapticfour/ferrum-ui` | same scheme (optional UI; not required by Lab Kit) |
 
-There are **no** documented per-service GHCR images (`ferrum-beacon`, `ferrum-drs`, …). Wiring Lab Kit fragments to invent those pins would be dishonest; keep placeholders until Ferrum publishes matching packages **or** Lab Kit switches generators to the monolith gateway image and documents the trade-off.
+Override with `FERRUM_IMAGE` / `FERRUM_PORT` (see [`.env.example`](../.env.example)).
 
-**Practical options today**
-
-1. Build Ferrum from source / use Ferrum’s own demo compose (`ghcr.io/synapticfour/ferrum` + UI).
-2. Override image names in generated Compose/Helm to images you build and push.
-3. When Ferrum adds per-service packages (or Lab Kit adopts the monolith ref), replace placeholders with those GHCR tags explicitly.
+**Legacy path:** `--legacy-per-service` still emits unpublished `synapticfour/ferrum-beacon` (etc.) fragments for operators who build their own multi-container images. Those tags are **not** on GHCR today — see `deploy/docker-compose/legacy/README.md`.
 
 **GA4GH local demo (WES + TES Docker, workdirs, `docker.sock`, optional Crypt4GH):** upstream merge overlay and env checklist — see [FERRUM-GA4GH-DEMO-OVERLAY.md](FERRUM-GA4GH-DEMO-OVERLAY.md) and `contrib/ferrum/`.
+
+### ga4gh-infra co-deploy
+
+```bash
+lab-kit generate compose --with-ga4gh-infra …
+# or [ga4gh_infra] mode = "co-deploy" | "external"
+make up-with-infra
+```
+
+Merges vendored `infra.yml` (GHCR ga4gh-infra images) + `co-deploy.yml` (JWKS / discovery on `ferrum-gateway`). External mode uses `co-deploy-external.yml` and your `service_registry_url` / broker port — no local broker containers.
+
+### Solum companion
+
+Optional consent sidecar — see [SOLUM-CO-DEPLOY.md](SOLUM-CO-DEPLOY.md).
 
 ## Versioned ingest (`/api/v1/ingest/*`)
 
@@ -98,26 +110,7 @@ lab-kit mii validate \
   --input ./etl-output/fhir \
   --manifest profiles/mii/manifest.json \
   --strict \
-  --format sarif \
-  --output mii-report.sarif
+  --format text
 ```
 
-Notes:
-
-- These commands call an installed `ferrum` binary (override via `FERRUM_BIN`).
-- They are optional and do not change Lab Kit's GA4GH-focused scope.
-- Validation output is a technical signal, not legal/compliance certification.
-
-## Co-deploy with ga4gh-infra
-
-Lab Kit can generate compose that merges Ferrum with a local **ga4gh-infra** auth plane:
-
-| Piece | Location |
-|-------|----------|
-| Profiles | `config/profiles/field-edge+infra.toml`, `institute.toml` |
-| Compose fragments | `deploy/docker-compose/co-deploy.yml`, `infra.yml` |
-| ga4gh-infra TOML | `deploy/docker-compose/ga4gh-infra-config/` |
-| Edge installer | `./install-edge.sh --with-infra` |
-| CLI flag | `lab-kit generate compose --with-ga4gh-infra` |
-
-Set `[ga4gh_infra].mode = "co-deploy"` in `lab-kit.toml` (see `config/lab-kit.example.toml`). Stack overview: [ECOSYSTEM.md](ECOSYSTEM.md).
+MII remains **optional** — Lab Kit stays GA4GH-centric; clinical MII ownership is Ferrum MII Connect.

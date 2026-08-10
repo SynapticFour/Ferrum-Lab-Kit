@@ -1,10 +1,8 @@
 # Always merged first by `lab-kit generate compose`.
 #
-# PLACEHOLDER IMAGES: per-service fragments use synapticfour/ferrum-*:latest names that
-# are NOT published on GHCR today. Ferrum publishes monolith packages only:
-#   ghcr.io/synapticfour/ferrum
-#   ghcr.io/synapticfour/ferrum-ui
-# See docs/FERRUM-INTEGRATION.md — override or rebuild before expecting `docker compose up` to pull.
+# Runtime path: monolith `ghcr.io/synapticfour/ferrum` via docker-compose.gateway.yml
+# plus FERRUM_SERVICES__ENABLE_* from the selected lab-kit.toml / profile.
+# See docs/FERRUM-INTEGRATION.md and .env.example.
 name: ferrum-lab-kit
 
 services: {}

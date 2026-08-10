@@ -1,54 +1,49 @@
 use std::fs;
 use std::path::Path;
 
-use lab_kit_core::{LabKitConfig, ServiceId, ServiceRegistry};
+use lab_kit_core::{is_solum_enabled, LabKitConfig, ServiceId, ServiceRegistry};
 use serde::Serialize;
 
 use crate::DeployError;
 
-/// Write Helm-style `values` with enabled flags, images, and optional `externalUrl` per service.
+/// Write Helm-style `values` for the monolith gateway + selective ENABLE_* flags.
 pub fn generate_helm_values(cfg: &LabKitConfig, output_path: &Path) -> Result<(), DeployError> {
     let registry = ServiceRegistry::from_config(cfg);
-    let mut drs = svc_defaults(ServiceId::Drs);
-    let mut htsget = svc_defaults(ServiceId::Htsget);
-    let mut wes = svc_defaults(ServiceId::Wes);
-    let mut tes = svc_defaults(ServiceId::Tes);
-    let mut beacon = svc_defaults(ServiceId::Beacon);
-    let mut trs = svc_defaults(ServiceId::Trs);
-    let mut auth = svc_defaults(ServiceId::Auth);
-
+    let mut enable = EnableFlags::default();
     for e in &registry.entries {
-        let target = match e.id {
-            ServiceId::Drs => &mut drs,
-            ServiceId::Htsget => &mut htsget,
-            ServiceId::Wes => &mut wes,
-            ServiceId::Tes => &mut tes,
-            ServiceId::Beacon => &mut beacon,
-            ServiceId::Trs => &mut trs,
-            ServiceId::Auth => &mut auth,
-        };
-        target.enabled = e.deploy;
-        if let Some(u) = &e.external_base {
-            target.external_url = Some(u.to_string());
+        if !e.deploy {
+            continue;
+        }
+        match e.id {
+            ServiceId::Drs => enable.drs = true,
+            ServiceId::Htsget => enable.htsget = true,
+            ServiceId::Wes => enable.wes = true,
+            ServiceId::Tes => enable.tes = true,
+            ServiceId::Beacon => enable.beacon = true,
+            ServiceId::Trs => enable.trs = true,
+            ServiceId::Auth => {}
         }
     }
 
+    let solum_enabled = is_solum_enabled(cfg);
     let root = HelmRoot {
         global: GlobalVals {
-            image_registry: String::new(),
+            image_registry: "ghcr.io/synapticfour".into(),
         },
         lab: HelmLab {
             name: cfg.lab.name.clone(),
             environment: cfg.lab.environment.clone(),
         },
-        services: ServicesVals {
-            drs,
-            htsget,
-            wes,
-            tes,
-            beacon,
-            trs,
-            auth,
+        gateway: GatewayVals {
+            enabled: enable.any(),
+            image: "ghcr.io/synapticfour/ferrum:latest".into(),
+            port: 8080,
+            enable,
+        },
+        solum: SolumVals {
+            enabled: solum_enabled,
+            image: "synapticfour/solum-sidecar:lab-kit".into(),
+            port: cfg.solum.as_ref().map(|s| s.port).unwrap_or(8787),
         },
         auth: AuthVals {
             ls_login: LsLoginVals {
@@ -60,6 +55,10 @@ pub fn generate_helm_values(cfg: &LabKitConfig, output_path: &Path) -> Result<()
                     .unwrap_or_else(|| "https://login.elixir-czech.org/oidc/".to_string()),
             },
         },
+        // Retained for operators who still overlay legacy per-service charts.
+        services: LegacyServicesVals {
+            note: "Prefer gateway.enable*; per-service images are unpublished placeholders".into(),
+        },
     };
 
     if let Some(parent) = output_path.parent() {
@@ -69,33 +68,30 @@ pub fn generate_helm_values(cfg: &LabKitConfig, output_path: &Path) -> Result<()
     Ok(())
 }
 
-fn svc_defaults(id: ServiceId) -> ServiceHelmVals {
-    ServiceHelmVals {
-        enabled: false,
-        image: default_image(id),
-        external_url: None,
-    }
+#[derive(Serialize, Default)]
+struct EnableFlags {
+    drs: bool,
+    htsget: bool,
+    wes: bool,
+    tes: bool,
+    beacon: bool,
+    trs: bool,
 }
 
-fn default_image(id: ServiceId) -> String {
-    let name = match id {
-        ServiceId::Drs => "ferrum-drs",
-        ServiceId::Htsget => "ferrum-htsget",
-        ServiceId::Wes => "ferrum-wes",
-        ServiceId::Tes => "ferrum-tes",
-        ServiceId::Beacon => "ferrum-beacon",
-        ServiceId::Trs => "ferrum-trs",
-        ServiceId::Auth => "ferrum-auth-proxy",
-    };
-    format!("synapticfour/{name}:latest")
+impl EnableFlags {
+    fn any(&self) -> bool {
+        self.drs || self.htsget || self.wes || self.tes || self.beacon || self.trs
+    }
 }
 
 #[derive(Serialize)]
 struct HelmRoot {
     global: GlobalVals,
     lab: HelmLab,
-    services: ServicesVals,
+    gateway: GatewayVals,
+    solum: SolumVals,
     auth: AuthVals,
+    services: LegacyServicesVals,
 }
 
 #[derive(Serialize)]
@@ -111,22 +107,23 @@ struct HelmLab {
 }
 
 #[derive(Serialize)]
-struct ServicesVals {
-    drs: ServiceHelmVals,
-    htsget: ServiceHelmVals,
-    wes: ServiceHelmVals,
-    tes: ServiceHelmVals,
-    beacon: ServiceHelmVals,
-    trs: ServiceHelmVals,
-    auth: ServiceHelmVals,
+struct GatewayVals {
+    enabled: bool,
+    image: String,
+    port: u16,
+    enable: EnableFlags,
 }
 
 #[derive(Serialize)]
-struct ServiceHelmVals {
+struct SolumVals {
     enabled: bool,
     image: String,
-    #[serde(rename = "externalUrl", skip_serializing_if = "Option::is_none")]
-    external_url: Option<String>,
+    port: u16,
+}
+
+#[derive(Serialize)]
+struct LegacyServicesVals {
+    note: String,
 }
 
 #[derive(Serialize)]
@@ -168,11 +165,9 @@ dataset_id = "ds1"
         generate_helm_values(&cfg, &out).unwrap();
         let yaml = fs::read_to_string(&out).unwrap();
         assert!(yaml.contains("name: Helm Lab"));
-        assert!(yaml.contains("beacon:"));
-        assert!(yaml.contains("enabled: true"));
-        assert!(yaml.contains("synapticfour/ferrum-beacon:latest"));
-        // Other services default to disabled placeholders
-        assert!(yaml.contains("ferrum-drs"));
-        assert!(yaml.contains("enabled: false"));
+        assert!(yaml.contains("gateway:"));
+        assert!(yaml.contains("ghcr.io/synapticfour/ferrum"));
+        assert!(yaml.contains("beacon: true"));
+        assert!(yaml.contains("drs: false"));
     }
 }

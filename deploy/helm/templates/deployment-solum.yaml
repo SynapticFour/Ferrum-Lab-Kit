@@ -1,0 +1,47 @@
+{{- if .Values.solum.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "ferrum-lab-kit.name" . }}-solum
+  labels:
+    {{- include "ferrum-lab-kit.labels" . | nindent 4 }}
+    app.kubernetes.io/component: solum
+spec:
+  type: ClusterIP
+  ports:
+    - port: {{ .Values.solum.port }}
+      targetPort: 8787
+      name: http
+  selector:
+    app.kubernetes.io/component: solum
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "ferrum-lab-kit.name" . }}-solum
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: solum
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/component: solum
+        {{- include "ferrum-lab-kit.labels" . | nindent 8 }}
+    spec:
+      containers:
+        - name: solum-sidecar
+          image: {{ .Values.solum.image }}
+          ports:
+            - containerPort: 8787
+          env:
+            - name: SOLUM_SIDECAR_BIND
+              value: "0.0.0.0:8787"
+            - name: SOLUM_SIDECAR_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "ferrum-lab-kit.name" . }}-solum
+                  key: sidecar-token
+                  optional: true
+{{- end }}
