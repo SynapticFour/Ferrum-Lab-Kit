@@ -13,7 +13,7 @@ Licensed under **BUSL-1.1** with parameters aligned to [Ferrum](https://github.c
 
 ## Commercial (Synaptic Four)
 
-- **PDF conformance report** generation (`lab-kit-report`) — requires **`FERRUM_LAB_KIT_LICENSE_KEY`** at runtime. Rationale: high-value artifact for grants and consortium submissions.
+- **PDF conformance report** generation (`lab-kit-report`) — requires a well-formed **`FERRUM_LAB_KIT_LICENSE_KEY`** (`flk_` + ≥32 chars) **and** `lab-kit license activate`. Rationale: high-value artifact for grants and consortium submissions.
 - **Multi-site federation tooling** (Beacon Network across deployments) — planned product boundary.
 - **Managed deployment & sign-off** — consulting engagement.
 - **Priority support SLA** — paid support channel.

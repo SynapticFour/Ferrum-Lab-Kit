@@ -102,7 +102,7 @@ Mehr in [docs/GA4GH-STANDARDS.md](docs/GA4GH-STANDARDS.md).
 
 ## Open-Core-Modell
 
-**GA4GH-Deployments und LS-Login-Integration** stehen unter **BUSL-1.1** (siehe [LICENSE](LICENSE)) für zulässige **nicht-kommerzielle Forschung**. **PDF-Konformitätsberichte** und Enterprise-Föderations-Features sind **kommerziell**; die PDF-Ausgabe prüft **`FERRUM_LAB_KIT_LICENSE_KEY`** — **JSON-Berichte und die Protokoll-Stacks selbst sind nicht lizenzgeschützt.** Details: [docs/BUSINESS-MODEL.md](docs/BUSINESS-MODEL.md).
+**GA4GH-Deployments und LS-Login-Integration** stehen unter **BUSL-1.1** (siehe [LICENSE](LICENSE)) für zulässige **nicht-kommerzielle Forschung**. **PDF-Konformitätsberichte** und Enterprise-Föderations-Features sind **kommerziell**; die PDF-Ausgabe verlangt einen wohlgeformten **`FERRUM_LAB_KIT_LICENSE_KEY`** und **`lab-kit license activate`** — **JSON-Berichte und die Protokoll-Stacks selbst sind nicht lizenzgeschützt.** Details: [docs/BUSINESS-MODEL.md](docs/BUSINESS-MODEL.md).
 
 ## CLI (`lab-kit`)
 

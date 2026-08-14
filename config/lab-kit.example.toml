@@ -13,7 +13,8 @@ provider = "ls-login" # ls-login | keycloak | ldap | none (demo only)
 
 [auth.ls-login]
 client_id = "your-client-id"
-client_secret = "your-client-secret"
+# Do not put a real secret here. Export LS_LOGIN_CLIENT_SECRET instead.
+client_secret = "${LS_LOGIN_CLIENT_SECRET}"
 # Discovery: https://login.elixir-czech.org/oidc/.well-known/openid-configuration
 issuer = "https://login.elixir-czech.org/oidc/"
 # redirect_uri = "https://lab.example.org/oauth/callback"

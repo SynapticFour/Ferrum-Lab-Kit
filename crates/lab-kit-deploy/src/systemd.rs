@@ -10,45 +10,14 @@ pub fn generate_systemd_units(cfg: &LabKitConfig, output_dir: &Path) -> Result<(
     fs::create_dir_all(output_dir)?;
     let registry = ServiceRegistry::from_config(cfg);
 
-    let mut enable_drs = false;
-    let mut enable_htsget = false;
-    let mut enable_wes = false;
-    let mut enable_tes = false;
-    let mut enable_beacon = false;
-    let mut enable_trs = false;
-    let mut any = false;
-    for e in &registry.entries {
-        if !e.deploy {
-            continue;
-        }
-        match e.id {
-            ServiceId::Drs => {
-                enable_drs = true;
-                any = true;
-            }
-            ServiceId::Htsget => {
-                enable_htsget = true;
-                any = true;
-            }
-            ServiceId::Wes => {
-                enable_wes = true;
-                any = true;
-            }
-            ServiceId::Tes => {
-                enable_tes = true;
-                any = true;
-            }
-            ServiceId::Beacon => {
-                enable_beacon = true;
-                any = true;
-            }
-            ServiceId::Trs => {
-                enable_trs = true;
-                any = true;
-            }
-            ServiceId::Auth => {}
-        }
-    }
+    let enable_drs = registry.is_deployed(ServiceId::Drs);
+    let enable_htsget = registry.is_deployed(ServiceId::Htsget);
+    let enable_wes = registry.is_deployed(ServiceId::Wes);
+    let enable_tes = registry.is_deployed(ServiceId::Tes);
+    let enable_beacon = registry.is_deployed(ServiceId::Beacon);
+    let enable_trs = registry.is_deployed(ServiceId::Trs);
+    let any =
+        enable_drs || enable_htsget || enable_wes || enable_tes || enable_beacon || enable_trs;
 
     if any {
         let unit = format!(

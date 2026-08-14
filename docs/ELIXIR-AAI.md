@@ -12,7 +12,7 @@ This guide is written so an **IT administrator without Rust experience** can reg
 
 ## 1. Register an OIDC client
 
-1. Use the ELIXIR Czech broker discovery document:  
+1. Use the ELIXIR Czech broker discovery document:
    `https://login.elixir-czech.org/oidc/.well-known/openid-configuration`
 2. In your IdP admin UI (or via your institutional contact), register a **confidential** client for your Lab Kit base URL.
 3. Set **redirect URI** to your gateway callback, e.g. `https://lab.example.org/oauth/callback`.
@@ -35,7 +35,8 @@ provider = "ls-login"
 
 [auth.ls-login]
 client_id = "…"
-client_secret = "…"
+# Keep the secret in the environment (LS_LOGIN_CLIENT_SECRET), not in git.
+client_secret = "${LS_LOGIN_CLIENT_SECRET}"
 issuer = "https://login.elixir-czech.org/oidc/"
 redirect_uri = "https://lab.example.org/oauth/callback"
 scopes = ["openid", "profile", "email", "offline_access", "ga4gh_passport_v1"]

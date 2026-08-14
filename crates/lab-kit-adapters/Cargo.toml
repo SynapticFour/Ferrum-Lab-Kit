@@ -14,7 +14,6 @@ integration-tests = ["dep:testcontainers"]
 s3 = ["dep:aws-config", "dep:aws-sdk-s3", "dep:aws-credential-types"]
 
 [dependencies]
-anyhow.workspace = true
 async-trait = "0.1"
 aws-config = { workspace = true, optional = true }
 aws-credential-types = { version = "1.2", optional = true }
@@ -23,8 +22,9 @@ chrono.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 sqlx.workspace = true
+tempfile.workspace = true
 testcontainers = { version = "0.27", optional = true }
 thiserror.workspace = true
-tokio = { version = "1.51", features = ["fs", "rt-multi-thread", "macros", "process"] }
+tokio = { version = "1.51", features = ["fs", "rt-multi-thread", "macros", "process", "io-util"] }
 tracing.workspace = true
 url.workspace = true

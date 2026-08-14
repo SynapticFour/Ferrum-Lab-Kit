@@ -27,7 +27,7 @@ lab-kit conformance report \
 Outputs:
 
 - **`conformance-report.json`** — always written (machine-readable, suitable for APIs and archives).
-- **`conformance-report.pdf`** — written only if **`FERRUM_LAB_KIT_LICENSE_KEY`** is set to a non-empty value (commercial tier). This **does not** gate GA4GH compliance; only the PDF artifact.
+- **`conformance-report.pdf`** — written only if **`FERRUM_LAB_KIT_LICENSE_KEY`** is a well-formed key (`flk_` + ≥32 chars) that matches a prior **`lab-kit license activate`** file (commercial tier). This **does not** gate GA4GH compliance; only the PDF artifact.
 
 ## Reading the report
 

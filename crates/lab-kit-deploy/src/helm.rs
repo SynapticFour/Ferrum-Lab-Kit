@@ -9,21 +9,14 @@ use crate::DeployError;
 /// Write Helm-style `values` for the monolith gateway + selective ENABLE_* flags.
 pub fn generate_helm_values(cfg: &LabKitConfig, output_path: &Path) -> Result<(), DeployError> {
     let registry = ServiceRegistry::from_config(cfg);
-    let mut enable = EnableFlags::default();
-    for e in &registry.entries {
-        if !e.deploy {
-            continue;
-        }
-        match e.id {
-            ServiceId::Drs => enable.drs = true,
-            ServiceId::Htsget => enable.htsget = true,
-            ServiceId::Wes => enable.wes = true,
-            ServiceId::Tes => enable.tes = true,
-            ServiceId::Beacon => enable.beacon = true,
-            ServiceId::Trs => enable.trs = true,
-            ServiceId::Auth => {}
-        }
-    }
+    let enable = EnableFlags {
+        drs: registry.is_deployed(ServiceId::Drs),
+        htsget: registry.is_deployed(ServiceId::Htsget),
+        wes: registry.is_deployed(ServiceId::Wes),
+        tes: registry.is_deployed(ServiceId::Tes),
+        beacon: registry.is_deployed(ServiceId::Beacon),
+        trs: registry.is_deployed(ServiceId::Trs),
+    };
 
     let solum_enabled = is_solum_enabled(cfg);
     let root = HelmRoot {
@@ -55,7 +48,6 @@ pub fn generate_helm_values(cfg: &LabKitConfig, output_path: &Path) -> Result<()
                     .unwrap_or_else(|| "https://login.elixir-czech.org/oidc/".to_string()),
             },
         },
-        // Retained for operators who still overlay legacy per-service charts.
         services: LegacyServicesVals {
             note: "Prefer gateway.enable*; per-service images are unpublished placeholders".into(),
         },

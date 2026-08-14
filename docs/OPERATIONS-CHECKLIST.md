@@ -8,7 +8,7 @@ Use this as a **runbook scaffold** when bringing up or handing over an environme
 |------|----------------|----------------------------------------|
 | **Open-source Ferrum + Lab Kit** | Deploy (`generate compose` / Helm), **`lab-kit status`**, **`lab-kit ingest`**, **`lab-kit ferrum check`** | **`FERRUM_GATEWAY_URL`**, **`FERRUM_TOKEN`** only when the gateway requires auth for ingest; Ferrum server config from **your** Ferrum install (see [Ferrum `INSTALLATION.md`](https://github.com/SynapticFour/Ferrum/blob/main/docs/INSTALLATION.md)). **No** Lab Kit license key required for GA4GH workflows or JSON reports. |
 | **HelixTest conformance** | **`lab-kit conformance run`** | External **[HelixTest](https://github.com/SynapticFour/HelixTest)** CLI; optional **`HELIXTEST_BIN`**. Ferrum CI matrix: [Ferrum `HELIXTEST-INTEGRATION.md`](https://github.com/SynapticFour/Ferrum/blob/main/docs/HELIXTEST-INTEGRATION.md). |
-| **Licensed PDF reports** | **`lab-kit conformance report`** → PDF | Optional **`FERRUM_LAB_KIT_LICENSE_KEY`** — **only** gates **PDF** output; JSON report is not license-gated ([CONFORMANCE.md](CONFORMANCE.md), [BUSINESS-MODEL.md](BUSINESS-MODEL.md)). |
+| **Licensed PDF reports** | **`lab-kit conformance report`** → PDF | **`FERRUM_LAB_KIT_LICENSE_KEY`** (well-formed `flk_…` key) plus **`lab-kit license activate`** — **only** gates **PDF** output; JSON report is not license-gated ([CONFORMANCE.md](CONFORMANCE.md), [BUSINESS-MODEL.md](BUSINESS-MODEL.md)). |
 
 **Authoritative API paths and auth:** [Ferrum `docs/GA4GH.md`](https://github.com/SynapticFour/Ferrum/blob/main/docs/GA4GH.md). **TES + Docker:** [`TES-DOCKER-BACKEND.md`](https://github.com/SynapticFour/Ferrum/blob/main/docs/TES-DOCKER-BACKEND.md).
 
@@ -66,7 +66,7 @@ Use this as a **runbook scaffold** when bringing up or handing over an environme
 | `FERRUM_DATA_DIR` | Edge data bind mount (default `~/.ferrum`). |
 | `FERRUM_GATEWAY_URL` | Base URL of ferrum-gateway for **`lab-kit ingest`**. |
 | `FERRUM_TOKEN` | Optional Bearer token for authenticated ingest. |
-| `FERRUM_LAB_KIT_LICENSE_KEY` | Optional; enables **PDF** conformance reports (`lab-kit-report`). |
+| `FERRUM_LAB_KIT_LICENSE_KEY` | Optional; well-formed key for **PDF** reports after `lab-kit license activate`. |
 | `HELIXTEST_BIN` | Override path to **HelixTest** binary for `lab-kit conformance run`. |
 | `GA4GH_IMAGE_PREFIX` / `*_VERSION` | ga4gh-infra image pins (see `.env.example`). |
 | `SOLUM_SIDECAR_TOKEN` / `SOLUM_IMAGE` / `SOLUM_TAG` | Solum companion (see [SOLUM-CO-DEPLOY.md](SOLUM-CO-DEPLOY.md)). |

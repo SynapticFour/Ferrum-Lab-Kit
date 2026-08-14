@@ -27,7 +27,7 @@ impl SqliteMetadataStore {
     pub async fn connect(database_url: &str) -> Result<Self, MetadataError> {
         let opts = SqliteConnectOptions::from_str(database_url)
             .map_err(|e| MetadataError::Other(e.to_string()))?;
-        let max = if database_url.contains("memory") {
+        let max = if is_sqlite_memory_url(database_url) {
             1
         } else {
             5
@@ -258,6 +258,11 @@ impl TryFrom<LicenseSqliteRow> for LicenseActivationRow {
     }
 }
 
+fn is_sqlite_memory_url(database_url: &str) -> bool {
+    let lower = database_url.to_ascii_lowercase();
+    lower == "sqlite::memory:" || lower.contains("mode=memory") || lower.contains(":memory:")
+}
+
 fn parse_dt(s: Option<&str>) -> Result<Option<DateTime<Utc>>, MetadataError> {
     match s {
         None => Ok(None),
@@ -337,5 +342,16 @@ mod tests {
             .await
             .expect("license");
         assert!(store.get_license_by_hash("h1").await.unwrap().is_some());
+    }
+
+    #[test]
+    fn memory_url_detector_does_not_match_path_named_memory() {
+        assert!(is_sqlite_memory_url("sqlite::memory:"));
+        assert!(is_sqlite_memory_url(
+            "sqlite:file:memdb1?mode=memory&cache=shared"
+        ));
+        assert!(is_sqlite_memory_url(":memory:"));
+        assert!(!is_sqlite_memory_url("sqlite:///data/memory.db?mode=rwc"));
+        assert!(!is_sqlite_memory_url("sqlite:data/memory.db"));
     }
 }

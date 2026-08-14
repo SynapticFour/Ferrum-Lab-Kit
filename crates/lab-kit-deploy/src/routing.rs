@@ -31,7 +31,7 @@ pub fn write_external_upstreams_next_to_compose(
     for e in &registry.entries {
         if let Some(url) = &e.external_base {
             externals.push(ExternalUpstream {
-                service: format!("{:?}", e.id).to_lowercase(),
+                service: e.id.to_string(),
                 base_url: url.to_string(),
             });
         }
@@ -124,7 +124,7 @@ fn traefik_dynamic_config_for_externals(
             continue;
         };
 
-        let router_name = format!("{:?}", e.id).to_lowercase();
+        let router_name = e.id.to_string();
         let service_name = format!("{router_name}-external");
         let prefix = ga4gh_path_prefix(e.id);
         routers.insert(

@@ -5,13 +5,15 @@ use clap::{Parser, Subcommand};
 use dialoguer::{theme::ColorfulTheme, Confirm, Input, MultiSelect, Select};
 use lab_kit_auth::LsLoginOidc;
 use lab_kit_core::{
-    load_config, load_profile_template, AuthProviderKind, AuthSection, BeaconAccessLevel,
-    BeaconServiceConfig, LabKitConfig, LabSection, LsLoginConfig, ProfileOverrides,
-    ServiceRegistry, ServicesSection,
+    load_config, load_named_config, load_profile_template, oidc_client_secret_placeholder,
+    AuthProviderKind, AuthSection, BeaconAccessLevel, BeaconServiceConfig, LabKitConfig,
+    LabSection, LsLoginConfig, ProfileOverrides, ServiceRegistry, ServicesSection,
+    LS_LOGIN_CLIENT_SECRET_ENV,
 };
 use lab_kit_deploy::{
     generate_compose_file, generate_helm_values, generate_raspberry_pi_bundle,
-    generate_systemd_units, ComposeOptions, RaspberryPiBundleOptions,
+    generate_systemd_units, render_compose_yaml, write_compose_sidecars, ComposeOptions,
+    RaspberryPiBundleOptions,
 };
 use lab_kit_ingest::{IngestClient, RegisterItem, RegisterRequest, UploadOptions};
 use lab_kit_report::generate_reports;
@@ -69,6 +71,22 @@ enum Command {
     Mii {
         #[command(subcommand)]
         action: MiiAction,
+    },
+    /// Activate a commercial PDF license key (hashed to a local activation file).
+    License {
+        #[command(subcommand)]
+        action: LicenseAction,
+    },
+}
+
+#[derive(Subcommand)]
+enum LicenseAction {
+    /// Hash `FERRUM_LAB_KIT_LICENSE_KEY` into the activation file (PDF reports).
+    Activate {
+        #[arg(long)]
+        expires: Option<String>,
+        #[arg(long)]
+        file: Option<PathBuf>,
     },
 }
 
@@ -293,10 +311,12 @@ async fn main() -> anyhow::Result<()> {
                     legacy_per_service,
                 };
                 if stdout {
-                    let tmp = tempfile::tempdir()?;
-                    let p = tmp.path().join("out.yml");
-                    generate_compose_file(&cfg, &fragments, &p, &options)?;
-                    print!("{}", std::fs::read_to_string(&p)?);
+                    let yaml = render_compose_yaml(&cfg, &fragments, &options)?;
+                    print!("{yaml}");
+                    write_compose_sidecars(&cfg, Path::new("docker-compose.yml"))?;
+                    tracing::info!(
+                        "wrote external-upstreams.yaml / proxy-traefik-dynamic.yaml next to ./docker-compose.yml if needed"
+                    );
                 } else {
                     generate_compose_file(&cfg, &fragments, &output, &options)?;
                     tracing::info!(path = %output.display(), "wrote compose file");
@@ -371,16 +391,45 @@ async fn main() -> anyhow::Result<()> {
         Command::Status { config } => {
             let cfg = load_config(&config).with_context(|| format!("load {}", config.display()))?;
             let reg = ServiceRegistry::from_config(&cfg);
-            let health = lab_kit_core::HealthAggregator::poll(&reg)?;
-            println!("{:#?}", health);
+            let health = lab_kit_core::HealthAggregator::poll(&reg).await?;
+            println!("{:<10} {:<6} URL", "SERVICE", "OK");
+            for h in &health {
+                println!(
+                    "{:<10} {:<6} {}",
+                    h.service,
+                    if h.ok { "yes" } else { "no" },
+                    h.url
+                );
+                if let Some(err) = &h.error {
+                    println!("           {err}");
+                }
+            }
         }
         Command::Conformance { action } => match action {
             ConformanceAction::Run { config } => {
-                let _cfg =
+                let cfg =
                     load_config(&config).with_context(|| format!("load {}", config.display()))?;
                 let bin = std::env::var("HELIXTEST_BIN").unwrap_or_else(|_| "helixtest".into());
-                tracing::info!(%bin, "invoke HelixTest from https://github.com/SynapticFour/HelixTest — not bundled");
-                let status = std::process::Command::new(&bin).status();
+                let timeout = cfg
+                    .conformance
+                    .as_ref()
+                    .map(|c| c.helixtest_timeout_seconds)
+                    .unwrap_or(120);
+                tracing::info!(%bin, timeout, "invoke HelixTest from https://github.com/SynapticFour/HelixTest — not bundled");
+                let mut cmd = std::process::Command::new(&bin);
+                cmd.env("HELIXTEST_TIMEOUT_SECS", timeout.to_string());
+                if let Some(u) = cfg.ferrum.gateway_url.as_ref() {
+                    cmd.env("FERRUM_GATEWAY_URL", u.as_str());
+                    cmd.env("HELIXTEST_BASE_URL", u.as_str());
+                }
+                let enabled: Vec<_> = lab_kit_core::ServiceRegistry::from_config(&cfg)
+                    .enabled_ids()
+                    .map(|id| id.to_string())
+                    .collect();
+                if !enabled.is_empty() {
+                    cmd.env("HELIXTEST_SERVICES", enabled.join(","));
+                }
+                let status = cmd.status();
                 match status {
                     Ok(s) if s.success() => {}
                     Ok(s) => anyhow::bail!("HelixTest exited with {s}"),
@@ -408,7 +457,7 @@ async fn main() -> anyhow::Result<()> {
                 );
                 println!(
                     "Pinned rev: {}  |  {}",
-                    lab_kit_ferrum::FERRUM_GIT_REV,
+                    lab_kit_ferrum::ferrum_git_rev(),
                     lab_kit_ferrum::FERRUM_GIT_URL
                 );
                 println!("Keep in sync: config/ci/ferrum-revision.txt");
@@ -416,6 +465,32 @@ async fn main() -> anyhow::Result<()> {
         },
         Command::Ingest(cmd) => run_ingest(cmd).await?,
         Command::Mii { action } => run_mii(action)?,
+        Command::License { action } => run_license(action)?,
+    }
+    Ok(())
+}
+
+fn run_license(action: LicenseAction) -> anyhow::Result<()> {
+    match action {
+        LicenseAction::Activate { expires, file } => {
+            let key = std::env::var(lab_kit_report::LICENSE_KEY_ENV).with_context(|| {
+                format!(
+                    "set {} to a well-formed key (flk_<32+ chars>)",
+                    lab_kit_report::LICENSE_KEY_ENV
+                )
+            })?;
+            let path = file.unwrap_or_else(lab_kit_report::default_license_file);
+            let exp = match expires {
+                Some(s) => Some(
+                    chrono::DateTime::parse_from_rfc3339(&s)
+                        .with_context(|| "expires must be RFC3339")?
+                        .with_timezone(&chrono::Utc),
+                ),
+                None => None,
+            };
+            lab_kit_report::activate_license(&key, &path, exp)?;
+            println!("Activated license at {}", path.display());
+        }
     }
     Ok(())
 }
@@ -572,11 +647,6 @@ async fn run_ingest(cmd: IngestCmd) -> anyhow::Result<()> {
             workspace_id,
             client_request_id,
         } => {
-            let bytes = std::fs::read(&file).with_context(|| format!("read {}", file.display()))?;
-            let file_name = file
-                .file_name()
-                .map(|s| s.to_string_lossy().into_owned())
-                .unwrap_or_else(|| "upload.bin".into());
             let opts = UploadOptions {
                 name,
                 mime_type,
@@ -585,7 +655,7 @@ async fn run_ingest(cmd: IngestCmd) -> anyhow::Result<()> {
                 workspace_id,
                 client_request_id,
             };
-            let job = client.upload(&file_name, bytes, opts).await?;
+            let job = client.upload_path(&file, opts).await?;
             println!("{}", serde_json::to_string_pretty(&job)?);
         }
         IngestAction::Job { job_id } => {
@@ -681,6 +751,26 @@ fn resolve_pi_config(
         .context("expand profile to lab-kit.toml")
 }
 
+/// Prompt for OIDC client_id only; never write a real client_secret to disk.
+fn prompt_ls_login(theme: &ColorfulTheme, issuer: &str) -> anyhow::Result<LsLoginConfig> {
+    let client_id: String = Input::with_theme(theme)
+        .with_prompt("OIDC client_id")
+        .interact_text()?;
+    println!(
+        "OIDC client_secret is not stored in lab-kit.toml. Export {LS_LOGIN_CLIENT_SECRET_ENV} before starting Ferrum."
+    );
+    Ok(LsLoginConfig {
+        client_id,
+        client_secret: oidc_client_secret_placeholder(),
+        issuer: issuer.to_string(),
+        redirect_uri: None,
+        scopes: LsLoginOidc::default_scopes()
+            .into_iter()
+            .map(String::from)
+            .collect(),
+    })
+}
+
 fn write_config(output: &Path, cfg: &LabKitConfig) -> anyhow::Result<()> {
     cfg.validate()?;
     let toml = toml::to_string_pretty(cfg)?;
@@ -744,21 +834,16 @@ async fn init_wizard(output: &Path, preset: Option<&str>) -> anyhow::Result<()> 
     }
 
     if profile_idx == 1 {
-        let mut cfg = load_config("config/profiles/full-elixir-node.toml")
-            .or_else(|_| load_config("../config/profiles/full-elixir-node.toml"))
-            .context("load full-elixir-node profile")?;
+        let mut cfg =
+            load_named_config("full-elixir-node").context("load full-elixir-node profile")?;
         customize_lab_name(&theme, &mut cfg.lab)?;
         write_config(output, &cfg)?;
         return Ok(());
     }
 
     if profile_idx == 2 {
-        let mut cfg = load_config("config/profiles/full-elixir-node.toml")
-            .or_else(|_| load_config("../config/profiles/full-elixir-node.toml"))
-            .context("load full-elixir-node profile")?;
-        if let Some(beacon) = cfg.services.beacon.as_mut() {
-            beacon.access_level = BeaconAccessLevel::Controlled;
-        }
+        let mut cfg =
+            load_named_config("gdi-national-node").context("load gdi-national-node profile")?;
         customize_lab_name(&theme, &mut cfg.lab)?;
         write_config(output, &cfg)?;
         return Ok(());
@@ -815,22 +900,10 @@ async fn init_field_edge_wizard(
         .interact()?;
 
     let ls_login = if auth_idx == 1 {
-        let client_id: String = Input::with_theme(theme)
-            .with_prompt("OIDC client_id")
-            .interact_text()?;
-        let client_secret: String = Input::with_theme(theme)
-            .with_prompt("OIDC client_secret")
-            .interact_text()?;
-        Some(LsLoginConfig {
-            client_id,
-            client_secret,
-            issuer: "https://login.elixir-czech.org/oidc/".into(),
-            redirect_uri: None,
-            scopes: LsLoginOidc::default_scopes()
-                .into_iter()
-                .map(String::from)
-                .collect(),
-        })
+        Some(prompt_ls_login(
+            theme,
+            "https://login.elixir-czech.org/oidc/",
+        )?)
     } else {
         None
     };
@@ -919,12 +992,7 @@ async fn init_standard_wizard(output: &Path, theme: &ColorfulTheme) -> anyhow::R
         .default("production".into())
         .interact_text()?;
 
-    let client_id: String = Input::with_theme(theme)
-        .with_prompt("OIDC client_id")
-        .interact_text()?;
-    let client_secret: String = Input::with_theme(theme)
-        .with_prompt("OIDC client_secret")
-        .interact_text()?;
+    let ls_login = prompt_ls_login(theme, "https://login.elixir-czech.org/oidc/")?;
 
     let dataset_id: String = Input::with_theme(theme)
         .with_prompt("Beacon dataset_id")
@@ -939,16 +1007,7 @@ async fn init_standard_wizard(output: &Path, theme: &ColorfulTheme) -> anyhow::R
         },
         auth: AuthSection {
             provider: AuthProviderKind::LsLogin,
-            ls_login: Some(LsLoginConfig {
-                client_id,
-                client_secret,
-                issuer: "https://login.elixir-czech.org/oidc/".into(),
-                redirect_uri: None,
-                scopes: LsLoginOidc::default_scopes()
-                    .into_iter()
-                    .map(String::from)
-                    .collect(),
-            }),
+            ls_login: Some(ls_login),
             keycloak: None,
             ldap: None,
         },
@@ -995,29 +1054,15 @@ async fn init_custom_wizard(output: &Path, theme: &ColorfulTheme) -> anyhow::Res
         .interact()?;
 
     let (auth_section, ls_login) = if auth_idx == 0 {
-        let client_id: String = Input::with_theme(theme)
-            .with_prompt("OIDC client_id")
-            .interact_text()?;
-        let client_secret: String = Input::with_theme(theme)
-            .with_prompt("OIDC client_secret")
-            .interact_text()?;
         let issuer: String = Input::with_theme(theme)
             .with_prompt("Issuer base URL")
             .default("https://login.elixir-czech.org/oidc/".into())
             .interact_text()?;
+        let ls = prompt_ls_login(theme, &issuer)?;
         (
             AuthSection {
                 provider: AuthProviderKind::LsLogin,
-                ls_login: Some(LsLoginConfig {
-                    client_id,
-                    client_secret,
-                    issuer,
-                    redirect_uri: None,
-                    scopes: LsLoginOidc::default_scopes()
-                        .into_iter()
-                        .map(String::from)
-                        .collect(),
-                }),
+                ls_login: Some(ls),
                 keycloak: None,
                 ldap: None,
             },
@@ -1066,10 +1111,13 @@ async fn init_custom_wizard(output: &Path, theme: &ColorfulTheme) -> anyhow::Res
     }
 
     if !ls_login && services.beacon.is_some() {
-        let _ = Confirm::with_theme(theme)
+        let ok = Confirm::with_theme(theme)
             .with_prompt("Beacon without LS Login is OK for public tiers only — continue?")
             .default(true)
             .interact()?;
+        if !ok {
+            anyhow::bail!("aborted");
+        }
     }
 
     let cfg = LabKitConfig {

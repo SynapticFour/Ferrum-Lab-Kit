@@ -22,14 +22,14 @@ pub struct ConformanceJsonReport {
     pub next_steps: Vec<String>,
 }
 
-/// Accept either an array of results or a `{ "results": [...] }` object from HelixTest exports.
+/// Accept HelixTest `OverallReport` JSON, a `{ "results": [...] }` object, or a raw array.
 pub fn build_from_helixtest_value(
     raw: &str,
     lab_name: &str,
 ) -> Result<ConformanceJsonReport, ReportError> {
     let v: Value = serde_json::from_str(raw)?;
     let rows = extract_rows(&v);
-    let enabled_services: Vec<String> = rows.iter().map(|r| r.service.clone()).collect();
+    let enabled_services = extract_enabled_services(&v, &rows);
     let overall_pass = rows.iter().all(|r| r.passed);
     let mut next_steps = Vec::new();
     for r in &rows {
@@ -54,51 +54,158 @@ pub fn build_from_helixtest_value(
     })
 }
 
-fn extract_rows(v: &Value) -> Vec<ServiceResultRow> {
-    let mut out = Vec::new();
-    if let Some(arr) = v.as_array() {
-        for item in arr {
-            if let Some(obj) = item.as_object() {
-                out.push(row_from_obj(obj));
-            }
-        }
-        return out;
+fn json_string(v: &Value) -> Option<String> {
+    match v {
+        Value::String(s) => Some(s.clone()),
+        Value::Number(n) => Some(n.to_string()),
+        other if !other.is_null() => Some(other.to_string().trim_matches('"').to_string()),
+        _ => None,
     }
-    if let Some(arr) = v.get("results").and_then(|x| x.as_array()) {
-        for item in arr {
-            if let Some(obj) = item.as_object() {
-                out.push(row_from_obj(obj));
-            }
-        }
-        return out;
-    }
-    // Stub / minimal HelixTest file: single object
-    if let Some(obj) = v.as_object() {
-        out.push(row_from_obj(obj));
-    }
-    out
 }
 
-fn row_from_obj(obj: &serde_json::Map<String, Value>) -> ServiceResultRow {
+fn extract_enabled_services(v: &Value, rows: &[ServiceResultRow]) -> Vec<String> {
+    if let Some(arr) = v.get("enabled_services").and_then(|x| x.as_array()) {
+        let names: Vec<String> = arr.iter().filter_map(json_string).collect();
+        if !names.is_empty() {
+            return names;
+        }
+    }
+    rows.iter().map(|r| r.service.clone()).collect()
+}
+
+fn extract_rows(v: &Value) -> Vec<ServiceResultRow> {
+    if let Some(arr) = v.get("services").and_then(|x| x.as_array()) {
+        if arr.iter().any(|item| item.get("tests").is_some()) {
+            return arr.iter().filter_map(row_from_helixtest_service).collect();
+        }
+        let rows: Vec<ServiceResultRow> = arr
+            .iter()
+            .filter_map(|item| item.as_object().and_then(row_from_obj))
+            .collect();
+        if !rows.is_empty() {
+            return rows;
+        }
+    }
+    if let Some(arr) = v.as_array() {
+        return arr
+            .iter()
+            .filter_map(|item| item.as_object().and_then(row_from_obj))
+            .collect();
+    }
+    if let Some(arr) = v.get("results").and_then(|x| x.as_array()) {
+        return arr
+            .iter()
+            .filter_map(|item| item.as_object().and_then(row_from_obj))
+            .collect();
+    }
+    if let Some(obj) = v.as_object() {
+        if let Some(row) = row_from_obj(obj) {
+            return vec![row];
+        }
+    }
+    Vec::new()
+}
+
+/// HelixTest `ServiceReport`: `{ "service": "Wes", "tests": [{ "name", "passed", "status", "error" }] }`.
+fn row_from_helixtest_service(item: &Value) -> Option<ServiceResultRow> {
+    let obj = item.as_object()?;
+    let service = obj.get("service").and_then(json_string)?;
+    let Some(tests) = obj.get("tests").and_then(|t| t.as_array()) else {
+        return row_from_obj(obj);
+    };
+    let mut failed = Vec::new();
+    for t in tests {
+        let status = t
+            .get("status")
+            .and_then(|x| x.as_str())
+            .unwrap_or("")
+            .to_ascii_lowercase();
+        if status == "skip" {
+            continue;
+        }
+        let name = t.get("name").and_then(|x| x.as_str()).unwrap_or("test");
+        let passed = t.get("passed").and_then(|x| x.as_bool()).unwrap_or(false) || status == "pass";
+        if !passed {
+            let err = t.get("error").and_then(|x| x.as_str()).unwrap_or("failed");
+            failed.push(format!("{name}: {err}"));
+        }
+    }
+    Some(ServiceResultRow {
+        service,
+        passed: failed.is_empty(),
+        detail: if failed.is_empty() {
+            None
+        } else {
+            Some(failed.join("; "))
+        },
+    })
+}
+
+fn row_from_obj(obj: &serde_json::Map<String, Value>) -> Option<ServiceResultRow> {
     let service = obj
         .get("service")
         .or_else(|| obj.get("name"))
-        .and_then(|x| x.as_str())
-        .unwrap_or("unknown")
-        .to_string();
+        .or_else(|| obj.get("service_id"))
+        .and_then(json_string);
     let passed = obj
         .get("passed")
         .or_else(|| obj.get("ok"))
-        .and_then(|x| x.as_bool())
-        .unwrap_or(false);
+        .or_else(|| obj.get("success"))
+        .and_then(|x| x.as_bool());
+    if service.is_none() && passed.is_none() {
+        return None;
+    }
     let detail = obj
         .get("message")
         .or_else(|| obj.get("error"))
+        .or_else(|| obj.get("detail"))
         .and_then(|x| x.as_str())
         .map(String::from);
-    ServiceResultRow {
-        service,
-        passed,
+    Some(ServiceResultRow {
+        service: service.unwrap_or_else(|| "unknown".into()),
+        passed: passed.unwrap_or(false),
         detail,
+    })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn parses_helixtest_overall_report() {
+        let raw = r#"{
+            "enabled_services": ["Wes", "Drs"],
+            "services": [
+                {
+                    "service": "Wes",
+                    "tests": [
+                        {"name": "schema", "status": "pass", "passed": true, "error": null},
+                        {"name": "skip-me", "status": "skip", "passed": false, "error": "skipped: n/a"}
+                    ]
+                },
+                {
+                    "service": "Drs",
+                    "tests": [
+                        {"name": "checksum", "status": "fail", "passed": false, "error": "mismatch"}
+                    ]
+                }
+            ]
+        }"#;
+        let r = build_from_helixtest_value(raw, "lab").unwrap();
+        assert_eq!(r.enabled_services, vec!["Wes", "Drs"]);
+        assert_eq!(r.results.len(), 2);
+        assert!(r.results[0].passed);
+        assert!(!r.results[1].passed);
+        assert!(!r.overall_pass);
+        assert!(r.results[1].detail.as_ref().unwrap().contains("mismatch"));
+    }
+
+    #[test]
+    fn skips_envelope_without_service() {
+        let raw = r#"{"ok": true, "results": [{"service": "Beacon", "passed": true}]}"#;
+        let r = build_from_helixtest_value(raw, "lab").unwrap();
+        assert_eq!(r.results.len(), 1);
+        assert!(r.overall_pass);
     }
 }

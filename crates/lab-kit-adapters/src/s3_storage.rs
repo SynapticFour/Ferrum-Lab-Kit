@@ -1,3 +1,5 @@
+use std::path::Path;
+
 use async_trait::async_trait;
 use aws_config::BehaviorVersion;
 use aws_credential_types::Credentials;
@@ -66,7 +68,7 @@ impl StorageBackend for S3StorageBackend {
             .await
             .map_err(|e| StorageError::S3(e.to_string()))?
             .into_bytes();
-        Ok(data.to_vec())
+        Ok(data.into())
     }
 
     async fn delete_object(&self, key: &str) -> Result<(), StorageError> {
@@ -91,7 +93,40 @@ impl StorageBackend for S3StorageBackend {
             .map_err(|e| StorageError::S3(e.to_string()))?;
         Ok(StorageObjectMeta {
             key: key.to_string(),
-            size: out.content_length().unwrap_or(0) as u64,
+            size: out.content_length().unwrap_or(0).max(0) as u64,
         })
+    }
+
+    async fn put_file(&self, key: &str, path: &Path) -> Result<(), StorageError> {
+        let body = ByteStream::from_path(path)
+            .await
+            .map_err(|e| StorageError::S3(e.to_string()))?;
+        self.client
+            .put_object()
+            .bucket(&self.bucket)
+            .key(key)
+            .body(body)
+            .send()
+            .await
+            .map_err(|e| StorageError::S3(e.to_string()))?;
+        Ok(())
+    }
+
+    async fn get_file(&self, key: &str, dest: &Path) -> Result<(), StorageError> {
+        let out = self
+            .client
+            .get_object()
+            .bucket(&self.bucket)
+            .key(key)
+            .send()
+            .await
+            .map_err(|e| StorageError::S3(e.to_string()))?;
+        if let Some(parent) = dest.parent() {
+            tokio::fs::create_dir_all(parent).await?;
+        }
+        let mut file = tokio::fs::File::create(dest).await?;
+        let mut reader = out.body.into_async_read();
+        tokio::io::copy(&mut reader, &mut file).await?;
+        Ok(())
     }
 }

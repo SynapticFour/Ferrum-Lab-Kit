@@ -107,7 +107,7 @@ Details: [docs/GA4GH-STANDARDS.md](docs/GA4GH-STANDARDS.md).
 
 ## Open core
 
-**GA4GH deployment and LS Login integration** are open under **BUSL-1.1** (see [LICENSE](LICENSE)) for permitted non-commercial research use. **Conformance PDF reports** and enterprise federation tooling are **commercial** offerings — PDF output checks **`FERRUM_LAB_KIT_LICENSE_KEY`**; **JSON reports and protocol stacks are not license-gated.** See [docs/BUSINESS-MODEL.md](docs/BUSINESS-MODEL.md).
+**GA4GH deployment and LS Login integration** are open under **BUSL-1.1** (see [LICENSE](LICENSE)) for permitted non-commercial research use. **Conformance PDF reports** and enterprise federation tooling are **commercial** offerings — PDF output requires a well-formed **`FERRUM_LAB_KIT_LICENSE_KEY`** and **`lab-kit license activate`**; **JSON reports and protocol stacks are not license-gated.** See [docs/BUSINESS-MODEL.md](docs/BUSINESS-MODEL.md).
 
 ## CLI (`lab-kit`)
 

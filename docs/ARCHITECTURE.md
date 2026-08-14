@@ -14,7 +14,7 @@
 | `lab-kit-adapters` | `StorageBackend`, `ComputeBackend`, `MetadataStore`, `WorkflowEngine` + S3, POSIX, SLURM (local + SSH), SQLite/Postgres (sqlx) |
 | `lab-kit-deploy` | Compose merge, Helm values emission, systemd unit stubs |
 | `lab-kit-ingest` | Async HTTP client for Ferrum **`/api/v1/ingest/*`** (register, multipart upload, job poll) |
-| `lab-kit-report` | HelixTest JSON → `conformance-report.json`; PDF behind `FERRUM_LAB_KIT_LICENSE_KEY` |
+| `lab-kit-report` | HelixTest JSON → `conformance-report.json`; PDF behind activated `FERRUM_LAB_KIT_LICENSE_KEY` |
 | `lab-kit-selector` | `lab-kit` CLI: `init`, `generate`, `status`, `conformance`, `ingest`, `ferrum check` |
 
 ## Data flow

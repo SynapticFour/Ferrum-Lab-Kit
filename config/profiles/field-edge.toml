@@ -35,10 +35,11 @@ emergency_threshold = 10
 
 [auth]
 mode = "local"                # local Passport validation, no external IdP
-# For internet-connected deployments, switch to "ls-login" and set credentials:
+# For internet-connected deployments, switch to "ls-login" and set client_id;
+# export LS_LOGIN_CLIENT_SECRET instead of writing the secret into this file.
 # mode = "ls-login"
 # client_id = ""
-# client_secret = ""
+# client_secret = "${LS_LOGIN_CLIENT_SECRET}"
 
 [network]
 # Bandwidth-adaptive settings (activated if Ferrum upstream supports them)

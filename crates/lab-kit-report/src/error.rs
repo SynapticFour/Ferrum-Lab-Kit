@@ -8,4 +8,6 @@ pub enum ReportError {
     Json(#[from] serde_json::Error),
     #[error("PDF: {0}")]
     Pdf(String),
+    #[error("license: {0}")]
+    License(String),
 }

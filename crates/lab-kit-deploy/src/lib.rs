@@ -9,7 +9,9 @@ mod pi_bundle;
 mod routing;
 mod systemd;
 
-pub use compose::{generate_compose_file, ComposeOptions};
+pub use compose::{
+    generate_compose_file, render_compose_yaml, write_compose_sidecars, ComposeOptions,
+};
 pub use error::DeployError;
 pub use helm::generate_helm_values;
 pub use pi_bundle::{generate_raspberry_pi_bundle, RaspberryPiBundleOptions};

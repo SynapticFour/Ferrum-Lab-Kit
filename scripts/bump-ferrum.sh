@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Bump the Ferrum git pin (ferrum-core) to latest main or a given full SHA.
-# Updates: crates/lab-kit-ferrum/Cargo.toml, crates/lab-kit-ferrum/src/lib.rs, config/ci/ferrum-revision.txt
+# Updates: crates/lab-kit-ferrum/Cargo.toml, config/ci/ferrum-revision.txt
 #
 # Usage:
 #   ./scripts/bump-ferrum.sh              # use origin/main tip
@@ -82,9 +82,6 @@ fi
 perl -i -pe "s/rev = \"[0-9a-f]{40}\"/rev = \"$FERRUM_REV\"/" \
   "$ROOT/crates/lab-kit-ferrum/Cargo.toml"
 
-perl -i -pe "s/pub const FERRUM_GIT_REV: &str = \"[0-9a-f]{40}\"/pub const FERRUM_GIT_REV: &str = \"$FERRUM_REV\"/" \
-  "$ROOT/crates/lab-kit-ferrum/src/lib.rs"
-
 TMP="$(mktemp)"
 awk -v sha="$FERRUM_REV" '
   /^[0-9a-f]{40}$/ { print sha; replaced = 1; next }
@@ -95,7 +92,6 @@ mv "$TMP" "$ROOT/config/ci/ferrum-revision.txt"
 
 echo "Updated:"
 echo "  - crates/lab-kit-ferrum/Cargo.toml"
-echo "  - crates/lab-kit-ferrum/src/lib.rs (FERRUM_GIT_REV)"
 echo "  - config/ci/ferrum-revision.txt"
 echo ""
 echo "Next:"

@@ -2,7 +2,8 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 use lab_kit_core::{
-    is_co_deploy, is_solum_enabled, Ga4ghInfraMode, LabKitConfig, ServiceId, ServiceRegistry,
+    is_co_deploy, is_solum_enabled, tes_slurm_config, Ga4ghInfraMode, LabKitConfig, ServiceId,
+    ServiceRegistry,
 };
 use serde_yaml::{Mapping, Value};
 
@@ -37,13 +38,12 @@ fn merge_fragment(merged: &mut Value, fragments_dir: &Path, file: &str) -> Resul
     Ok(())
 }
 
-/// Merge `docker-compose.base.yml` with gateway (or legacy fragments) into `output_path`.
-pub fn generate_compose_file(
+/// Merge `docker-compose.base.yml` with gateway (or legacy fragments) and return YAML.
+pub fn render_compose_yaml(
     cfg: &LabKitConfig,
     fragments_dir: &Path,
-    output_path: &Path,
     options: &ComposeOptions,
-) -> Result<(), DeployError> {
+) -> Result<String, DeployError> {
     let registry = ServiceRegistry::from_config(cfg);
     let base_raw = fs::read_to_string(fragment_path(fragments_dir, "docker-compose.base.yml"))?;
     let mut merged: Value = serde_yaml::from_str(&base_raw)?;
@@ -99,6 +99,8 @@ pub fn generate_compose_file(
         merge_fragment(&mut merged, fragments_dir, "edge.yml")?;
     }
 
+    apply_lab_kit_runtime_env(&mut merged, cfg, &registry)?;
+
     let ga4gh = cfg.ga4gh_infra.as_ref();
     let force_infra = options.with_ga4gh_infra;
     let co_deploy = force_infra || is_co_deploy(cfg);
@@ -112,7 +114,9 @@ pub fn generate_compose_file(
         }
     } else if external_infra {
         merge_fragment(&mut merged, fragments_dir, "co-deploy-external.yml")?;
-        apply_external_infra_urls(&mut merged, ga4gh.expect("checked"))?;
+        if let Some(g) = ga4gh {
+            apply_external_infra_urls(&mut merged, g)?;
+        }
     }
 
     let solum = options.with_solum || is_solum_enabled(cfg);
@@ -121,13 +125,31 @@ pub fn generate_compose_file(
         apply_solum_defaults(&mut merged, cfg)?;
     }
 
+    Ok(serde_yaml::to_string(&merged)?)
+}
+
+pub fn write_compose_sidecars(
+    cfg: &LabKitConfig,
+    compose_output: &Path,
+) -> Result<(), DeployError> {
+    write_external_upstreams_next_to_compose(cfg, compose_output)?;
+    write_traefik_dynamic_proxy_next_to_compose(cfg, compose_output)?;
+    Ok(())
+}
+
+/// Merge `docker-compose.base.yml` with gateway (or legacy fragments) into `output_path`.
+pub fn generate_compose_file(
+    cfg: &LabKitConfig,
+    fragments_dir: &Path,
+    output_path: &Path,
+    options: &ComposeOptions,
+) -> Result<(), DeployError> {
+    let out = render_compose_yaml(cfg, fragments_dir, options)?;
     if let Some(parent) = output_path.parent() {
         fs::create_dir_all(parent)?;
     }
-    let out = serde_yaml::to_string(&merged)?;
     fs::write(output_path, out)?;
-    write_external_upstreams_next_to_compose(cfg, output_path)?;
-    write_traefik_dynamic_proxy_next_to_compose(cfg, output_path)?;
+    write_compose_sidecars(cfg, output_path)?;
     Ok(())
 }
 
@@ -153,35 +175,165 @@ fn gateway_env_map(merged: &mut Value) -> Result<&mut Mapping, DeployError> {
         .ok_or_else(|| DeployError::Msg("ferrum-gateway.environment must be a mapping".into()))
 }
 
+fn insert_env(env: &mut Mapping, key: &str, value: impl Into<String>) {
+    env.insert(Value::String(key.into()), Value::String(value.into()));
+}
+
 fn apply_enable_flags(merged: &mut Value, registry: &ServiceRegistry) -> Result<(), DeployError> {
-    let flag = |id: ServiceId| -> &'static str {
-        if registry.entries.iter().any(|e| e.id == id && e.deploy) {
-            "true"
-        } else {
-            "false"
+    let env = gateway_env_map(merged)?;
+    for id in [
+        ServiceId::Drs,
+        ServiceId::Htsget,
+        ServiceId::Wes,
+        ServiceId::Tes,
+        ServiceId::Beacon,
+        ServiceId::Trs,
+    ] {
+        if let Some(flag) = id.enable_env() {
+            let val = if registry.is_deployed(id) {
+                "true"
+            } else {
+                "false"
+            };
+            insert_env(env, flag, val);
         }
+    }
+    Ok(())
+}
+
+fn apply_lab_kit_runtime_env(
+    merged: &mut Value,
+    cfg: &LabKitConfig,
+    _registry: &ServiceRegistry,
+) -> Result<(), DeployError> {
+    let Ok(env) = gateway_env_map(merged) else {
+        return Ok(());
     };
-    let patch_raw = format!(
-        r#"
-services:
-  ferrum-gateway:
-    environment:
-      FERRUM_SERVICES__ENABLE_DRS: "{drs}"
-      FERRUM_SERVICES__ENABLE_HTSGET: "{htsget}"
-      FERRUM_SERVICES__ENABLE_WES: "{wes}"
-      FERRUM_SERVICES__ENABLE_TES: "{tes}"
-      FERRUM_SERVICES__ENABLE_BEACON: "{beacon}"
-      FERRUM_SERVICES__ENABLE_TRS: "{trs}"
-"#,
-        drs = flag(ServiceId::Drs),
-        htsget = flag(ServiceId::Htsget),
-        wes = flag(ServiceId::Wes),
-        tes = flag(ServiceId::Tes),
-        beacon = flag(ServiceId::Beacon),
-        trs = flag(ServiceId::Trs),
-    );
-    let patch: Value = serde_yaml::from_str(&patch_raw)?;
-    merge_yaml(merged, patch);
+
+    if let Some(drs) = cfg.services.drs.as_ref() {
+        if let Some(s3) = &drs.s3 {
+            insert_env(env, "FERRUM_STORAGE__BACKEND", "s3");
+            insert_env(env, "FERRUM_STORAGE__S3_ENDPOINT", s3.endpoint.as_str());
+            insert_env(env, "FERRUM_STORAGE__S3_BUCKET", &s3.bucket);
+            insert_env(env, "FERRUM_STORAGE__S3_ACCESS_KEY_ID", &s3.access_key);
+            insert_env(env, "FERRUM_STORAGE__S3_SECRET_ACCESS_KEY", &s3.secret_key);
+            if let Some(region) = &s3.region {
+                insert_env(env, "FERRUM_STORAGE__S3_REGION", region);
+            }
+        } else if let Some(posix) = &drs.posix {
+            insert_env(env, "FERRUM_STORAGE__BACKEND", "local");
+            insert_env(env, "FERRUM_STORAGE__BASE_PATH", &posix.root);
+        }
+    }
+
+    if let Some(backend) = cfg.backend.as_ref() {
+        if cfg
+            .services
+            .drs
+            .as_ref()
+            .and_then(|d| d.posix.as_ref())
+            .is_none()
+            && cfg
+                .services
+                .drs
+                .as_ref()
+                .and_then(|d| d.s3.as_ref())
+                .is_none()
+        {
+            insert_env(env, "FERRUM_STORAGE__BACKEND", "local");
+            insert_env(env, "FERRUM_STORAGE__BASE_PATH", &backend.objects_path);
+        }
+        if backend.database == "sqlite" {
+            insert_env(
+                env,
+                "FERRUM_DATABASE__URL",
+                format!("sqlite:{}", backend.sqlite_path),
+            );
+        }
+    }
+
+    if let Some(africa) = cfg.africa.as_ref() {
+        insert_env(
+            env,
+            "FERRUM_AFRICA__OFFLINE_FIRST",
+            africa.offline_first.to_string(),
+        );
+        insert_env(
+            env,
+            "FERRUM_AFRICA__MAX_MEMORY_MB",
+            africa.max_memory_mb.to_string(),
+        );
+        insert_env(
+            env,
+            "FERRUM_AFRICA__POWER_ENABLED",
+            africa.power_monitor.to_string(),
+        );
+        insert_env(
+            env,
+            "FERRUM_AFRICA__LOW_POWER_THRESHOLD",
+            africa.low_power_threshold.to_string(),
+        );
+        insert_env(
+            env,
+            "FERRUM_AFRICA__EMERGENCY_THRESHOLD",
+            africa.emergency_threshold.to_string(),
+        );
+        if let Some(backend) = cfg.backend.as_ref() {
+            insert_env(env, "FERRUM_AFRICA__SQLITE_PATH", &backend.sqlite_path);
+            insert_env(env, "FERRUM_AFRICA__OBJECTS_PATH", &backend.objects_path);
+        }
+    }
+
+    if let Some(res) = cfg.resources.as_ref() {
+        insert_env(
+            env,
+            "FERRUM_MAX_CONCURRENT_REQUESTS",
+            res.max_concurrent_requests.to_string(),
+        );
+        insert_env(
+            env,
+            "FERRUM_BACKGROUND_INDEXING",
+            res.background_indexing.to_string(),
+        );
+    }
+
+    if let Some(net) = cfg.network.as_ref() {
+        insert_env(
+            env,
+            "FERRUM_BANDWIDTH_ADAPTIVE",
+            net.bandwidth_adaptive.to_string(),
+        );
+    }
+
+    if let Some(wes) = cfg.services.wes.as_ref() {
+        if wes
+            .compute_backend
+            .as_deref()
+            .is_some_and(|s| s.eq_ignore_ascii_case("slurm"))
+        {
+            insert_env(env, "FERRUM_WES_BACKEND", "slurm");
+        }
+        if let Some(slurm) = &wes.slurm {
+            if let Some(p) = &slurm.partition {
+                insert_env(env, "FERRUM_WES_SLURM_PARTITION", p);
+            }
+        }
+    }
+    if let Some(tes) = cfg.services.tes.as_ref() {
+        if tes
+            .compute_backend
+            .as_deref()
+            .is_some_and(|s| s.eq_ignore_ascii_case("slurm"))
+        {
+            insert_env(env, "FERRUM_TES_BACKEND", "slurm");
+        }
+        if let Some(slurm) = tes_slurm_config(cfg) {
+            if let Some(p) = &slurm.partition {
+                insert_env(env, "FERRUM_TES_SLURM_PARTITION", p);
+            }
+        }
+    }
+
     Ok(())
 }
 
@@ -259,6 +411,11 @@ fn apply_solum_defaults(merged: &mut Value, cfg: &LabKitConfig) -> Result<(), De
             Value::String("FERRUM_SOLUM__TIMEOUT_SECS".into()),
             Value::String(solum.timeout_secs.to_string()),
         );
+        if let Some(ref token) = solum.sidecar_token {
+            if !token.is_empty() {
+                insert_env(env, "FERRUM_SOLUM__SIDECAR_TOKEN", token);
+            }
+        }
     }
 
     // Merge depends_on without clobbering ga4gh-infra broker deps.

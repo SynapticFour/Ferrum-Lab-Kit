@@ -1,17 +1,23 @@
 //! Conformance report generation from HelixTest-style JSON.
-//! **PDF** output requires `FERRUM_LAB_KIT_LICENSE_KEY` at runtime (open-core boundary).
+//! **PDF** output requires a well-formed `FERRUM_LAB_KIT_LICENSE_KEY` that matches
+//! a prior `lab-kit license activate` file (open-core boundary).
 
 #![forbid(unsafe_code)]
 
 mod error;
 mod json_report;
+mod license;
 #[cfg(feature = "pdf")]
 mod pdf_report;
 
 pub use error::ReportError;
 pub use json_report::{ConformanceJsonReport, ServiceResultRow};
+pub use license::{
+    activate_license, default_license_file, hash_license_key, license_key_well_formed,
+    pdf_license_granted, LicenseActivation, LICENSE_FILE_ENV,
+};
 
-/// Environment variable checked before emitting PDF (commercial tier).
+/// Environment variable holding the raw license key (must also be activated).
 pub const LICENSE_KEY_ENV: &str = "FERRUM_LAB_KIT_LICENSE_KEY";
 
 /// Build structured JSON + optional PDF from raw HelixTest JSON file.
@@ -28,19 +34,21 @@ pub fn generate_reports(
 
     #[cfg(feature = "pdf")]
     {
-        if std::env::var(LICENSE_KEY_ENV)
-            .map(|v| !v.trim().is_empty())
-            .unwrap_or(false)
-        {
-            let pdf_path = out_dir.join("conformance-report.pdf");
-            pdf_report::write_pdf(&report, &pdf_path)?;
-            tracing::info!(path = %pdf_path.display(), "wrote PDF report (licensed)");
-        } else {
-            tracing::warn!(
-                "PDF skipped: set {} for licensed PDF output. JSON written to {}",
-                LICENSE_KEY_ENV,
-                json_path.display()
-            );
+        let key = std::env::var(LICENSE_KEY_ENV).unwrap_or_default();
+        let lic_path = default_license_file();
+        match pdf_license_granted(&key, &lic_path) {
+            Ok(()) => {
+                let pdf_path = out_dir.join("conformance-report.pdf");
+                pdf_report::write_pdf(&report, &pdf_path)?;
+                tracing::info!(path = %pdf_path.display(), "wrote PDF report (licensed)");
+            }
+            Err(e) => {
+                tracing::warn!(
+                    "PDF skipped: {e}. JSON written to {}. Set {} and run `lab-kit license activate`.",
+                    json_path.display(),
+                    LICENSE_KEY_ENV
+                );
+            }
         }
     }
     #[cfg(not(feature = "pdf"))]

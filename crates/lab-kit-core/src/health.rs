@@ -1,5 +1,7 @@
 //! Poll enabled services for readiness (dashboard + HelixTest pre-flight).
 
+use std::collections::HashSet;
+
 use serde::Serialize;
 
 use crate::error::CoreError;
@@ -19,25 +21,29 @@ pub struct ServiceHealth {
 pub struct HealthAggregator;
 
 impl HealthAggregator {
-    /// Synchronous HTTP GET; treats 2xx as healthy.
-    pub fn poll(registry: &ServiceRegistry) -> Result<Vec<ServiceHealth>, CoreError> {
-        let client = reqwest::blocking::Client::builder()
+    /// HTTP GET per unique health URL; treats 2xx as healthy.
+    pub async fn poll(registry: &ServiceRegistry) -> Result<Vec<ServiceHealth>, CoreError> {
+        let client = reqwest::Client::builder()
             .timeout(std::time::Duration::from_secs(5))
             .build()
             .map_err(|e| CoreError::Health(e.to_string()))?;
 
+        let mut seen = HashSet::new();
         let mut out = Vec::new();
         for e in &registry.entries {
             let Some(url) = &e.health_url else {
                 continue;
             };
             let url_s = url.to_string();
-            match client.get(url.clone()).send() {
+            if !seen.insert(url_s.clone()) {
+                continue;
+            }
+            match client.get(url.clone()).send().await {
                 Ok(resp) => {
                     let code = resp.status().as_u16();
                     let ok = resp.status().is_success();
                     out.push(ServiceHealth {
-                        service: format!("{:?}", e.id).to_lowercase(),
+                        service: e.id.to_string(),
                         url: url_s,
                         ok,
                         status_code: Some(code),
@@ -49,7 +55,7 @@ impl HealthAggregator {
                     });
                 }
                 Err(err) => out.push(ServiceHealth {
-                    service: format!("{:?}", e.id).to_lowercase(),
+                    service: e.id.to_string(),
                     url: url_s,
                     ok: false,
                     status_code: None,

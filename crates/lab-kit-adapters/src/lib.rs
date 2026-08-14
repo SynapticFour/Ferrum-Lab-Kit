@@ -2,8 +2,6 @@
 //! Ferrum services consume these boundaries; Lab Kit supplies defaults for common lab setups.
 
 #![forbid(unsafe_code)]
-// Public surface is consumed by Ferrum integrations; not all types are referenced in-tree yet.
-#![allow(dead_code)]
 
 mod compute;
 mod metadata;
@@ -29,4 +27,4 @@ pub use s3_storage::S3StorageBackend;
 pub use slurm::SlurmComputeBackend;
 pub use slurm_ssh::SlurmSshComputeBackend;
 pub use storage::{StorageBackend, StorageError, StorageObjectMeta};
-pub use workflow::{WorkflowEngine, WorkflowError, WorkflowRunSpec};
+pub use workflow::{NextflowWorkflowEngine, WorkflowEngine, WorkflowError, WorkflowRunSpec};

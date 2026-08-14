@@ -81,6 +81,8 @@ pub struct UploadOptions {
 pub enum IngestError {
     #[error("HTTP error: {0}")]
     Http(#[from] reqwest::Error),
+    #[error("IO: {0}")]
+    Io(#[from] std::io::Error),
     #[error("invalid response JSON: {0}")]
     Json(#[from] serde_json::Error),
     #[error("gateway HTTP {status}: {body}")]
@@ -149,15 +151,43 @@ impl IngestClient {
         Self::parse_job_response(resp).await
     }
 
-    /// `POST /api/v1/ingest/upload` (multipart).
+    /// `POST /api/v1/ingest/upload` (multipart). Prefer [`Self::upload_path`] for large files.
     pub async fn upload(
         &self,
         file_part_name: &str,
         bytes: Vec<u8>,
         opts: UploadOptions,
     ) -> Result<IngestJobResponse, IngestError> {
+        self.upload_part(
+            reqwest::multipart::Part::bytes(bytes).file_name(file_part_name.to_string()),
+            opts,
+        )
+        .await
+    }
+
+    /// Stream a file from disk (does not buffer the whole object in the client).
+    pub async fn upload_path(
+        &self,
+        path: &std::path::Path,
+        opts: UploadOptions,
+    ) -> Result<IngestJobResponse, IngestError> {
+        let file_name = path
+            .file_name()
+            .map(|s| s.to_string_lossy().into_owned())
+            .unwrap_or_else(|| "upload.bin".into());
+        let file = tokio::fs::File::open(path).await?;
+        let stream = tokio_util::io::ReaderStream::new(file);
+        let part = reqwest::multipart::Part::stream(reqwest::Body::wrap_stream(stream))
+            .file_name(file_name);
+        self.upload_part(part, opts).await
+    }
+
+    async fn upload_part(
+        &self,
+        mut part: reqwest::multipart::Part,
+        opts: UploadOptions,
+    ) -> Result<IngestJobResponse, IngestError> {
         let url = format!("{}/api/v1/ingest/upload", self.base);
-        let mut part = reqwest::multipart::Part::bytes(bytes).file_name(file_part_name.to_string());
         if let Some(ref m) = opts.mime_type {
             part = part.mime_str(m)?;
         }

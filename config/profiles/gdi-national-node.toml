@@ -1,7 +1,7 @@
 schema_version = 1
 
 [lab]
-name = "ELIXIR node candidate (full Lab Kit surface)"
+name = "GDI national node (Lab Kit surface)"
 environment = "staging"
 
 [auth]
@@ -21,7 +21,7 @@ root = "/srv/genomic-data"
 [services.htsget]
 
 [services.beacon]
-dataset_id = "national-node-cohort-001"
+dataset_id = "gdi-national-cohort-001"
 access_level = "controlled"
 
 [services.wes]
@@ -35,7 +35,7 @@ partition = "long"
 compute_backend = "slurm"
 
 [services.trs]
-registry_name = "National tools"
+registry_name = "GDI national tools"
 
 [external]
 beacon_network_url = "https://beacon-network.elixir-europe.org"

@@ -8,9 +8,11 @@ use std::path::PathBuf;
 use std::process::Stdio;
 
 use async_trait::async_trait;
+use tokio::io::AsyncWriteExt;
 use tokio::process::Command;
 
 use crate::compute::{ComputeBackend, ComputeError, ComputeJobSpec, ComputeJobStatus};
+use crate::slurm::{parse_sbatch_job_id, sbatch_flag_args};
 
 /// Compute backend: run `sbatch` / `squeue` on a cluster login node over SSH.
 #[derive(Debug, Clone)]
@@ -22,7 +24,12 @@ pub struct SlurmSshComputeBackend {
     /// Optional identity file (`ssh -i`).
     pub identity_file: Option<PathBuf>,
     /// Extra `ssh` arguments **before** the remote destination (e.g. `-o`, `ProxyJump=jumphost`).
+    ///
+    /// Operator-supplied only — never interpolate untrusted input; these are raw ssh argv.
     pub extra_ssh_args: Vec<String>,
+    /// Optional `UserKnownHostsFile`. When unset, OpenSSH uses `~/.ssh/known_hosts`.
+    /// `StrictHostKeyChecking=yes` requires the host to already be listed there.
+    pub known_hosts: Option<PathBuf>,
     /// Optional SLURM partition (`sbatch -p`).
     pub partition: Option<String>,
 }
@@ -34,6 +41,7 @@ impl SlurmSshComputeBackend {
             ssh_port: None,
             identity_file: None,
             extra_ssh_args: Vec::new(),
+            known_hosts: None,
             partition: None,
         }
     }
@@ -44,8 +52,11 @@ impl SlurmSshComputeBackend {
             .stdout(Stdio::piped())
             .stderr(Stdio::piped());
         cmd.arg("-o").arg("BatchMode=yes");
-        // Safer default for automation than `yes`; operators can override via `extra_ssh_args`.
-        cmd.arg("-o").arg("StrictHostKeyChecking=accept-new");
+        cmd.arg("-o").arg("StrictHostKeyChecking=yes");
+        if let Some(ref kh) = self.known_hosts {
+            cmd.arg("-o")
+                .arg(format!("UserKnownHostsFile={}", kh.display()));
+        }
         if let Some(p) = self.ssh_port {
             cmd.args(["-p", &p.to_string()]);
         }
@@ -61,55 +72,44 @@ impl SlurmSshComputeBackend {
         cmd.arg(&self.ssh_target);
         cmd
     }
-
-    async fn remote_output(mut cmd: Command) -> Result<std::process::Output, ComputeError> {
-        let out = cmd.output().await?;
-        Ok(out)
-    }
 }
 
 #[async_trait]
 impl ComputeBackend for SlurmSshComputeBackend {
     async fn submit(&self, spec: ComputeJobSpec) -> Result<String, ComputeError> {
         let mut cmd = self.base_ssh();
+        cmd.stdin(Stdio::piped());
         cmd.arg("sbatch");
-        if let Some(p) = &self.partition {
-            cmd.args(["-p", p]);
+        for a in sbatch_flag_args(&spec, self.partition.as_deref()) {
+            cmd.arg(a);
         }
-        if let Some(c) = spec.cpus {
-            cmd.arg("-c").arg(c.to_string());
-        }
-        if let Some(m) = spec.memory_mb {
-            cmd.arg("--mem").arg(format!("{m}M"));
-        }
-        cmd.arg("--job-name").arg(&spec.name);
-        cmd.arg("--wrap").arg(&spec.script);
+        cmd.arg("/dev/stdin");
 
-        let out = Self::remote_output(cmd).await.map_err(|e| {
+        let mut child = cmd.spawn().map_err(|e| {
             ComputeError::Scheduler(format!(
                 "failed to run ssh sbatch (is `ssh` installed and reachable?): {e}"
             ))
         })?;
+        if let Some(mut stdin) = child.stdin.take() {
+            stdin
+                .write_all(format!("#!/bin/bash\n{}\n", spec.script).as_bytes())
+                .await?;
+        }
+        let out = child.wait_with_output().await?;
         if !out.status.success() {
             return Err(ComputeError::Scheduler(
                 String::from_utf8_lossy(&out.stderr).to_string(),
             ));
         }
-        let stdout = String::from_utf8_lossy(&out.stdout);
-        let id = stdout
-            .split_whitespace()
-            .last()
-            .unwrap_or("unknown")
-            .trim()
-            .to_string();
-        Ok(id)
+        Ok(parse_sbatch_job_id(&String::from_utf8_lossy(&out.stdout)))
     }
 
     async fn status(&self, job_id: &str) -> Result<ComputeJobStatus, ComputeError> {
         let mut cmd = self.base_ssh();
         cmd.args(["squeue", "-h", "-j", job_id, "-o", "%T"]);
 
-        let out = Self::remote_output(cmd)
+        let out = cmd
+            .output()
             .await
             .map_err(|e| ComputeError::Scheduler(format!("failed to run ssh squeue: {e}")))?;
         let state = if out.status.success() {

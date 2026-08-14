@@ -5,6 +5,41 @@ use url::Url;
 
 use crate::CoreError;
 
+/// Environment variable for the LS Login / ELIXIR OIDC client secret.
+/// Generated configs write `${LS_LOGIN_CLIENT_SECRET}` instead of a real secret.
+pub const LS_LOGIN_CLIENT_SECRET_ENV: &str = "LS_LOGIN_CLIENT_SECRET";
+
+/// Environment variable for a Keycloak client secret.
+pub const KEYCLOAK_CLIENT_SECRET_ENV: &str = "KEYCLOAK_CLIENT_SECRET";
+
+/// True when `s` is empty or a documented env placeholder (not a real secret).
+pub fn is_oidc_secret_placeholder(s: &str) -> bool {
+    let t = s.trim();
+    t.is_empty()
+        || t == "your-client-secret"
+        || t == "${LS_LOGIN_CLIENT_SECRET}"
+        || t == "${KEYCLOAK_CLIENT_SECRET}"
+        || t.eq_ignore_ascii_case(LS_LOGIN_CLIENT_SECRET_ENV)
+        || t.eq_ignore_ascii_case(KEYCLOAK_CLIENT_SECRET_ENV)
+}
+
+/// Resolve an OIDC client secret: keep concrete values; fill placeholders from `env_name`.
+pub fn resolve_oidc_client_secret(configured: &str, env_name: &str) -> String {
+    if !is_oidc_secret_placeholder(configured) {
+        return configured.to_string();
+    }
+    std::env::var(env_name)
+        .ok()
+        .map(|s| s.trim().to_string())
+        .filter(|s| !s.is_empty())
+        .unwrap_or_else(|| configured.trim().to_string())
+}
+
+/// Value written into generated `lab-kit.toml` so the secret stays in the environment.
+pub fn oidc_client_secret_placeholder() -> String {
+    format!("${{{LS_LOGIN_CLIENT_SECRET_ENV}}}")
+}
+
 /// Root configuration: only sections a lab actually uses need to be filled in.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LabKitConfig {
@@ -54,20 +89,37 @@ impl LabKitConfig {
         }
 
         match self.auth.provider {
-            AuthProvider::LsLogin => {
-                if self.auth.ls_login.is_none() {
+            AuthProvider::LsLogin => match &self.auth.ls_login {
+                None => {
                     return Err(CoreError::Validation(
                         "auth.provider = \"ls-login\" requires [auth.ls-login]".into(),
                     ));
                 }
-            }
-            AuthProvider::Keycloak => {
-                if self.auth.keycloak.is_none() {
+                Some(ls)
+                    if ls.client_id.trim().is_empty() || ls.client_secret.trim().is_empty() =>
+                {
+                    return Err(CoreError::Validation(
+                            "auth.provider = \"ls-login\" requires non-empty client_id and client_secret".into(),
+                        ));
+                }
+                Some(_) => {}
+            },
+            AuthProvider::Keycloak => match &self.auth.keycloak {
+                None => {
                     return Err(CoreError::Validation(
                         "auth.provider = \"keycloak\" requires [auth.keycloak]".into(),
                     ));
                 }
-            }
+                Some(kc)
+                    if kc.client_id.trim().is_empty()
+                        || kc.client_secret.as_deref().unwrap_or("").trim().is_empty() =>
+                {
+                    return Err(CoreError::Validation(
+                            "auth.provider = \"keycloak\" requires non-empty client_id and client_secret".into(),
+                        ));
+                }
+                Some(_) => {}
+            },
             AuthProvider::Ldap => {
                 if self.auth.ldap.is_none() {
                     return Err(CoreError::Validation(
@@ -642,5 +694,55 @@ access_level = "public"
             c.services.beacon.as_ref().unwrap().access_level,
             BeaconAccessLevel::Public
         );
+    }
+
+    #[test]
+    fn rejects_ls_login_empty_secret() {
+        let raw = r#"
+schema_version = 1
+
+[lab]
+name = "Test Lab"
+environment = "demo"
+
+[auth]
+provider = "ls-login"
+
+[auth.ls-login]
+client_id = "cid"
+client_secret = ""
+issuer = "https://login.elixir-czech.org/oidc/"
+
+[services.beacon]
+dataset_id = "ds1"
+"#;
+        let err = parse_config(raw).unwrap_err();
+        assert!(err.to_string().contains("client_secret"));
+    }
+
+    #[test]
+    fn accepts_ls_login_env_placeholder() {
+        let raw = r#"
+schema_version = 1
+
+[lab]
+name = "Test Lab"
+environment = "demo"
+
+[auth]
+provider = "ls-login"
+
+[auth.ls-login]
+client_id = "cid"
+client_secret = "${LS_LOGIN_CLIENT_SECRET}"
+issuer = "https://login.elixir-czech.org/oidc/"
+
+[services.beacon]
+dataset_id = "ds1"
+"#;
+        let c = parse_config(raw).unwrap();
+        assert!(is_oidc_secret_placeholder(
+            &c.auth.ls_login.as_ref().unwrap().client_secret
+        ));
     }
 }

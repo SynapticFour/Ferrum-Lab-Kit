@@ -18,7 +18,7 @@ services:
     image: ${SOLUM_IMAGE:-synapticfour/solum-sidecar:lab-kit}
     networks: [lab]
     environment:
-      SOLUM_SIDECAR_TOKEN: ${SOLUM_SIDECAR_TOKEN:-solum-lab-kit-local-token-change-me}
+      SOLUM_SIDECAR_TOKEN: ${SOLUM_SIDECAR_TOKEN:?set SOLUM_SIDECAR_TOKEN in .env — do not use a shared default}
       SOLUM_ALLOW_EPHEMERAL: ${SOLUM_ALLOW_EPHEMERAL:-1}
       SOLUM_PROFILE: /etc/solum/dev-local.toml
       SOLUM_AUDIT: /data/audit.jsonl
@@ -34,7 +34,7 @@ services:
   ferrum-gateway:
     environment:
       FERRUM_SOLUM__BASE_URL: http://solum-sidecar:8787
-      FERRUM_SOLUM__SIDECAR_TOKEN: ${SOLUM_SIDECAR_TOKEN:-solum-lab-kit-local-token-change-me}
+      FERRUM_SOLUM__SIDECAR_TOKEN: ${SOLUM_SIDECAR_TOKEN:?set SOLUM_SIDECAR_TOKEN in .env}
       FERRUM_SOLUM__TIMEOUT_SECS: ${FERRUM_SOLUM_TIMEOUT_SECS:-5}
       # Optional defaults for unbound objects/runs (operator may leave empty):
       # FERRUM_SOLUM__DEFAULT_SUBJECT: ""

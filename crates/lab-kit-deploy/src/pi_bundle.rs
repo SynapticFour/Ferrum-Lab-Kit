@@ -203,7 +203,13 @@ fn pi_env_file(
     if want_solum {
         out.push_str("# Solum Track A sidecar (consent companion). Building on Pi is slow — prefer SOLUM_IMAGE.\n");
         out.push_str("SOLUM_PORT=8787\n");
-        out.push_str("SOLUM_SIDECAR_TOKEN=solum-lab-kit-local-token-change-me\n");
+        let token = cfg
+            .solum
+            .as_ref()
+            .and_then(|s| s.sidecar_token.clone())
+            .filter(|t| !t.trim().is_empty() && t != "solum-lab-kit-local-token-change-me")
+            .unwrap_or_else(|| format!("solum-{}", uuid::Uuid::new_v4()));
+        out.push_str(&format!("SOLUM_SIDECAR_TOKEN={token}\n"));
         out.push_str("SOLUM_ALLOW_EPHEMERAL=1\n");
         out.push_str("SOLUM_DOCKER_CONTEXT=./deploy/docker-compose\n");
         out.push_str("# SOLUM_IMAGE=ghcr.io/example/solum-sidecar:tag\n");
@@ -462,6 +468,9 @@ mod tests {
         assert!(out
             .join("deploy/docker-compose/Dockerfile.solum-sidecar")
             .is_file());
+        let env = fs::read_to_string(out.join(".env")).unwrap();
+        assert!(env.contains("SOLUM_SIDECAR_TOKEN=solum-"));
+        assert!(!env.contains("solum-lab-kit-local-token-change-me"));
         let compose = fs::read_to_string(out.join("docker-compose.yml")).unwrap();
         assert!(compose.contains("solum-sidecar"));
     }

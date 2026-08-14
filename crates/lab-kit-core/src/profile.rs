@@ -170,7 +170,7 @@ fn auth_from_profile(
             ldap: None,
         }),
         "ls-login" => {
-            let ls = ls_login.or_else(|| {
+            let mut ls = ls_login.or_else(|| {
                 Some(LsLoginConfig {
                     client_id: auth.client_id.clone().unwrap_or_default(),
                     client_secret: auth.client_secret.clone().unwrap_or_default(),
@@ -182,7 +182,19 @@ fn auth_from_profile(
                     scopes: lab_kit_auth_scopes(),
                 })
             });
-            let ls = ls.filter(|c| !c.client_id.is_empty());
+            if let Some(c) = ls.as_mut() {
+                if c.client_secret.trim().is_empty() {
+                    c.client_secret = crate::config::resolve_oidc_client_secret(
+                        "",
+                        crate::config::LS_LOGIN_CLIENT_SECRET_ENV,
+                    );
+                }
+                if c.client_secret.trim().is_empty() && !c.client_id.trim().is_empty() {
+                    c.client_secret = crate::config::oidc_client_secret_placeholder();
+                }
+            }
+            let ls =
+                ls.filter(|c| !c.client_id.trim().is_empty() && !c.client_secret.trim().is_empty());
             if ls.is_none() {
                 return Err(CoreError::Validation(
                     "auth.mode = \"ls-login\" requires client_id and client_secret".into(),
@@ -211,8 +223,13 @@ fn lab_kit_auth_scopes() -> Vec<String> {
     ]
 }
 
-/// Load a profile template from `config/profiles/{name}.toml` relative to repo root or CWD.
+/// Load a profile template from the binary (shipped profiles) or `config/profiles/{name}.toml`.
 pub fn load_profile_template(name: &str) -> Result<ProfileTemplate, CoreError> {
+    if let Some(raw) = bundled_profile_toml(name) {
+        if let Ok(t) = ProfileTemplate::parse(raw) {
+            return Ok(t);
+        }
+    }
     let candidates = [
         format!("config/profiles/{name}.toml"),
         format!("../config/profiles/{name}.toml"),
@@ -223,13 +240,65 @@ pub fn load_profile_template(name: &str) -> Result<ProfileTemplate, CoreError> {
         }
     }
     Err(CoreError::Validation(format!(
-        "profile \"{name}\" not found (looked for config/profiles/{name}.toml)"
+        "profile \"{name}\" not found (embedded or config/profiles/{name}.toml)"
     )))
 }
 
-/// Returns `true` when raw TOML is a profile template (has `[meta].profile`, no `[lab]`).
+/// Parse a named bundled/on-disk document as either a profile template or canonical `lab-kit.toml`.
+pub fn load_named_config(name: &str) -> Result<LabKitConfig, CoreError> {
+    if let Some(raw) = bundled_profile_toml(name) {
+        return parse_config_or_profile(raw);
+    }
+    let candidates = [
+        format!("config/profiles/{name}.toml"),
+        format!("../config/profiles/{name}.toml"),
+    ];
+    for path in &candidates {
+        if let Ok(raw) = std::fs::read_to_string(path) {
+            return parse_config_or_profile(&raw);
+        }
+    }
+    Err(CoreError::Validation(format!(
+        "profile \"{name}\" not found (embedded or config/profiles/{name}.toml)"
+    )))
+}
+
+/// Shipped profile/config TOML compiled into the CLI.
+pub fn bundled_profile_toml(name: &str) -> Option<&'static str> {
+    match name {
+        "field-edge" => Some(include_str!("../../../config/profiles/field-edge.toml")),
+        "field-edge+infra" => Some(include_str!(
+            "../../../config/profiles/field-edge+infra.toml"
+        )),
+        "field-edge+solum" => Some(include_str!(
+            "../../../config/profiles/field-edge+solum.toml"
+        )),
+        "field-edge+infra+solum" => Some(include_str!(
+            "../../../config/profiles/field-edge+infra+solum.toml"
+        )),
+        "institute" => Some(include_str!("../../../config/profiles/institute.toml")),
+        "full-elixir-node" => Some(include_str!(
+            "../../../config/profiles/full-elixir-node.toml"
+        )),
+        "gdi-national-node" => Some(include_str!(
+            "../../../config/profiles/gdi-national-node.toml"
+        )),
+        "beacon-only" => Some(include_str!("../../../config/profiles/beacon-only.toml")),
+        "drs-wes" => Some(include_str!("../../../config/profiles/drs-wes.toml")),
+        _ => None,
+    }
+}
+
+/// Returns `true` when raw TOML is a profile template (`[meta].profile` present, no `[lab]`).
 pub fn is_profile_template(raw: &str) -> bool {
-    raw.contains("[meta]") && raw.contains("profile =") && !raw.contains("[lab]")
+    let Ok(v) = raw.parse::<toml::Value>() else {
+        return false;
+    };
+    v.get("meta")
+        .and_then(|m| m.get("profile"))
+        .and_then(|p| p.as_str())
+        .is_some()
+        && v.get("lab").is_none()
 }
 
 /// Parse either a canonical `lab-kit.toml` or a profile template.
