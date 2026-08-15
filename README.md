@@ -1,6 +1,8 @@
 # Ferrum Lab Kit
 
-**Ferrum Lab Kit** is a **Compose / Helm / systemd on-ramp** for [Ferrum](https://github.com/SynapticFour/Ferrum). It generates deployment YAML, env files, and operator tooling around the **Ferrum monolith image** (`ghcr.io/synapticfour/ferrum`, SHA-pinned). It is a **separate repository** — not a fork — and **does not implement GA4GH protocol logic**. Runtime Beacon/DRS/WES/… I/O is the Ferrum container.
+**Comes with [Ferrum](https://github.com/SynapticFour/Ferrum) — not sold separately.** On-ramp so a lab can install **one, two, or three** of the GA4GH surfaces Ferrum offers (`FERRUM_SERVICES__ENABLE_*` + edge images). Nobody should pay for this repo alone.
+
+**Ferrum Lab Kit** generates Compose / Helm / systemd around the **Ferrum monolith image** (`ghcr.io/synapticfour/ferrum`, SHA-pinned). It is a **separate repository** — not a fork — and **does not implement GA4GH protocol logic**. Runtime Beacon/DRS/WES/… I/O is the Ferrum container.
 
 Adapter traits (`lab-kit-adapters`) and OIDC helpers (`lab-kit-auth`) are **Lab Kit libraries**. Probe them with `lab-kit adapters check`. **Ferrum does not depend on these crates at runtime.**
 
@@ -8,7 +10,7 @@ Adapter traits (`lab-kit-adapters`) and OIDC helpers (`lab-kit-auth`) are **Lab 
 
 ## SynapticFour GA4GH stack
 
-Lab Kit is the **deployment on-ramp**. See **[docs/ECOSYSTEM.md](docs/ECOSYSTEM.md)** for Ferrum, ga4gh-infra, Demo, and HelixTest.
+Lab Kit is a **Ferrum companion**, not a fifth product. See **[docs/ECOSYSTEM.md](docs/ECOSYSTEM.md)** and [Ferrum PORTFOLIO.md](https://github.com/SynapticFour/Ferrum/blob/main/docs/PORTFOLIO.md).
 
 ## Install CLI (optional)
 

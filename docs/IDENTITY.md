@@ -1,0 +1,21 @@
+# Who Ferrum Lab Kit is for
+
+Ferrum Lab Kit **comes with Ferrum**. It is not sold separately. It generates Compose / Helm / systemd so a lab can turn on **one, two, or three** GA4GH surfaces (`FERRUM_SERVICES__ENABLE_*`) around the SHA-pinned Ferrum image.
+
+It does **not** implement GA4GH protocol logic.
+
+## Audience
+
+Ferrum operators who do not want the full monolith surface on day one.
+
+**Not for:** a second GA4GH server, a product without Ferrum.
+
+## Standalone (still needs Ferrum)
+
+```bash
+git clone https://github.com/SynapticFour/Ferrum-Lab-Kit.git && cd Ferrum-Lab-Kit
+make prove
+lab-kit init --profile field-edge --non-interactive
+```
+
+HelixTest pin for CI: tag **v0.1.1** (same as Ferrum `VERSIONS.lock`).
