@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- Pin Ferrum **v0.3.0** (`6444469a`) for `ferrum-core` and GHCR variant tags (full / edge / edge-infra).
+- Solum sidecar pin matches Solum-Demo baseline `6b4519c`.
+
 ## [0.2.0-alpha] - 2026-08-15
 
 Named Ferrum image variants so a Beacon/DRS stack can pull a smaller gateway binary. Ferrum pin: `a4ba89911e207b9597e03c321f0e18ea9112d57a`.

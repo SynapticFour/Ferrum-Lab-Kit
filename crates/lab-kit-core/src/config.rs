@@ -560,7 +560,7 @@ pub struct SolumSection {
     pub default_purpose: Option<String>,
     #[serde(default = "default_solum_timeout")]
     pub timeout_secs: u64,
-    /// Git tag / branch for `Dockerfile.solum-sidecar` build (when not using `SOLUM_IMAGE`).
+    /// Git commit SHA for `Dockerfile.solum-sidecar` (Solum-Demo Solum-ref).
     #[serde(default = "default_solum_tag")]
     pub solum_tag: String,
 }
@@ -574,7 +574,8 @@ fn default_solum_timeout() -> u64 {
 }
 
 fn default_solum_tag() -> String {
-    "stage1-baseline-sidecar-custody-2026-08-01".into()
+    // Same SHA as Solum-Demo PINNED_VERSIONS.txt Solum-ref (not Solum HEAD).
+    "6b4519c98f5c1e905ab5cf3f517787021d1e2604".into()
 }
 
 impl Default for SolumSection {

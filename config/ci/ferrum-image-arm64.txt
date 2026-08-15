@@ -1,3 +1,3 @@
 # ARM64 Ferrum image for Pi kits (edge variant; same tag when GHCR is multi-arch).
 # Override with FERRUM_IMAGE. Prefer lab-kit build image --platform linux/arm64 when the tag is amd64-only.
-ghcr.io/synapticfour/ferrum:a4ba89911e207b9597e03c321f0e18ea9112d57a-edge
+ghcr.io/synapticfour/ferrum:6444469ac488af9dd6f62f584b99be87ff2d7180-edge

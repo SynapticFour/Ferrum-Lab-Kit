@@ -69,7 +69,7 @@ Use this as a **runbook scaffold** when bringing up or handing over an environme
 | `FERRUM_LAB_KIT_LICENSE_KEY` | Optional; well-formed key for **PDF** reports after `lab-kit license activate`. |
 | `HELIXTEST_BIN` | Override path to **HelixTest** binary for `lab-kit conformance run`. |
 | `GA4GH_IMAGE_PREFIX` / `*_VERSION` | ga4gh-infra image pins (see `.env.example`). |
-| `SOLUM_SIDECAR_TOKEN` / `SOLUM_IMAGE` / `SOLUM_TAG` | Solum companion (see [SOLUM-CO-DEPLOY.md](SOLUM-CO-DEPLOY.md)). |
+| `SOLUM_SIDECAR_TOKEN` / `SOLUM_IMAGE` / `SOLUM_REF` | Solum companion SHA (see [SOLUM-CO-DEPLOY.md](SOLUM-CO-DEPLOY.md)). |
 
 **Selective surfaces (injected by `lab-kit generate compose`):** `FERRUM_SERVICES__ENABLE_{DRS,HTSGET,WES,TES,BEACON,TRS}`.
 

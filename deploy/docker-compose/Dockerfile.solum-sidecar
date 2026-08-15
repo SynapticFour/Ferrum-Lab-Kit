@@ -1,9 +1,9 @@
-# Builds solum-sidecar from a pinned Solum tag (same pattern as Solum-Demo).
+# Builds solum-sidecar from a pinned Solum git SHA (same pin as Solum-Demo Solum-ref).
 # Lab Kit does not vendor Solum source — clone happens at image build time.
 #
-# Reproducibility: pin SOLUM_TAG; do not track Solum main from Lab Kit.
+# Reproducibility: pin SOLUM_REF; do not track Solum main from Lab Kit.
 
-ARG SOLUM_TAG=stage1-baseline-sidecar-custody-2026-08-01
+ARG SOLUM_REF=6b4519c98f5c1e905ab5cf3f517787021d1e2604
 ARG RUST_VERSION=1.91.1
 
 FROM rust:${RUST_VERSION}-bookworm AS builder
@@ -16,11 +16,11 @@ RUN apt-get update \
         pkg-config \
     && rm -rf /var/lib/apt/lists/*
 
-ARG SOLUM_TAG
+ARG SOLUM_REF
 WORKDIR /build
 
-RUN git clone --depth 1 --branch "${SOLUM_TAG}" \
-    https://github.com/SynapticFour/Solum.git .
+RUN git clone --filter=blob:none https://github.com/SynapticFour/Solum.git . \
+    && git checkout --detach "${SOLUM_REF}"
 
 RUN cargo build --release -p solum-sidecar \
     && strip target/release/solum-sidecar

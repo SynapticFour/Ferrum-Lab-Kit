@@ -1447,7 +1447,7 @@ dependencies = [
 [[package]]
 name = "ferrum-core"
 version = "0.2.0"
-source = "git+https://github.com/SynapticFour/Ferrum.git?rev=a4ba89911e207b9597e03c321f0e18ea9112d57a#a4ba89911e207b9597e03c321f0e18ea9112d57a"
+source = "git+https://github.com/SynapticFour/Ferrum.git?rev=6444469ac488af9dd6f62f584b99be87ff2d7180#6444469ac488af9dd6f62f584b99be87ff2d7180"
 dependencies = [
  "anyhow",
  "async-trait",
