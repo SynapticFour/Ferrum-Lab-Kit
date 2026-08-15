@@ -2,12 +2,12 @@
 # Selective GA4GH surfaces are enabled via FERRUM_SERVICES__ENABLE_* (injected by
 # `lab-kit generate compose` from lab-kit.toml / profiles).
 #
-# Published image: ghcr.io/synapticfour/ferrum (+ optional :latest-arm64 on Pi).
+# Published image: ghcr.io/synapticfour/ferrum (SHA tag from config/ci/ferrum-image.txt).
 # Override: FERRUM_IMAGE / FERRUM_PORT in .env (see .env.example).
 
 services:
   ferrum-gateway:
-    image: ${FERRUM_IMAGE:-ghcr.io/synapticfour/ferrum:latest}
+    image: ${FERRUM_IMAGE:-ghcr.io/synapticfour/ferrum:fd6c9ee49cbe356e7986bf174d8710023a0c1c4f}
     networks: [lab]
     ports:
       - "${FERRUM_PORT:-8080}:8080"

@@ -9,7 +9,7 @@ contact = "bioinformatics@molgen.mpg.de"
 environment = "production" # staging | demo | production
 
 [auth]
-provider = "ls-login" # ls-login | keycloak | ldap | none (demo only)
+provider = "ls-login" # ls-login | keycloak | local | none (demo). ldap is rejected (not implemented).
 
 [auth.ls-login]
 client_id = "your-client-id"
@@ -28,8 +28,8 @@ scopes = ["openid", "profile", "email", "offline_access", "ga4gh_passport_v1"]
 # [services.drs.s3]
 # endpoint = "http://minio.cluster.internal:9000"
 # bucket = "genomic-data"
-# access_key = "..."
-# secret_key = "..."
+# S3 credentials are not copied into Compose. Set FERRUM_S3_ACCESS_KEY_ID /
+# FERRUM_S3_SECRET_ACCESS_KEY in the environment.
 
 # [services.wes]
 # workflow_engine = "nextflow"

@@ -10,4 +10,6 @@ pub enum ReportError {
     Pdf(String),
     #[error("license: {0}")]
     License(String),
+    #[error("conformance report is empty: {0}")]
+    EmptyConformance(String),
 }

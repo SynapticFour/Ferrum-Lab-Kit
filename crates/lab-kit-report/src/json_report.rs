@@ -9,6 +9,10 @@ pub struct ServiceResultRow {
     pub service: String,
     pub passed: bool,
     #[serde(default)]
+    pub executed_tests: u32,
+    #[serde(default)]
+    pub skipped_tests: u32,
+    #[serde(default)]
     pub detail: Option<String>,
 }
 
@@ -19,6 +23,8 @@ pub struct ConformanceJsonReport {
     pub enabled_services: Vec<String>,
     pub results: Vec<ServiceResultRow>,
     pub overall_pass: bool,
+    /// True when at least one non-skipped check ran.
+    pub had_executed_checks: bool,
     pub next_steps: Vec<String>,
 }
 
@@ -29,11 +35,27 @@ pub fn build_from_helixtest_value(
 ) -> Result<ConformanceJsonReport, ReportError> {
     let v: Value = serde_json::from_str(raw)?;
     let rows = extract_rows(&v);
+    if rows.is_empty() {
+        return Err(ReportError::EmptyConformance(
+            "no service results in HelixTest JSON".into(),
+        ));
+    }
     let enabled_services = extract_enabled_services(&v, &rows);
-    let overall_pass = rows.iter().all(|r| r.passed);
+    let had_executed_checks = rows.iter().any(|r| r.executed_tests > 0);
+    if !had_executed_checks {
+        return Err(ReportError::EmptyConformance(
+            "every HelixTest check was skipped — not a pass".into(),
+        ));
+    }
+    let overall_pass = rows.iter().all(|r| r.passed) && had_executed_checks;
     let mut next_steps = Vec::new();
     for r in &rows {
-        if !r.passed {
+        if r.executed_tests == 0 {
+            next_steps.push(format!(
+                "{} reported only skipped checks — not counted as pass",
+                r.service
+            ));
+        } else if !r.passed {
             next_steps.push(format!(
                 "Fix failing checks for {} — see HelixTest logs for {}",
                 r.service,
@@ -50,6 +72,7 @@ pub fn build_from_helixtest_value(
         enabled_services,
         results: rows,
         overall_pass,
+        had_executed_checks,
         next_steps,
     })
 }
@@ -114,6 +137,8 @@ fn row_from_helixtest_service(item: &Value) -> Option<ServiceResultRow> {
         return row_from_obj(obj);
     };
     let mut failed = Vec::new();
+    let mut executed = 0u32;
+    let mut skipped = 0u32;
     for t in tests {
         let status = t
             .get("status")
@@ -121,8 +146,10 @@ fn row_from_helixtest_service(item: &Value) -> Option<ServiceResultRow> {
             .unwrap_or("")
             .to_ascii_lowercase();
         if status == "skip" {
+            skipped += 1;
             continue;
         }
+        executed += 1;
         let name = t.get("name").and_then(|x| x.as_str()).unwrap_or("test");
         let passed = t.get("passed").and_then(|x| x.as_bool()).unwrap_or(false) || status == "pass";
         if !passed {
@@ -130,10 +157,15 @@ fn row_from_helixtest_service(item: &Value) -> Option<ServiceResultRow> {
             failed.push(format!("{name}: {err}"));
         }
     }
+    let passed = failed.is_empty() && executed > 0;
     Some(ServiceResultRow {
         service,
-        passed: failed.is_empty(),
-        detail: if failed.is_empty() {
+        passed,
+        executed_tests: executed,
+        skipped_tests: skipped,
+        detail: if executed == 0 {
+            Some("all checks skipped".into())
+        } else if failed.is_empty() {
             None
         } else {
             Some(failed.join("; "))
@@ -161,9 +193,12 @@ fn row_from_obj(obj: &serde_json::Map<String, Value>) -> Option<ServiceResultRow
         .or_else(|| obj.get("detail"))
         .and_then(|x| x.as_str())
         .map(String::from);
+    let passed = passed.unwrap_or(false);
     Some(ServiceResultRow {
         service: service.unwrap_or_else(|| "unknown".into()),
-        passed: passed.unwrap_or(false),
+        passed,
+        executed_tests: if passed || detail.is_some() { 1 } else { 0 },
+        skipped_tests: 0,
         detail,
     })
 }
@@ -196,6 +231,7 @@ mod tests {
         assert_eq!(r.enabled_services, vec!["Wes", "Drs"]);
         assert_eq!(r.results.len(), 2);
         assert!(r.results[0].passed);
+        assert_eq!(r.results[0].executed_tests, 1);
         assert!(!r.results[1].passed);
         assert!(!r.overall_pass);
         assert!(r.results[1].detail.as_ref().unwrap().contains("mismatch"));
@@ -207,5 +243,24 @@ mod tests {
         let r = build_from_helixtest_value(raw, "lab").unwrap();
         assert_eq!(r.results.len(), 1);
         assert!(r.overall_pass);
+        assert!(r.had_executed_checks);
+    }
+
+    #[test]
+    fn empty_json_is_not_a_pass() {
+        let err = build_from_helixtest_value("{}", "lab").unwrap_err();
+        assert!(err.to_string().contains("empty") || err.to_string().contains("no service"));
+    }
+
+    #[test]
+    fn skip_only_service_is_not_a_pass() {
+        let raw = r#"{
+            "services": [{
+                "service": "Wes",
+                "tests": [{"name": "skip-me", "status": "skip", "passed": false}]
+            }]
+        }"#;
+        let err = build_from_helixtest_value(raw, "lab").unwrap_err();
+        assert!(err.to_string().contains("skipped"));
     }
 }

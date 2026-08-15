@@ -65,6 +65,36 @@ if [[ "$WITH_SOLUM" -eq 1 ]] && ! grep -q 'solum-sidecar' "$COMPOSE_OUT" 2>/dev/
   exit 1
 fi
 
+if grep -qE 'aai-broker|8180' "$COMPOSE_OUT" 2>/dev/null; then
+  secrets_dir="$ROOT/deploy/docker-compose/ga4gh-infra-secrets"
+  if [[ ! -f "$secrets_dir/secrets.env" ]]; then
+    if command -v lab-kit >/dev/null 2>&1; then
+      echo "==> Generating ga4gh-infra secrets..."
+      lab-kit generate infra-secrets --output "$secrets_dir"
+    elif [[ -x "$ROOT/target/release/lab-kit" ]]; then
+      echo "==> Generating ga4gh-infra secrets..."
+      "$ROOT/target/release/lab-kit" generate infra-secrets --output "$secrets_dir"
+    else
+      echo "error: ga4gh-infra compose needs secrets. Run: lab-kit generate infra-secrets" >&2
+      exit 1
+    fi
+  fi
+  if [[ -f "$secrets_dir/secrets.env" ]]; then
+    if [[ ! -f "$ROOT/.env" ]]; then
+      cp "$secrets_dir/secrets.env" "$ROOT/.env"
+    else
+      while IFS= read -r line || [[ -n "$line" ]]; do
+        [[ "$line" =~ ^[[:space:]]*# ]] && continue
+        [[ -z "${line// }" ]] && continue
+        key="${line%%=*}"
+        if ! grep -qE "^${key}=" "$ROOT/.env" 2>/dev/null; then
+          printf '%s\n' "$line" >>"$ROOT/.env"
+        fi
+      done <"$secrets_dir/secrets.env"
+    fi
+  fi
+fi
+
 echo "==> Starting Ferrum Lab Kit stack ($COMPOSE_OUT)..."
 docker compose -f "$COMPOSE_OUT" up -d --build
 echo "Stack is up. Status: lab-kit status --config ${LAB_KIT_CONFIG:-lab-kit.toml}"

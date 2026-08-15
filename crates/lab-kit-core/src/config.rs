@@ -121,11 +121,9 @@ impl LabKitConfig {
                 Some(_) => {}
             },
             AuthProvider::Ldap => {
-                if self.auth.ldap.is_none() {
-                    return Err(CoreError::Validation(
-                        "auth.provider = \"ldap\" requires [auth.ldap]".into(),
-                    ));
-                }
+                return Err(CoreError::Validation(
+                    "auth.provider = \"ldap\" is not implemented; use ls-login or keycloak".into(),
+                ));
             }
             AuthProvider::Local | AuthProvider::None => {}
         }
@@ -162,6 +160,7 @@ pub enum AuthProvider {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AuthSection {
+    #[serde(alias = "mode")]
     pub provider: AuthProvider,
     #[serde(rename = "ls-login", default)]
     pub ls_login: Option<LsLoginConfig>,
@@ -252,7 +251,7 @@ fn default_emergency() -> u32 {
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct ProfileAuthSection {
-    #[serde(default = "default_auth_mode")]
+    #[serde(default = "default_auth_mode", alias = "provider")]
     pub mode: String,
     #[serde(default)]
     pub client_id: Option<String>,
@@ -440,7 +439,11 @@ pub struct TrsServiceConfig {
 pub struct S3NestedConfig {
     pub endpoint: Url,
     pub bucket: String,
+    /// Ignored at generate time — Compose emits `${FERRUM_S3_ACCESS_KEY_ID}`.
+    #[serde(default)]
     pub access_key: String,
+    /// Ignored at generate time — Compose emits `${FERRUM_S3_SECRET_ACCESS_KEY}`.
+    #[serde(default)]
     pub secret_key: String,
     #[serde(default)]
     pub region: Option<String>,
@@ -718,6 +721,47 @@ dataset_id = "ds1"
 "#;
         let err = parse_config(raw).unwrap_err();
         assert!(err.to_string().contains("client_secret"));
+    }
+
+    #[test]
+    fn rejects_ldap_as_unimplemented() {
+        let raw = r#"
+schema_version = 1
+
+[lab]
+name = "Test Lab"
+environment = "demo"
+
+[auth]
+provider = "ldap"
+
+[auth.ldap]
+url = "ldaps://ldap.example.org"
+
+[services.beacon]
+dataset_id = "ds1"
+"#;
+        let err = parse_config(raw).unwrap_err();
+        assert!(err.to_string().contains("not implemented"));
+    }
+
+    #[test]
+    fn accepts_auth_mode_alias_for_provider() {
+        let raw = r#"
+schema_version = 1
+
+[lab]
+name = "Edge"
+environment = "field"
+
+[auth]
+mode = "local"
+
+[services.beacon]
+dataset_id = "cohort-1"
+"#;
+        let c = parse_config(raw).unwrap();
+        assert_eq!(c.auth.provider, AuthProvider::Local);
     }
 
     #[test]

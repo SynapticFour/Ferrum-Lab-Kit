@@ -1,0 +1,55 @@
+# cargo-deny policy for Ferrum Lab Kit.
+# Run: cargo deny check
+
+[graph]
+all-features = false
+
+[advisories]
+version = 2
+yanked = "warn"
+ignore = [
+    # jsonwebtoken → rsa 0.9: Marvin timing. No safe upgrade on this major; tokens are validated not minted here.
+    { id = "RUSTSEC-2023-0071", reason = "rsa 0.9 Marvin; jsonwebtoken has no patched 0.9 line" },
+    # printpdf 0.7 → lopdf 0.31: Lab Kit generates PDFs, it does not parse untrusted PDFs.
+    { id = "RUSTSEC-2026-0187", reason = "lopdf nested-object DoS on parse; we only emit PDFs" },
+    # printpdf 0.7 pins ttf-parser 0.19.
+    { id = "RUSTSEC-2026-0192", reason = "ttf-parser unmaintained via printpdf 0.7; PDF is license-gated emit-only" },
+    # Older rustls 0.21 (AWS smithy / hyper-rustls 0.24) name-constraint issues; 0.23 line is current.
+    { id = "RUSTSEC-2026-0098", reason = "rustls 0.21 name constraints; pulled by aws-smithy-http-client 0.24 stack" },
+    { id = "RUSTSEC-2026-0099", reason = "rustls 0.21 wildcard name constraints; same 0.24 TLS stack" },
+    { id = "RUSTSEC-2026-0104", reason = "rustls 0.21 CRL parse panic; same 0.24 TLS stack" },
+]
+
+[licenses]
+version = 2
+allow = [
+    "MIT",
+    "Apache-2.0",
+    "Apache-2.0 WITH LLVM-exception",
+    "BSD-2-Clause",
+    "BSD-3-Clause",
+    "ISC",
+    "Unicode-3.0",
+    "Unicode-DFS-2016",
+    "Zlib",
+    "BSL-1.0",
+    "CC0-1.0",
+    "MPL-2.0",
+    "OpenSSL",
+    "BUSL-1.1",
+    "CDLA-Permissive-2.0",
+]
+confidence-threshold = 0.8
+
+[bans]
+multiple-versions = "warn"
+# Path deps in this workspace omit version= by design.
+wildcards = "allow"
+highlight = "all"
+
+[sources]
+unknown-registry = "deny"
+unknown-git = "deny"
+allow-git = [
+    "https://github.com/SynapticFour/Ferrum",
+]

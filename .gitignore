@@ -13,6 +13,10 @@ dist/
 reports/
 *.pdf
 /generated/
+config/secrets/
+pi-kit/
+crates/lab-kit-report/keys/*.pub
+!crates/lab-kit-report/keys/*.pub.example
 
 # Generated artifacts and caches
 .svelte-kit/

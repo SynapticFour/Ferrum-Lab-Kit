@@ -2,7 +2,7 @@
 
 **Ferrum** is the full sovereign bioinformatics platform (GA4GH implementations in Rust crates).
 
-**Ferrum Lab Kit** is a **separate** repository: a deployment and integration layer that depends on Ferrum as a library, **without** forking or duplicating GA4GH service logic.
+**Ferrum Lab Kit** is a **separate** repository: a Compose/Helm/systemd on-ramp that depends on Ferrum as a **git-pinned library** (`lab-kit-ferrum`) and ships the **Ferrum container** at runtime. It does **not** fork or duplicate GA4GH service logic. Adapter traits in this repo are **not** linked into Ferrum.
 
 ## Crates
 
@@ -11,11 +11,11 @@
 | `lab-kit-core` | `lab-kit.toml` schema, validation, `ServiceRegistry`, `HealthAggregator` |
 | `lab-kit-ferrum` | Git-pinned `ferrum-core` from [SynapticFour/Ferrum](https://github.com/SynapticFour/Ferrum) — shared types / future gateway glue |
 | `lab-kit-auth` | ELIXIR LS Login OIDC (discovery, JWKS, JWT validation), `AuthProvider` trait, Passport / Beacon tier helpers |
-| `lab-kit-adapters` | `StorageBackend`, `ComputeBackend`, `MetadataStore`, `WorkflowEngine` + S3, POSIX, SLURM (local + SSH), SQLite/Postgres (sqlx) |
+| `lab-kit-adapters` | `StorageBackend`, `ComputeBackend`, `MetadataStore`, `WorkflowEngine` — **Lab Kit libraries**; `lab-kit adapters check` probes them. Ferrum does not depend on these traits. |
 | `lab-kit-deploy` | Compose merge, Helm values emission, systemd unit stubs |
 | `lab-kit-ingest` | Async HTTP client for Ferrum **`/api/v1/ingest/*`** (register, multipart upload, job poll) |
-| `lab-kit-report` | HelixTest JSON → `conformance-report.json`; PDF behind activated `FERRUM_LAB_KIT_LICENSE_KEY` |
-| `lab-kit-selector` | `lab-kit` CLI: `init`, `generate`, `status`, `conformance`, `ingest`, `ferrum check` |
+| `lab-kit-report` | HelixTest JSON → `conformance-report.json`; PDF behind signed `flk1` license token |
+| `lab-kit-selector` | `lab-kit` CLI: `init`, `generate`, `adapters check`, `status`, `conformance`, `ingest`, `ferrum check` |
 
 ## Data flow
 

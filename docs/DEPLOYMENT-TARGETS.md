@@ -8,7 +8,7 @@ Lab Kit targets three environments equally (see `lab-kit generate …`).
 - **Flow:** `lab-kit generate compose` → `docker compose -f docker-compose.yml up -d`.
 - **Default runtime:** monolith `ghcr.io/synapticfour/ferrum` as `ferrum-gateway` on **8080**, with `FERRUM_SERVICES__ENABLE_*` from your profile.
 - **Fragments:** `docker-compose.base.yml` + `docker-compose.gateway.yml` (+ `edge.yml` / `infra.yml` / `solum.yml` as needed).
-- **Platforms:** Ubuntu 22.04/24.04, macOS (Apple Silicon), x86_64 Linux, Raspberry Pi 5 (prefer `FERRUM_IMAGE=…:latest-arm64`).
+- **Platforms:** Ubuntu 22.04/24.04, macOS (Apple Silicon), x86_64 Linux, Raspberry Pi 5 (use the SHA pin in `config/ci/ferrum-image-arm64.txt`, override with `FERRUM_IMAGE`).
 - **Env:** copy [`.env.example`](../.env.example) → `.env`.
 
 ## 2. Kubernetes (Helm)
@@ -110,5 +110,5 @@ When intermittent connectivity returns, register this edge node with your **GDI 
 ### Power and connectivity
 
 - **Intermittent internet:** opportunistic sync defaults to `0 2 * * *` (2 AM) when bandwidth is available (`[network].bandwidth_adaptive`).
-- **Solar / battery:** the edge overlay sets power-monitor thresholds (`FERRUM_AFRICA__LOW_POWER_THRESHOLD`, `FERRUM_AFRICA__EMERGENCY_THRESHOLD`). These are **ignored by stock Ferrum** until Africa Cursor Prompts land upstream.
+- **Solar / battery:** the edge overlay sets power-monitor thresholds (`FERRUM_AFRICA__LOW_POWER_THRESHOLD`, `FERRUM_AFRICA__EMERGENCY_THRESHOLD`). These are **ignored by stock Ferrum** unless the pinned image implements them.
 - **Memory:** default `max_memory_mb = 3072` leaves headroom on 4 GB Pi; increase via `lab-kit init` → “Expected RAM (GB)?”.

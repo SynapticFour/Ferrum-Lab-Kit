@@ -18,8 +18,8 @@ storage_backend = "s3"
 [services.drs.s3]
 endpoint = "http://minio.internal:9000"
 bucket = "genomes"
-access_key = "CHANGE_ME"
-secret_key = "CHANGE_ME"
+# Do not put real keys here. Compose emits ${FERRUM_S3_ACCESS_KEY_ID} /
+# ${FERRUM_S3_SECRET_ACCESS_KEY}; set those in the environment.
 
 [services.wes]
 workflow_engine = "nextflow"

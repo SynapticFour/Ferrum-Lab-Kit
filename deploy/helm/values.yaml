@@ -11,7 +11,7 @@ lab:
 
 gateway:
   enabled: false
-  image: ghcr.io/synapticfour/ferrum:latest
+  image: ghcr.io/synapticfour/ferrum:fd6c9ee49cbe356e7986bf174d8710023a0c1c4f
   port: 8080
   enable:
     drs: false
@@ -23,6 +23,7 @@ gateway:
 
 solum:
   enabled: false
+  # Local compose-build tag — not published on GHCR. Override for pilots.
   image: synapticfour/solum-sidecar:lab-kit
   port: 8787
 

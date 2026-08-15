@@ -11,13 +11,16 @@ use lab_kit_core::{
     LS_LOGIN_CLIENT_SECRET_ENV,
 };
 use lab_kit_deploy::{
-    generate_compose_file, generate_helm_values, generate_raspberry_pi_bundle,
-    generate_systemd_units, render_compose_yaml, write_compose_sidecars, ComposeOptions,
-    RaspberryPiBundleOptions,
+    generate_compose_file, generate_helm_values, generate_infra_secrets,
+    generate_raspberry_pi_bundle, generate_systemd_units, render_compose_yaml,
+    write_compose_sidecars, ComposeOptions, RaspberryPiBundleOptions,
 };
 use lab_kit_ingest::{IngestClient, RegisterItem, RegisterRequest, UploadOptions};
 use lab_kit_report::generate_reports;
 use tracing_subscriber::EnvFilter;
+
+mod adapters_check;
+mod conformance_run;
 
 #[derive(Parser)]
 #[command(name = "lab-kit")]
@@ -72,16 +75,21 @@ enum Command {
         #[command(subcommand)]
         action: MiiAction,
     },
-    /// Activate a commercial PDF license key (hashed to a local activation file).
+    /// Activate a vendor-signed PDF license token (`flk1.` Ed25519).
     License {
         #[command(subcommand)]
         action: LicenseAction,
+    },
+    /// Probe configured POSIX/SQLite/SLURM adapters (does not run GA4GH services).
+    Adapters {
+        #[command(subcommand)]
+        action: AdaptersAction,
     },
 }
 
 #[derive(Subcommand)]
 enum LicenseAction {
-    /// Hash `FERRUM_LAB_KIT_LICENSE_KEY` into the activation file (PDF reports).
+    /// Hash a vendor-signed `FERRUM_LAB_KIT_LICENSE_KEY` into the activation file (PDF reports).
     Activate {
         #[arg(long)]
         expires: Option<String>,
@@ -252,6 +260,26 @@ enum GenerateTarget {
         #[arg(long)]
         data_dir: Option<String>,
     },
+    /// RSA PEMs + secrets.env for ga4gh-infra co-deploy (gitignored; requires openssl).
+    InfraSecrets {
+        #[arg(
+            short,
+            long,
+            default_value = "deploy/docker-compose/ga4gh-infra-secrets"
+        )]
+        output: PathBuf,
+        #[arg(long, default_value_t = false)]
+        overwrite: bool,
+    },
+}
+
+#[derive(Subcommand)]
+enum AdaptersAction {
+    /// Ping POSIX/SQLite and report SLURM/S3/Nextflow configuration (no job submit).
+    Check {
+        #[arg(short, long, default_value = "lab-kit.toml")]
+        config: PathBuf,
+    },
 }
 
 #[derive(Subcommand)]
@@ -387,6 +415,13 @@ async fn main() -> anyhow::Result<()> {
                     output.display()
                 );
             }
+            GenerateTarget::InfraSecrets { output, overwrite } => {
+                generate_infra_secrets(&output, overwrite)?;
+                println!(
+                    "Wrote ga4gh-infra secrets to {} — merge secrets.env into .env (do not commit)",
+                    output.display()
+                );
+            }
         },
         Command::Status { config } => {
             let cfg = load_config(&config).with_context(|| format!("load {}", config.display()))?;
@@ -415,27 +450,40 @@ async fn main() -> anyhow::Result<()> {
                     .as_ref()
                     .map(|c| c.helixtest_timeout_seconds)
                     .unwrap_or(120);
-                tracing::info!(%bin, timeout, "invoke HelixTest from https://github.com/SynapticFour/HelixTest — not bundled");
-                let mut cmd = std::process::Command::new(&bin);
+                let enabled: Vec<_> = lab_kit_core::ServiceRegistry::from_config(&cfg)
+                    .enabled_ids()
+                    .map(|id| id.to_string())
+                    .collect();
+                let extra = conformance_run::helix_test_command_args(&enabled);
+                tracing::info!(%bin, timeout, args = ?extra, "invoke HelixTest");
+                let mut cmd = tokio::process::Command::new(&bin);
+                cmd.args(&extra);
                 cmd.env("HELIXTEST_TIMEOUT_SECS", timeout.to_string());
                 if let Some(u) = cfg.ferrum.gateway_url.as_ref() {
                     cmd.env("FERRUM_GATEWAY_URL", u.as_str());
                     cmd.env("HELIXTEST_BASE_URL", u.as_str());
                 }
-                let enabled: Vec<_> = lab_kit_core::ServiceRegistry::from_config(&cfg)
-                    .enabled_ids()
-                    .map(|id| id.to_string())
-                    .collect();
                 if !enabled.is_empty() {
                     cmd.env("HELIXTEST_SERVICES", enabled.join(","));
                 }
-                let status = cmd.status();
+                let mut child = cmd.spawn().with_context(|| {
+                    format!("could not run {bin} — install HelixTest or set HELIXTEST_BIN")
+                })?;
+                let status = tokio::time::timeout(
+                    std::time::Duration::from_secs(timeout as u64),
+                    child.wait(),
+                )
+                .await;
                 match status {
-                    Ok(s) if s.success() => {}
-                    Ok(s) => anyhow::bail!("HelixTest exited with {s}"),
-                    Err(e) => anyhow::bail!(
-                        "could not run {bin}: {e} — install HelixTest or set HELIXTEST_BIN"
-                    ),
+                    Ok(Ok(s)) if s.success() => {}
+                    Ok(Ok(s)) => anyhow::bail!("HelixTest exited with {s}"),
+                    Ok(Err(e)) => anyhow::bail!("HelixTest wait failed: {e}"),
+                    Err(_) => {
+                        let _ = child.start_kill();
+                        anyhow::bail!(
+                            "HelixTest exceeded {timeout}s — killed. Passing no args is not a pass."
+                        );
+                    }
                 }
             }
             ConformanceAction::Report {
@@ -449,23 +497,29 @@ async fn main() -> anyhow::Result<()> {
                 tracing::info!(dir = %out_dir.display(), "conformance reports generated");
             }
         },
-        Command::Ferrum { action } => match action {
-            FerrumAction::Check => {
-                println!(
-                    "Ferrum platform crate linked via lab-kit-ferrum → {}",
-                    lab_kit_ferrum::ferrum_core_type_name()
+        Command::Ferrum { action } => {
+            match action {
+                FerrumAction::Check => {
+                    let report =
+                        lab_kit_ferrum::ferrum_core_link_check().map_err(|e| anyhow::anyhow!(e))?;
+                    println!("{report}");
+                    println!("Keep in sync: config/ci/ferrum-revision.txt and config/ci/ferrum-image.txt");
+                    println!(
+                    "Runtime GA4GH is the Ferrum image, not lab-kit-adapters. Probe backends with `lab-kit adapters check`."
                 );
-                println!(
-                    "Pinned rev: {}  |  {}",
-                    lab_kit_ferrum::ferrum_git_rev(),
-                    lab_kit_ferrum::FERRUM_GIT_URL
-                );
-                println!("Keep in sync: config/ci/ferrum-revision.txt");
+                }
             }
-        },
+        }
         Command::Ingest(cmd) => run_ingest(cmd).await?,
         Command::Mii { action } => run_mii(action)?,
         Command::License { action } => run_license(action)?,
+        Command::Adapters { action } => match action {
+            AdaptersAction::Check { config } => {
+                let cfg =
+                    load_config(&config).with_context(|| format!("load {}", config.display()))?;
+                adapters_check::run_adapters_check(&cfg).await?;
+            }
+        },
     }
     Ok(())
 }
@@ -475,7 +529,7 @@ fn run_license(action: LicenseAction) -> anyhow::Result<()> {
         LicenseAction::Activate { expires, file } => {
             let key = std::env::var(lab_kit_report::LICENSE_KEY_ENV).with_context(|| {
                 format!(
-                    "set {} to a well-formed key (flk_<32+ chars>)",
+                    "set {} to a vendor-signed flk1.<payload>.<sig> token",
                     lab_kit_report::LICENSE_KEY_ENV
                 )
             })?;
@@ -696,9 +750,14 @@ async fn init_non_interactive(
         _ => ("Field Lab", "field-cohort-001"),
     };
 
+    let environment = if name.starts_with("field-edge") {
+        "field"
+    } else {
+        "production"
+    };
     let cfg = template.into_lab_kit_config(
         lab_name,
-        "production",
+        environment,
         dataset_id,
         ProfileOverrides {
             max_memory_mb: Some(max_memory_mb),

@@ -14,7 +14,9 @@ pdf = ["dep:printpdf"]
 
 [dependencies]
 anyhow.workspace = true
+base64 = "0.22"
 chrono.workspace = true
+ed25519-dalek = { workspace = true }
 printpdf = { workspace = true, optional = true }
 serde.workspace = true
 serde_json.workspace = true

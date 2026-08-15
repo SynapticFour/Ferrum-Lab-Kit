@@ -16,7 +16,7 @@ services:
       FERRUM_DISCOVERY__SERVICE_REGISTRY_URL: http://service-registry:8083
       FERRUM_DISCOVERY__REGISTRATION_BASE_URL: http://ferrum-gateway:8080
       FERRUM_DISCOVERY__REGISTRATION_API_KEY_ENV: SERVICE_REGISTRY_REGISTRATION_KEY
-      SERVICE_REGISTRY_REGISTRATION_KEY: dev-service-registry-key
+      SERVICE_REGISTRY_REGISTRATION_KEY: ${SERVICE_REGISTRY_REGISTRATION_KEY:?set SERVICE_REGISTRY_REGISTRATION_KEY in .env — run lab-kit generate infra-secrets}
     depends_on:
       aai-broker:
         condition: service_healthy

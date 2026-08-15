@@ -25,8 +25,8 @@ Usage: install-edge.sh [--with-infra] [--with-solum]
   --with-solum   Co-deploy Solum sidecar (consent companion on 8787)
 
 Environment:
-  FERRUM_IMAGE   Override monolith image (default: ghcr.io/synapticfour/ferrum:latest
-                 or :latest-arm64 on aarch64)
+  FERRUM_IMAGE   Override monolith image (default: SHA pin in config/ci/ferrum-image.txt
+                 or ferrum-image-arm64.txt on aarch64)
   FERRUM_PORT    Gateway host port (default: 8080)
   FERRUM_DATA_DIR  Persistent data (default: ~/.ferrum)
 EOF
@@ -87,10 +87,35 @@ detect_arch() {
 }
 
 default_ferrum_image() {
+  local pin_file
   case "$(detect_arch)" in
-    aarch64) echo "ghcr.io/synapticfour/ferrum:latest-arm64" ;;
-    *) echo "ghcr.io/synapticfour/ferrum:latest" ;;
+    aarch64) pin_file="$ROOT/config/ci/ferrum-image-arm64.txt" ;;
+    *) pin_file="$ROOT/config/ci/ferrum-image.txt" ;;
   esac
+  if [[ -f "$pin_file" ]]; then
+    grep -vE '^[[:space:]]*(#|$)' "$pin_file" | head -n1
+    return
+  fi
+  echo "ghcr.io/synapticfour/ferrum:fd6c9ee49cbe356e7986bf174d8710023a0c1c4f"
+}
+
+merge_env_file() {
+  local src="$1"
+  local dest="$2"
+  [[ -f "$src" ]] || return 0
+  if [[ ! -f "$dest" ]]; then
+    cp "$src" "$dest"
+    return 0
+  fi
+  local line key
+  while IFS= read -r line || [[ -n "$line" ]]; do
+    [[ "$line" =~ ^[[:space:]]*# ]] && continue
+    [[ -z "${line// }" ]] && continue
+    key="${line%%=*}"
+    if ! grep -qE "^${key}=" "$dest" 2>/dev/null; then
+      printf '%s\n' "$line" >>"$dest"
+    fi
+  done <"$src"
 }
 
 install_docker_apt() {
@@ -260,6 +285,12 @@ main() {
     compose_args+=(--with-solum)
   fi
   "$lab_kit" "${compose_args[@]}"
+
+  if [[ "$WITH_INFRA" -eq 1 ]]; then
+    echo "==> Generating ga4gh-infra secrets (gitignored)..."
+    "$lab_kit" generate infra-secrets --output deploy/docker-compose/ga4gh-infra-secrets
+    merge_env_file deploy/docker-compose/ga4gh-infra-secrets/secrets.env "$ROOT/.env"
+  fi
 
   echo "==> Starting Ferrum Lab Kit stack..."
   "${COMPOSE[@]}" -f "$COMPOSE_OUT" up -d --build

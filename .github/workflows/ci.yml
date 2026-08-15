@@ -32,6 +32,11 @@ jobs:
         run: cargo clippy --workspace --all-targets -- -D warnings
       - name: Test
         run: cargo test --workspace
+      - name: cargo-deny
+        uses: EmbarkStudios/cargo-deny-action@v2
+        with:
+          command: check
+          arguments: --all-features
       # Fold former edge-profile job into the same compile (avoids second cold build).
       - name: Build lab-kit (release)
         run: cargo build -p lab-kit-selector --release

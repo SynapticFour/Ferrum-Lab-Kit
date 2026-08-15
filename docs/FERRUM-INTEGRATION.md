@@ -7,7 +7,7 @@ Lab Kit depends on the **[Ferrum](https://github.com/SynapticFour/Ferrum)** plat
 - Crate: **`lab-kit-ferrum`** → `ferrum-core` from
   `https://github.com/SynapticFour/Ferrum.git` pinned by **full git `rev`** (see `crates/lab-kit-ferrum/Cargo.toml`).
 - **Bump procedure:** pick a Ferrum commit (often `main` HEAD), set the same SHA in `Cargo.toml` and **`config/ci/ferrum-revision.txt`**, then `cargo update -p ferrum-core` and run tests.
-- **Script:** `./scripts/bump-ferrum.sh` updates `Cargo.toml` and `config/ci/ferrum-revision.txt` from **`refs/heads/main`** (or pass an explicit 40-char SHA). Use `./scripts/bump-ferrum.sh --dry-run` to preview. Then run `cargo update -p ferrum-core` and `cargo test --workspace`. `lab-kit ferrum check` reads the revision from that text file.
+- **Script:** `./scripts/bump-ferrum.sh` updates `Cargo.toml`, `config/ci/ferrum-revision.txt`, and the **image pin files** (`config/ci/ferrum-image.txt`, `ferrum-image-arm64.txt`) from **`refs/heads/main`** (or pass an explicit 40-char SHA). Use `./scripts/bump-ferrum.sh --dry-run` to preview. Then run `cargo update -p ferrum-core` and `cargo test --workspace`. `lab-kit ferrum check` reads the revision from that text file.
 
 ## CLI check
 
@@ -29,7 +29,7 @@ Prints the linked `ferrum_core::FerrumError` type name and the pinned revision.
 
 | Package | Typical tags |
 |---------|----------------|
-| `ghcr.io/synapticfour/ferrum` | `latest`, `latest-arm64`, git SHA, `v*` |
+| `ghcr.io/synapticfour/ferrum` | SHA tag in `config/ci/ferrum-image.txt` (do not float `:latest` for generated artefacts) |
 | `ghcr.io/synapticfour/ferrum-ui` | same scheme (optional UI; not required by Lab Kit) |
 
 Override with `FERRUM_IMAGE` / `FERRUM_PORT` (see [`.env.example`](../.env.example)).

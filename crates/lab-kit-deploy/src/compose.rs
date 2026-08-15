@@ -215,8 +215,16 @@ fn apply_lab_kit_runtime_env(
             insert_env(env, "FERRUM_STORAGE__BACKEND", "s3");
             insert_env(env, "FERRUM_STORAGE__S3_ENDPOINT", s3.endpoint.as_str());
             insert_env(env, "FERRUM_STORAGE__S3_BUCKET", &s3.bucket);
-            insert_env(env, "FERRUM_STORAGE__S3_ACCESS_KEY_ID", &s3.access_key);
-            insert_env(env, "FERRUM_STORAGE__S3_SECRET_ACCESS_KEY", &s3.secret_key);
+            insert_env(
+                env,
+                "FERRUM_STORAGE__S3_ACCESS_KEY_ID",
+                "${FERRUM_S3_ACCESS_KEY_ID}",
+            );
+            insert_env(
+                env,
+                "FERRUM_STORAGE__S3_SECRET_ACCESS_KEY",
+                "${FERRUM_S3_SECRET_ACCESS_KEY}",
+            );
             if let Some(region) = &s3.region {
                 insert_env(env, "FERRUM_STORAGE__S3_REGION", region);
             }
@@ -413,7 +421,7 @@ fn apply_solum_defaults(merged: &mut Value, cfg: &LabKitConfig) -> Result<(), De
         );
         if let Some(ref token) = solum.sidecar_token {
             if !token.is_empty() {
-                insert_env(env, "FERRUM_SOLUM__SIDECAR_TOKEN", token);
+                insert_env(env, "FERRUM_SOLUM__SIDECAR_TOKEN", "${SOLUM_SIDECAR_TOKEN}");
             }
         }
     }
@@ -629,5 +637,37 @@ default_purpose = "research"
         let merged = std::fs::read_to_string(&out).unwrap();
         assert!(merged.contains("beacon:"));
         assert!(merged.contains("synapticfour/ferrum-beacon"));
+    }
+
+    #[test]
+    fn s3_keys_are_env_placeholders_not_copied() {
+        let raw = r#"
+schema_version = 1
+
+[lab]
+name = "S3 Lab"
+environment = "demo"
+
+[auth]
+provider = "none"
+
+[services.drs]
+storage_backend = "s3"
+
+[services.drs.s3]
+endpoint = "http://minio.internal:9000"
+bucket = "genomes"
+access_key = "SUPERSECRETKEY"
+secret_key = "SUPERSECRETSECRET"
+"#;
+        let cfg = parse_config(raw).unwrap();
+        let dir = tempfile::tempdir().unwrap();
+        let out = dir.path().join("docker-compose.yml");
+        generate_compose_file(&cfg, &fragments(), &out, &ComposeOptions::default()).unwrap();
+        let merged = std::fs::read_to_string(&out).unwrap();
+        assert!(merged.contains("${FERRUM_S3_ACCESS_KEY_ID}"));
+        assert!(merged.contains("${FERRUM_S3_SECRET_ACCESS_KEY}"));
+        assert!(!merged.contains("SUPERSECRETKEY"));
+        assert!(!merged.contains("SUPERSECRETSECRET"));
     }
 }

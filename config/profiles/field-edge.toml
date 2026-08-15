@@ -25,8 +25,8 @@ sqlite_path = "~/.ferrum/ferrum.db"
 objects_path = "~/.ferrum/objects"
 
 [africa]
-# These settings activate Ferrum Africa features if present in upstream.
-# Ignored if Ferrum upstream does not implement the Africa Cursor Prompts.
+# Optional Ferrum Africa/offline knobs (memory, power). Ignored unless the
+# pinned Ferrum image implements them.
 offline_first = true
 max_memory_mb = 3072          # conservative for 4GB Pi
 power_monitor = true

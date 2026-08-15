@@ -1,6 +1,6 @@
 //! Conformance report generation from HelixTest-style JSON.
-//! **PDF** output requires a well-formed `FERRUM_LAB_KIT_LICENSE_KEY` that matches
-//! a prior `lab-kit license activate` file (open-core boundary).
+//! **PDF** output requires a vendor-signed `flk1.` token in
+//! `FERRUM_LAB_KIT_LICENSE_KEY` plus `lab-kit license activate`.
 
 #![forbid(unsafe_code)]
 
@@ -14,7 +14,8 @@ pub use error::ReportError;
 pub use json_report::{ConformanceJsonReport, ServiceResultRow};
 pub use license::{
     activate_license, default_license_file, hash_license_key, license_key_well_formed,
-    pdf_license_granted, LicenseActivation, LICENSE_FILE_ENV,
+    pdf_license_granted, verify_signed_license, LicenseActivation, LicensePayload,
+    LICENSE_FILE_ENV, LICENSE_PUBKEY_ENV,
 };
 
 /// Environment variable holding the raw license key (must also be activated).
@@ -28,6 +29,12 @@ pub fn generate_reports(
 ) -> Result<(), ReportError> {
     let raw = std::fs::read_to_string(helixtest_json_path)?;
     let report = json_report::build_from_helixtest_value(&raw, lab_name)?;
+    if report.results.is_empty() || !report.had_executed_checks {
+        return Err(ReportError::EmptyConformance(
+            "HelixTest JSON contained no executed checks — refusing to mark conformance as passed"
+                .into(),
+        ));
+    }
     std::fs::create_dir_all(out_dir)?;
     let json_path = out_dir.join("conformance-report.json");
     std::fs::write(&json_path, serde_json::to_string_pretty(&report)?)?;

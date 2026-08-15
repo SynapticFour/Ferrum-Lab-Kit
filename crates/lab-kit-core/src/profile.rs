@@ -305,9 +305,14 @@ pub fn is_profile_template(raw: &str) -> bool {
 pub fn parse_config_or_profile(raw: &str) -> Result<LabKitConfig, CoreError> {
     if is_profile_template(raw) {
         let template = ProfileTemplate::parse(raw)?;
+        let environment = if template.meta.profile.starts_with("field-edge") {
+            "field"
+        } else {
+            "production"
+        };
         return template.into_lab_kit_config(
             "Field Lab",
-            "production",
+            environment,
             "field-cohort-001",
             ProfileOverrides::default(),
         );

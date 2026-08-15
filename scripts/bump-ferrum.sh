@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Bump the Ferrum git pin (ferrum-core) to latest main or a given full SHA.
-# Updates: crates/lab-kit-ferrum/Cargo.toml, config/ci/ferrum-revision.txt
+# Updates: crates/lab-kit-ferrum/Cargo.toml, config/ci/ferrum-revision.txt,
+#          config/ci/ferrum-image.txt, config/ci/ferrum-image-arm64.txt
 #
 # Usage:
 #   ./scripts/bump-ferrum.sh              # use origin/main tip
@@ -90,9 +91,27 @@ awk -v sha="$FERRUM_REV" '
 ' "$ROOT/config/ci/ferrum-revision.txt" >"$TMP"
 mv "$TMP" "$ROOT/config/ci/ferrum-revision.txt"
 
+write_image_pin() {
+  local file="$1"
+  local comment="$2"
+  cat >"$file" <<EOF
+$comment
+ghcr.io/synapticfour/ferrum:$FERRUM_REV
+EOF
+}
+
+write_image_pin "$ROOT/config/ci/ferrum-image.txt" \
+  "# Default Ferrum monolith image for generated Compose/Helm (git SHA tag).
+# Bumped with ./scripts/bump-ferrum.sh. Override with FERRUM_IMAGE."
+write_image_pin "$ROOT/config/ci/ferrum-image-arm64.txt" \
+  "# ARM64 Ferrum monolith image. Override with FERRUM_IMAGE on Raspberry Pi.
+# Prefer a multi-arch SHA tag when published; otherwise set latest-arm64 explicitly."
+
 echo "Updated:"
 echo "  - crates/lab-kit-ferrum/Cargo.toml"
 echo "  - config/ci/ferrum-revision.txt"
+echo "  - config/ci/ferrum-image.txt"
+echo "  - config/ci/ferrum-image-arm64.txt"
 echo ""
 echo "Next:"
 echo "  cargo update -p ferrum-core"

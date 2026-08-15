@@ -9,20 +9,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`lab-kit adapters check`** — probes POSIX/SQLite locally and reports SLURM/S3/Nextflow configuration without submitting jobs. Ferrum still owns runtime GA4GH I/O.
+- **`lab-kit generate infra-secrets`** — local RSA PEMs + `secrets.env` for ga4gh-infra (gitignored). Wired into `install-edge.sh --with-infra`, `scripts/stack-up.sh`, and the Raspberry Pi kit.
+- **SHA image pins** — `config/ci/ferrum-image.txt` / `ferrum-image-arm64.txt`; generated Compose/Helm/Pi kit/install-edge default to `ghcr.io/synapticfour/ferrum:<git-sha>`. `./scripts/bump-ferrum.sh` updates the pin files.
+- **Signed PDF license tokens** — `flk1.<payload>.<sig>` (Ed25519). Unsigned `flk_` blobs are rejected. No issuing private key in the repository.
+- **CI** — `cargo deny check` (`deny.toml`), monthly Dependabot (cargo + GitHub Actions), CodeQL SARIF upload, blocking dependency-review on PRs.
+- Engineering ADRs in [DECISIONS.md](DECISIONS.md) (monolith on-ramp, auth ownership, signed licenses).
 - **Monolith runtime path** — `docker-compose.gateway.yml` pulls `ghcr.io/synapticfour/ferrum` and injects `FERRUM_SERVICES__ENABLE_*` from the selected profile (usable `docker compose up`).
 - **Solum companion** — `[solum]` config, `solum.yml` + `Dockerfile.solum-sidecar`, CLI `--with-solum`, profiles `field-edge+solum` / `field-edge+infra+solum`, `make up-with-solum` / `up-with-infra-solum`, [docs/SOLUM-CO-DEPLOY.md](docs/SOLUM-CO-DEPLOY.md).
 - **Raspberry Pi field kit** — `lab-kit generate raspberry-pi` (alias `pi`) writes a portable `pi-kit/` (compose, `.env` ARM64, `install-on-pi.sh`); `make pi-kit`; [docs/RASPBERRY-PI.md](docs/RASPBERRY-PI.md).
-- **ga4gh-infra external mode** — `co-deploy-external.yml` (no local broker containers); broker port applied to co-deploy compose.- **`.env.example`** — Ferrum / ga4gh-infra / Solum variables for compose and CLI.
+- **ga4gh-infra external mode** — `co-deploy-external.yml` (no local broker containers); broker port applied to co-deploy compose.
+- **`.env.example`** — Ferrum / ga4gh-infra / Solum variables for compose and CLI.
 - Helm `deployment-gateway.yaml` / `deployment-solum.yaml`; systemd emits `ferrum-gateway.service` (+ optional Solum).
 
 ### Changed
 
+- README (EN/DE) and operator docs describe Lab Kit as a **Compose/Helm/systemd on-ramp**, not a BYO-SLURM/S3/OIDC runtime inside Ferrum.
+- Official MariaDB **BUSL-1.1** license text. BUSL is not described as OSI open source.
+- `lab-kit conformance run` always invokes HelixTest with `--all --mode ferrum` and kills the process on timeout.
+- systemd units write `gateway.env`; Ferrum does not read `lab-kit.toml`.
+- Helm `values.yaml` gateway image uses the SHA pin. Legacy per-service `:latest` images remain unpublished placeholders (`--legacy-per-service`). Solum `lab-kit` tag is a local compose-build name, not GHCR.
 - Default compose/Helm/systemd no longer depend on unpublished per-service images; `--legacy-per-service` retains the old fragments.
 - Health checks and edge installer wait on gateway port **8080**.
-- Docs (EN/DE README, integration, deployment, operations, ecosystem) aligned with the monolith + companion model.
+
+### Security
+
+- ga4gh-infra compose requires env secrets (`${VAR:?…}`); no committed `dev-*` defaults.
+- Generated Compose emits `${FERRUM_S3_ACCESS_KEY_ID}` / `${FERRUM_S3_SECRET_ACCESS_KEY}` instead of copying keys from TOML.
+- Visa JWKS fetch is fail-closed (issuer allowlist + 10-minute TTL). Controlled access without a grant is **Denied**.
+- `auth.provider = "ldap"` is rejected at config validate.
+- Ingest HTTP client uses a 30-second timeout.
 
 ### Fixed
 
+- Empty or skip-only HelixTest JSON is not a conformance pass. Unparseable license expiry is fail-closed.
+- Field-edge profile environment is `field`; `auth.mode` is accepted as an alias for `auth.provider`.
 - Edge / co-deploy overlays now apply to a real `ferrum-gateway` service (previously orphaned patches).
 
 ## [0.1.0-alpha] — unreleased tag

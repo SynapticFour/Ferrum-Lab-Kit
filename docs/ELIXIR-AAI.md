@@ -2,11 +2,9 @@
 
 ## „Out of the box“?
 
-**Teilweise.** Im **Open-Source-Teil** von Lab Kit liegt die **Bibliotheks-Integration**:
+**Konfiguration ja, Browser-Login nein.** Lab Kit speichert OIDC-Parameter in `lab-kit.toml` und setzt Compose-/Helm-Env für den Ferrum-Gateway. Die Bibliothek `lab-kit-auth::LsLoginOidc` kann ID-Tokens (Discovery, JWKS, `iss`/`aud`) validieren — das ist **kein** Login-Button und **kein** Authorization-Code-Austausch.
 
-- `lab-kit-auth::LsLoginOidc` — OIDC Discovery, JWKS, Validierung von ID-Tokens (Issuer/Audience), plus **GA4GH-Passport-Helpers** (Claims / Visa-Struktur).
-
-Das ist **kein fertiger Login-Button** und kein gehosteter IdP. **Ende-zu-Ende** (Browser-Flow mit **Authorization Code + PKCE**, Redirects, Sessions, Schutz der GA4GH-Endpunkte) kommt aus **Ferrum** — insbesondere **Gateway und Auth-Middleware** in `ferrum-core` / `ferrum-gateway` ([Ferrum](https://github.com/SynapticFour/Ferrum)). Lab Kit **konfiguriert** (`lab-kit.toml`) und **verdrahtet** Deployments; du registrierst trotzdem einen **OIDC-Client** bei LS Login und setzt **Ingress/HTTPS** wie unten beschrieben.
+**Ende-zu-Ende** (Browser-Redirect, Authorization Code + PKCE, Sessions, Schutz der GA4GH-Endpunkte) liegt in **Ferrum** (`ferrum-core` / `ferrum-gateway`). Lab Kit **führt keinen Code-Exchange aus** und implementiert **kein PKCE**. Du registrierst trotzdem einen **OIDC-Client** bei LS Login und setzt **Ingress/HTTPS** wie unten beschrieben.
 
 This guide is written so an **IT administrator without Rust experience** can register Lab Kit as an **OpenID Connect Relying Party** against ELIXIR’s Life Science AAI.
 
@@ -15,15 +13,16 @@ This guide is written so an **IT administrator without Rust experience** can reg
 1. Use the ELIXIR Czech broker discovery document:
    `https://login.elixir-czech.org/oidc/.well-known/openid-configuration`
 2. In your IdP admin UI (or via your institutional contact), register a **confidential** client for your Lab Kit base URL.
-3. Set **redirect URI** to your gateway callback, e.g. `https://lab.example.org/oauth/callback`.
+3. Set **redirect URI** to the **Ferrum gateway** callback, e.g. `https://lab.example.org/oauth/callback`.
 4. Enable scopes: `openid`, `profile`, `email`, `offline_access`, `ga4gh_passport_v1` (Passport for controlled access).
 
-## 2. Authorization Code + PKCE
+## 2. Who owns the browser flow
 
-Lab Kit’s open-source adapter (`lab-kit-auth::LsLoginOidc`) expects **standard OIDC**:
+Ferrum’s gateway is the relying party for **Authorization Code + PKCE (S256)** when you enable LS Login there. Lab Kit only:
 
-- Authorization Code Flow with **PKCE** (S256).
-- `offline_access` for refresh tokens where your policy allows it.
+- writes `auth.provider = "ls-login"` and `[auth.ls-login]` into config;
+- refuses HMAC/`none` algorithms in `lab-kit-auth` token validation helpers;
+- does **not** exchange authorization codes or store refresh tokens.
 
 **eduGAIN:** Home institution login is handled **inside LS Login**; Lab Kit must not rewrite redirects or strip parameters.
 
@@ -42,16 +41,17 @@ redirect_uri = "https://lab.example.org/oauth/callback"
 scopes = ["openid", "profile", "email", "offline_access", "ga4gh_passport_v1"]
 ```
 
-Deploy the **auth** fragment (`docker-compose.auth.yml`) or equivalent Ferrum gateway so callbacks terminate on your ingress.
+`auth.provider = "ldap"` is **rejected** at config validate (not implemented). Offline/field nodes use `provider = "local"` (Ferrum Passport path).
 
 ## 4. GA4GH Passport & Beacon tiers
 
 - **Public:** no session.
 - **Registered:** any valid LS Login session.
-- **Controlled:** valid `ControlledAccessGrants` visa in `ga4gh_passport_v1` for the dataset.
+- **Controlled:** valid `ControlledAccessGrants` visa in `ga4gh_passport_v1` for the dataset. Without a grant, Lab Kit helpers return **Denied**, not Registered.
+- Visa JWKS fetch is **fail-closed**: issuer allowlist required, 10-minute JWKS TTL, no unsigned `iss` SSRF.
 
 ORCID / Google as upstream IdPs require **no extra Lab Kit config** when LS Login is the OIDC issuer.
 
 ## 5. Token validation (for integrators)
 
-`LsLoginOidc` loads JWKS from discovery, validates `iss`/`aud`, and exposes claims to Ferrum’s gateway. Passport visa JWTs inside the claim array should be validated per GA4GH AAI policy (Lab Kit provides parsing helpers in `lab-kit-auth::passport`).
+`LsLoginOidc` loads JWKS from discovery and validates `iss`/`aud` for **library callers**. Runtime enforcement is Ferrum’s gateway. Passport visa JWTs inside the claim array should be validated per GA4GH AAI policy (`lab-kit-auth::passport`).

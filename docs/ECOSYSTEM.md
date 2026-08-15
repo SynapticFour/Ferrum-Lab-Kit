@@ -113,4 +113,4 @@ helixtest --all --mode ferrum+infra --profile ferrum-infra
 
 ## CI
 
-GitHub Actions runs `cargo test`, edge-profile checks, and ARM64 builds on `main`.
+GitHub Actions runs `cargo test`, field-edge compose generation (inside the `rust` job), cargo-deny, and ARM64 builds on `main`.

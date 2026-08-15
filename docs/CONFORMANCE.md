@@ -13,6 +13,8 @@ export HELIXTEST_BIN=helixtest   # or path to the HelixTest CLI
 lab-kit conformance run --config lab-kit.toml
 ```
 
+`lab-kit conformance run` always passes HelixTest **`--all --mode ferrum --report json`** plus `--only` for enabled surfaces. Invoking bare `helixtest` prints “Nothing to do” and exits 0 — that is **not** treated as a pass. The runner kills the process on timeout.
+
 HelixTest should emit JSON results (format may vary; `lab-kit-report` accepts flexible shapes).
 
 ## Reports
@@ -26,11 +28,11 @@ lab-kit conformance report \
 
 Outputs:
 
-- **`conformance-report.json`** — always written (machine-readable, suitable for APIs and archives).
-- **`conformance-report.pdf`** — written only if **`FERRUM_LAB_KIT_LICENSE_KEY`** is a well-formed key (`flk_` + ≥32 chars) that matches a prior **`lab-kit license activate`** file (commercial tier). This **does not** gate GA4GH compliance; only the PDF artifact.
+- **`conformance-report.json`** — always written (machine-readable). **Empty JSON or skip-only rows fail** (`overall_pass = false`).
+- **`conformance-report.pdf`** — written only if **`FERRUM_LAB_KIT_LICENSE_KEY`** is a **signed** `flk1.<payload>.<sig>` token that verifies against the operator public key and matches a prior **`lab-kit license activate`**. Unparseable `expires_at` is **fail-closed**. This **does not** gate GA4GH compliance; only the PDF artifact.
 
 ## Reading the report
 
 - **Per-service table:** pass/fail per enabled GA4GH surface.
-- **Overall summary:** aggregate pass/fail.
+- **Overall summary:** aggregate pass/fail (never true when no tests executed).
 - **Next steps:** remediation hints for failed checks (attach to grant / ELIXIR node packages).

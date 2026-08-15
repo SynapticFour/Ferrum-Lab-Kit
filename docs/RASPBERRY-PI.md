@@ -57,7 +57,7 @@ curl -fsSL https://raw.githubusercontent.com/SynapticFour/Ferrum-Lab-Kit/main/in
 ./install-edge.sh --with-infra --with-solum
 ```
 
-Same stack as the kit; uses `field-edge*` profiles and pulls `ghcr.io/synapticfour/ferrum:latest-arm64` on aarch64.
+Same stack as the kit; uses `field-edge*` profiles and the SHA-pinned ARM64 image from `config/ci/ferrum-image-arm64.txt` (override with `FERRUM_IMAGE`).
 
 ```bash
 make up                 # first run → install-edge.sh

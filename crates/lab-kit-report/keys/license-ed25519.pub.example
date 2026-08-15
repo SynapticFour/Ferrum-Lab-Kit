@@ -1,0 +1,3 @@
+# Vendor Ed25519 public key for PDF license tokens (64 hex chars, one line).
+# Copy to license-ed25519.pub after `cargo run -p lab-kit-report --example gen_license_keypair`.
+# Unsigned flk_ strings are rejected. There is no issuing secret in this repository.

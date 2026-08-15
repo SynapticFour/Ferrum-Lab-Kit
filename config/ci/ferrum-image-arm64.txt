@@ -1,0 +1,3 @@
+# ARM64 Ferrum monolith image. Override with FERRUM_IMAGE on Raspberry Pi.
+# Prefer a multi-arch SHA tag when published; otherwise set latest-arm64 explicitly.
+ghcr.io/synapticfour/ferrum:fd6c9ee49cbe356e7986bf174d8710023a0c1c4f

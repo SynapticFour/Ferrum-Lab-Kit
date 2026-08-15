@@ -15,7 +15,7 @@ services:
       MOCK_IDP_PORT: "9100"
       MOCK_IDP_SUBJECT: researcher@uni-heidelberg.de
       MOCK_IDP_CLIENT_ID: ga4gh-broker
-      MOCK_IDP_CLIENT_SECRET: mock-client-secret
+      MOCK_IDP_CLIENT_SECRET: ${MOCK_IDP_CLIENT_SECRET:?set MOCK_IDP_CLIENT_SECRET in .env — run lab-kit generate infra-secrets}
       RUST_LOG: info
     ports:
       - "9100:9100"
@@ -32,7 +32,7 @@ services:
     networks: [lab]
     command: ["/config/visa-registry.toml"]
     environment:
-      REGISTRY_BOOTSTRAP_API_KEY: dev-visa-api-key
+      REGISTRY_BOOTSTRAP_API_KEY: ${REGISTRY_BOOTSTRAP_API_KEY:?set REGISTRY_BOOTSTRAP_API_KEY in .env}
       RUST_LOG: info
     ports:
       - "8181:8081"
@@ -67,7 +67,7 @@ services:
     networks: [lab]
     command: ["/config/service-registry.toml"]
     environment:
-      SERVICE_REGISTRY_REGISTRATION_KEY: dev-service-registry-key
+      SERVICE_REGISTRY_REGISTRATION_KEY: ${SERVICE_REGISTRY_REGISTRATION_KEY:?set SERVICE_REGISTRY_REGISTRATION_KEY in .env}
       RUST_LOG: info
     ports:
       - "8183:8083"
@@ -85,8 +85,8 @@ services:
     networks: [lab]
     command: ["/config/access-decision-service.toml"]
     environment:
-      ADS_DAC_API_KEY: dev-ads-api-key
-      REGISTRY_BOOTSTRAP_API_KEY: dev-visa-api-key
+      ADS_DAC_API_KEY: ${ADS_DAC_API_KEY:?set ADS_DAC_API_KEY in .env}
+      REGISTRY_BOOTSTRAP_API_KEY: ${REGISTRY_BOOTSTRAP_API_KEY:?set REGISTRY_BOOTSTRAP_API_KEY in .env}
       RUST_LOG: info
     ports:
       - "8190:8090"
@@ -107,9 +107,9 @@ services:
     networks: [lab]
     command: ["/config/broker.toml"]
     environment:
-      BROKER_COOKIE_SECRET: dev-broker-cookie-secret
-      MOCK_IDP_CLIENT_SECRET: mock-client-secret
-      ADS_DAC_API_KEY: dev-ads-api-key
+      BROKER_COOKIE_SECRET: ${BROKER_COOKIE_SECRET:?set BROKER_COOKIE_SECRET in .env}
+      MOCK_IDP_CLIENT_SECRET: ${MOCK_IDP_CLIENT_SECRET:?set MOCK_IDP_CLIENT_SECRET in .env}
+      ADS_DAC_API_KEY: ${ADS_DAC_API_KEY:?set ADS_DAC_API_KEY in .env}
       RUST_LOG: info
     ports:
       - "8180:8080"

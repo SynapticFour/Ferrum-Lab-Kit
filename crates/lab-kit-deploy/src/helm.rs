@@ -29,7 +29,7 @@ pub fn generate_helm_values(cfg: &LabKitConfig, output_path: &Path) -> Result<()
         },
         gateway: GatewayVals {
             enabled: enable.any(),
-            image: "ghcr.io/synapticfour/ferrum:latest".into(),
+            image: crate::default_ferrum_image().into(),
             port: 8080,
             enable,
         },

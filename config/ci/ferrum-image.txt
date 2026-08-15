@@ -1,0 +1,3 @@
+# Default Ferrum monolith image for generated Compose/Helm (git SHA tag).
+# Bumped with ./scripts/bump-ferrum.sh. Override with FERRUM_IMAGE.
+ghcr.io/synapticfour/ferrum:fd6c9ee49cbe356e7986bf174d8710023a0c1c4f

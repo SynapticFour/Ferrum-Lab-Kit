@@ -1,6 +1,8 @@
 # Ferrum Lab Kit
 
-**Ferrum Lab Kit** is the **on-ramp** to [Ferrum](https://github.com/SynapticFour/Ferrum): a **deployment and integration layer** for small and mid-size research labs, **ELIXIR node candidates**, **GHGA** data submitters, and **GDI** national-node participants who need **selective GA4GH-aligned services** without running the full Ferrum platform. It is a **separate repository** — not a fork — and **does not duplicate** Ferrum’s GA4GH implementations; it configures and ships them against **your** storage, scheduler, and identity stack.
+**Ferrum Lab Kit** is a **Compose / Helm / systemd on-ramp** for [Ferrum](https://github.com/SynapticFour/Ferrum). It generates deployment YAML, env files, and operator tooling around the **Ferrum monolith image** (`ghcr.io/synapticfour/ferrum`, SHA-pinned). It is a **separate repository** — not a fork — and **does not implement GA4GH protocol logic**. Runtime Beacon/DRS/WES/… I/O is the Ferrum container.
+
+Adapter traits (`lab-kit-adapters`) and OIDC helpers (`lab-kit-auth`) are **Lab Kit libraries**. Probe them with `lab-kit adapters check`. **Ferrum does not depend on these crates at runtime.**
 
 > **Legal notice:** This repository documents technical capabilities and operating guidance. It is not legal advice and does not by itself provide regulatory certification or compliance guarantees. Compliance outcomes depend on operator configuration, contracts, and organisational controls.
 
@@ -50,7 +52,7 @@ Full guide: [docs/RASPBERRY-PI.md](docs/RASPBERRY-PI.md).
 
 | Image | Notes |
 |-------|--------|
-| `ghcr.io/synapticfour/ferrum` | Gateway / platform (`latest`, `latest-arm64`, SHA, `v*`) |
+| `ghcr.io/synapticfour/ferrum` | Gateway / platform (SHA tag in `config/ci/ferrum-image.txt`; override with `FERRUM_IMAGE`) |
 | `ghcr.io/synapticfour/ferrum-ui` | Optional UI (not required by Lab Kit) |
 
 Override with `FERRUM_IMAGE` in `.env`. Details: [docs/FERRUM-INTEGRATION.md](docs/FERRUM-INTEGRATION.md).
@@ -107,7 +109,7 @@ Details: [docs/GA4GH-STANDARDS.md](docs/GA4GH-STANDARDS.md).
 
 ## Open core
 
-**GA4GH deployment and LS Login integration** are open under **BUSL-1.1** (see [LICENSE](LICENSE)) for permitted non-commercial research use. **Conformance PDF reports** and enterprise federation tooling are **commercial** offerings — PDF output requires a well-formed **`FERRUM_LAB_KIT_LICENSE_KEY`** and **`lab-kit license activate`**; **JSON reports and protocol stacks are not license-gated.** See [docs/BUSINESS-MODEL.md](docs/BUSINESS-MODEL.md).
+**GA4GH deployment tooling** is licensed under **BUSL-1.1** (see [LICENSE](LICENSE)) — BUSL is **not** an OSI open-source license; non-commercial research use is granted. **Conformance PDF reports** require a **signed** `FERRUM_LAB_KIT_LICENSE_KEY` (`flk1.<payload>.<sig>`) and **`lab-kit license activate`**. JSON reports and the GA4GH stack are not license-gated. See [docs/BUSINESS-MODEL.md](docs/BUSINESS-MODEL.md).
 
 ## CLI (`lab-kit`)
 
@@ -120,8 +122,10 @@ Details: [docs/GA4GH-STANDARDS.md](docs/GA4GH-STANDARDS.md).
 | `lab-kit generate raspberry-pi` / `pi` | Portable Pi field kit (`pi-kit/` + `install-on-pi.sh`) |
 | `lab-kit generate helm` | Emit values overlay (`gateway.enable.*`) |
 | `lab-kit generate systemd` | Emit `ferrum-gateway.service` (+ optional Solum) |
+| `lab-kit generate infra-secrets` | RSA PEMs + `secrets.env` for ga4gh-infra (gitignored) |
+| `lab-kit adapters check` | Probe POSIX/SQLite locally; report SLURM/S3/Nextflow config (no job submit) |
 | `lab-kit status` | Health table for enabled services |
-| `lab-kit conformance run` | Invoke external **HelixTest** CLI |
+| `lab-kit conformance run` | Invoke HelixTest with `--all --mode ferrum` (fails closed; empty/skip-only is not a pass) |
 | `lab-kit conformance report` | JSON (+ optional licensed PDF) |
 | `lab-kit ferrum check` | Confirms Git-pinned `ferrum-core` from [Ferrum](https://github.com/SynapticFour/Ferrum) resolves |
 | `lab-kit ingest …` | HTTP client for Ferrum **`/api/v1/ingest/*`** — see [Ferrum `docs/INGEST-LAB-KIT.md`](https://github.com/SynapticFour/Ferrum/blob/main/docs/INGEST-LAB-KIT.md) |

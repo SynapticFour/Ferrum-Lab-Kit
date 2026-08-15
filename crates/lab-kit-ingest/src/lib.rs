@@ -110,10 +110,15 @@ pub struct IngestClient {
 }
 
 impl IngestClient {
+    /// Default HTTP timeout for ingest calls (register, upload, poll).
+    pub const HTTP_TIMEOUT: std::time::Duration = std::time::Duration::from_secs(30);
+
     /// `base_url` is the gateway origin only (e.g. `http://localhost:8080`), no `/api/...` path.
     pub fn new(base_url: impl AsRef<str>, token: Option<String>) -> Result<Self, IngestError> {
         let base = base_url.as_ref().trim_end_matches('/').to_string();
-        let http = reqwest::Client::builder().build()?;
+        let http = reqwest::Client::builder()
+            .timeout(Self::HTTP_TIMEOUT)
+            .build()?;
         Ok(Self { http, base, token })
     }
 
@@ -268,5 +273,14 @@ mod tests {
         };
         let v = serde_json::to_value(&r).unwrap();
         assert_eq!(v["items"][0]["kind"], "url");
+    }
+
+    #[test]
+    fn client_constructs_with_thirty_second_timeout() {
+        assert_eq!(
+            IngestClient::HTTP_TIMEOUT,
+            std::time::Duration::from_secs(30)
+        );
+        IngestClient::new("http://127.0.0.1:8080", None).expect("client");
     }
 }

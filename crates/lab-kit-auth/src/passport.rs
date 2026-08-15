@@ -5,7 +5,7 @@
 
 use std::collections::HashMap;
 use std::sync::RwLock;
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 use jsonwebtoken::jwk::Jwk;
 use jsonwebtoken::{decode, decode_header, Algorithm, DecodingKey, Validation};
@@ -60,15 +60,30 @@ pub trait VisaKeySource: Send + Sync {
     ) -> Result<DecodingKey, AuthError>;
 }
 
-/// Fetches visa-issuer JWKS over HTTP (cached per issuer URL).
-#[derive(Default)]
+/// Fetches visa-issuer JWKS over HTTP.
+///
+/// HTTP fetch is **fail-closed** without an issuer allowlist. Cache entries expire
+/// after `ttl` (default 10 minutes).
 pub struct HttpJwks {
-    cache: RwLock<HashMap<String, Value>>,
+    cache: RwLock<HashMap<String, (Instant, Value)>>,
     http: Option<reqwest::blocking::Client>,
+    allowed_issuers: Vec<String>,
+    ttl: Duration,
+}
+
+impl Default for HttpJwks {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl HttpJwks {
+    /// No allowlist — `decoding_key` refuses network I/O.
     pub fn new() -> Self {
+        Self::with_allowed_issuers(Vec::new())
+    }
+
+    pub fn with_allowed_issuers(issuers: Vec<String>) -> Self {
         let http = reqwest::blocking::Client::builder()
             .timeout(Duration::from_secs(10))
             .build()
@@ -76,7 +91,13 @@ impl HttpJwks {
         Self {
             cache: RwLock::new(HashMap::new()),
             http,
+            allowed_issuers: issuers,
+            ttl: Duration::from_secs(600),
         }
+    }
+
+    fn issuer_allowed(&self, issuer: &str) -> bool {
+        self.allowed_issuers.iter().any(|a| a == issuer)
     }
 
     fn client(&self) -> Result<&reqwest::blocking::Client, AuthError> {
@@ -85,15 +106,13 @@ impl HttpJwks {
             .ok_or_else(|| AuthError::Oidc("HTTP client unavailable".into()))
     }
 
-    fn jwks_url_for_issuer(issuer: &str) -> Result<String, AuthError> {
+    fn jwks_url_for_issuer(&self, issuer: &str) -> Result<String, AuthError> {
         let mut base = issuer.trim_end_matches('/').to_string();
         if !base.ends_with("/.well-known/openid-configuration") {
             base.push_str("/.well-known/openid-configuration");
         }
-        let doc: Value = reqwest::blocking::Client::builder()
-            .timeout(Duration::from_secs(10))
-            .build()
-            .map_err(|e| AuthError::Oidc(e.to_string()))?
+        let doc: Value = self
+            .client()?
             .get(&base)
             .send()
             .map_err(AuthError::Http)?
@@ -115,21 +134,39 @@ impl VisaKeySource for HttpJwks {
         kid: &str,
         _header_alg: Algorithm,
     ) -> Result<DecodingKey, AuthError> {
+        if self.allowed_issuers.is_empty() {
+            return Err(AuthError::Oidc(
+                "visa JWKS fetch requires an issuer allowlist (HttpJwks::with_allowed_issuers)"
+                    .into(),
+            ));
+        }
+        if !self.issuer_allowed(issuer) {
+            return Err(AuthError::Oidc(format!(
+                "visa issuer {issuer} is not allowlisted"
+            )));
+        }
+
         if let Ok(g) = self.cache.read() {
-            if let Some(doc) = g.get(issuer) {
-                return key_from_jwks_doc(doc, kid);
+            if let Some((at, doc)) = g.get(issuer) {
+                if at.elapsed() < self.ttl {
+                    return key_from_jwks_doc(doc, kid);
+                }
             }
         } else {
             return Err(AuthError::Oidc("JWKS cache lock poisoned".into()));
         }
 
-        let client = self.client()?;
-        let jwks_uri = Self::jwks_url_for_issuer(issuer)?;
-        let doc: Value = client.get(&jwks_uri).send()?.error_for_status()?.json()?;
+        let jwks_uri = self.jwks_url_for_issuer(issuer)?;
+        let doc: Value = self
+            .client()?
+            .get(&jwks_uri)
+            .send()?
+            .error_for_status()?
+            .json()?;
         let key = key_from_jwks_doc(&doc, kid)?;
         match self.cache.write() {
             Ok(mut w) => {
-                w.insert(issuer.to_string(), doc);
+                w.insert(issuer.to_string(), (Instant::now(), doc));
             }
             Err(_) => return Err(AuthError::Oidc("JWKS cache lock poisoned".into())),
         }
@@ -259,12 +296,14 @@ pub fn dataset_matches(visa_value: &str, dataset_id: &str) -> bool {
     false
 }
 
-/// Three-tier Beacon mapping: public / registered / controlled.
+/// Three-tier Beacon mapping plus deny for controlled-without-grant.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum BeaconAccessTier {
     Public,
     Registered,
     Controlled,
+    /// Controlled dataset, no verified grant — fail closed.
+    Denied,
 }
 
 pub fn access_tier_for_beacon(
@@ -272,6 +311,8 @@ pub fn access_tier_for_beacon(
     claims: Option<&Value>,
     dataset_id: &str,
 ) -> BeaconAccessTier {
+    // No implicit JWKS fetch. Callers that need visa HTTP must pass a key source
+    // with an issuer allowlist.
     access_tier_for_beacon_with(cfg_level, claims, dataset_id, &HttpJwks::new())
 }
 
@@ -292,13 +333,13 @@ pub fn access_tier_for_beacon_with(
         }
         BeaconAccessLevel::Controlled => {
             let Some(c) = claims else {
-                return BeaconAccessTier::Public;
+                return BeaconAccessTier::Denied;
             };
             let visas = VisaEvaluator::visas_from_claims_with(c, keys);
             if VisaEvaluator::has_controlled_grant_for_dataset(&visas, dataset_id) {
                 BeaconAccessTier::Controlled
             } else {
-                BeaconAccessTier::Registered
+                BeaconAccessTier::Denied
             }
         }
     }
@@ -394,7 +435,7 @@ mod tests {
     }
 
     #[test]
-    fn wrong_dataset_is_registered_not_controlled() {
+    fn wrong_dataset_is_denied() {
         let token = signed_visa("https://example.org/datasets/other");
         let claims = json!({ "ga4gh_passport_v1": [token] });
         let tier = access_tier_for_beacon_with(
@@ -403,7 +444,15 @@ mod tests {
             "cohort-1",
             &HmacKeys,
         );
-        assert_eq!(tier, BeaconAccessTier::Registered);
+        assert_eq!(tier, BeaconAccessTier::Denied);
+    }
+
+    #[test]
+    fn http_jwks_without_allowlist_does_not_fetch() {
+        let err = HttpJwks::new()
+            .decoding_key("https://evil.example", "kid", Algorithm::RS256)
+            .unwrap_err();
+        assert!(err.to_string().contains("allowlist"));
     }
 
     #[test]

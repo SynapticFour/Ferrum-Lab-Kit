@@ -230,3 +230,33 @@ impl AuthProvider for LdapAuth {
         ))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use jsonwebtoken::Algorithm;
+
+    #[test]
+    fn rejects_hmac_algs() {
+        for alg in [Algorithm::HS256, Algorithm::HS384, Algorithm::HS512] {
+            let err = map_id_token_algorithm(alg).unwrap_err();
+            assert!(
+                err.to_string().contains("unsupported"),
+                "expected reject for {alg:?}"
+            );
+        }
+    }
+
+    #[test]
+    fn accepts_asymmetric_algs() {
+        for alg in [
+            Algorithm::RS256,
+            Algorithm::RS384,
+            Algorithm::RS512,
+            Algorithm::ES256,
+            Algorithm::ES384,
+        ] {
+            assert_eq!(map_id_token_algorithm(alg).unwrap(), alg);
+        }
+    }
+}

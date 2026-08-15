@@ -1,6 +1,8 @@
 # Ferrum Lab Kit
 
-**Ferrum Lab Kit** ist die **Einstiegslösung (On-Ramp)** zu [Ferrum](https://github.com/SynapticFour/Ferrum): eine **Deployments- und Integrationsschicht** für kleine und mittlere Forschungslabore, **ELIXIR-Knoten-Kandidaten**, **GHGA**-Datensubmitting und **GDI**-Teilnehmer, die **ausgewählte GA4GH-konforme Dienste** betreiben wollen, ohne die gesamte Ferrum-Plattform auszurollen. Es ist ein **eigenes Repository** (kein Fork) und **implementiert keine GA4GH-Logik erneut**; es konfiguriert Ferrum-Komponenten gegen **Ihre** Storage-, Scheduler- und Identity-Infrastruktur.
+**Ferrum Lab Kit** ist ein **Compose-/Helm-/systemd-On-Ramp** zu [Ferrum](https://github.com/SynapticFour/Ferrum): es erzeugt Deploy-YAML, Env-Dateien und Operator-Tools um das **Ferrum-Monolith-Image** (`ghcr.io/synapticfour/ferrum`, SHA-Pin). Es ist ein **eigenes Repository** (kein Fork) und **implementiert keine GA4GH-Protokoll-Logik**. Runtime-I/O (Beacon/DRS/WES/…) ist der Ferrum-Container.
+
+Adapter-Traits (`lab-kit-adapters`) und OIDC-Helfer (`lab-kit-auth`) sind **Lab-Kit-Bibliotheken**. Prüfung: `lab-kit adapters check`. **Ferrum hängt zur Laufzeit nicht von diesen Crates ab.**
 
 ## GA4GH-Stack
 
@@ -102,7 +104,7 @@ Mehr in [docs/GA4GH-STANDARDS.md](docs/GA4GH-STANDARDS.md).
 
 ## Open-Core-Modell
 
-**GA4GH-Deployments und LS-Login-Integration** stehen unter **BUSL-1.1** (siehe [LICENSE](LICENSE)) für zulässige **nicht-kommerzielle Forschung**. **PDF-Konformitätsberichte** und Enterprise-Föderations-Features sind **kommerziell**; die PDF-Ausgabe verlangt einen wohlgeformten **`FERRUM_LAB_KIT_LICENSE_KEY`** und **`lab-kit license activate`** — **JSON-Berichte und die Protokoll-Stacks selbst sind nicht lizenzgeschützt.** Details: [docs/BUSINESS-MODEL.md](docs/BUSINESS-MODEL.md).
+**GA4GH-Deploy-Tooling** steht unter **BUSL-1.1** (siehe [LICENSE](LICENSE)) — BUSL ist **kein** OSI-Open-Source-Lizenztext; nicht-kommerzielle Forschung ist über den Additional Use Grant erlaubt. **PDF-Konformitätsberichte** brauchen einen **signierten** `FERRUM_LAB_KIT_LICENSE_KEY` (`flk1.<payload>.<sig>`) und **`lab-kit license activate`**. JSON-Berichte und der GA4GH-Stack sind nicht lizenzgeschützt. Details: [docs/BUSINESS-MODEL.md](docs/BUSINESS-MODEL.md).
 
 ## CLI (`lab-kit`)
 
@@ -114,8 +116,10 @@ Mehr in [docs/GA4GH-STANDARDS.md](docs/GA4GH-STANDARDS.md).
 | `lab-kit generate compose --with-solum` | Solum-Sidecar erzwingen |
 | `lab-kit generate raspberry-pi` / `pi` | Portables Pi-Field-Kit |
 | `lab-kit generate helm` / `systemd` | Deploy-Artefakte |
+| `lab-kit generate infra-secrets` | RSA-PEMs + `secrets.env` für ga4gh-infra (gitignored) |
+| `lab-kit adapters check` | POSIX/SQLite lokal prüfen; SLURM/S3/Nextflow nur berichten |
 | `lab-kit status` | Health der konfigurierten Dienste |
-| `lab-kit conformance run` / `report` | HelixTest + Berichte |
+| `lab-kit conformance run` / `report` | HelixTest mit `--all` (leer/skip-only ≠ Pass) + Berichte |
 | `lab-kit ferrum check` | Git-gepinnter `ferrum-core`-Link prüfen |
 | `lab-kit ingest …` | Ferrum **`/api/v1/ingest/*`** — siehe [Ferrum INGEST-LAB-KIT](https://github.com/SynapticFour/Ferrum/blob/main/docs/INGEST-LAB-KIT.md) |
 | `lab-kit mii …` | Optionaler Passthrough zu `ferrum mii …` |

@@ -17,6 +17,7 @@ chrono.workspace = true
 clap.workspace = true
 dialoguer.workspace = true
 lab-kit-auth = { path = "../lab-kit-auth" }
+lab-kit-adapters = { path = "../lab-kit-adapters" }
 lab-kit-core = { path = "../lab-kit-core" }
 lab-kit-deploy = { path = "../lab-kit-deploy" }
 lab-kit-ferrum = { path = "../lab-kit-ferrum" }
@@ -24,7 +25,7 @@ lab-kit-ingest = { path = "../lab-kit-ingest" }
 lab-kit-report = { path = "../lab-kit-report" }
 serde_json.workspace = true
 tempfile.workspace = true
-tokio.workspace = true
+tokio = { workspace = true, features = ["rt-multi-thread", "macros", "process", "time"] }
 toml.workspace = true
 tracing.workspace = true
 tracing-subscriber.workspace = true

@@ -1,20 +1,20 @@
 # Image pin policy
 
-**Status:** 2026-08-12 · org level-up **C10**
+**Status:** 2026-08-15
 **Repo:** Ferrum-Lab-Kit
 
 ## Policy
 
 | Context | Rule |
 |---------|------|
-| **Pilot / production profiles** | Prefer **immutable tags** (SemVer / `vX.Y.Z`) or **digest pins** (`image@sha256:…`). Do not rely on floating `:latest` for customer-held pilots. |
-| **Local demo / bring-your-own** | `:latest` may appear as a developer default; document that pilots must override. |
+| **Generated Compose / Helm / Pi kit / install-edge** | Use the SHA tag in `config/ci/ferrum-image.txt` (ARM64: `ferrum-image-arm64.txt`). Do **not** emit floating `:latest` / `:latest-arm64`. |
+| **Pilot / production** | Prefer digest pins (`image@sha256:…`) or SemVer tags when Ferrum publishes them. Override with `FERRUM_IMAGE`. |
 | **Third-party infra** (Traefik, Postgres, …) | Pin minor/major versions (e.g. `traefik:v3.3`); bump deliberately in a PR with notes. |
 | **ga4gh-infra siblings** | Use version env vars (`MOCK_IDP_VERSION`, etc.) already present in compose; keep defaults aligned with published infra tags. |
+| **Legacy per-service fragments** | `--legacy-per-service` still references unpublished `synapticfour/ferrum-*` images. Operators who use that path must supply their own tags. |
+| **Solum sidecar** | Compose default `synapticfour/solum-sidecar:lab-kit` is a **local build tag** (see `Dockerfile.solum-sidecar`), not a published GHCR image. Set `SOLUM_IMAGE` or Helm `solum.image` to a real registry tag for pilots. |
 
-## Current known floaters (to tighten over time)
-
-Helm `values.yaml` and several compose fragments still default Synaptic Four service images to `:latest` / `lab-kit`. For H1/H2 pilot packs, operators should set explicit tags via Lab Kit profile / env (see Showcase `PINNED_VERSIONS.txt`).
+`./scripts/bump-ferrum.sh` rewrites the git pin **and** both image pin files to `ghcr.io/synapticfour/ferrum:<sha>`.
 
 ## Review
 
