@@ -6,7 +6,7 @@
 
 services:
   mock-idp:
-    image: ${GA4GH_IMAGE_PREFIX:-ghcr.io/synapticfour}/mock-idp:${MOCK_IDP_VERSION:-0.1.0}
+    image: ${GA4GH_IMAGE_PREFIX:-ghcr.io/synapticfour}/mock-idp:${MOCK_IDP_VERSION:-0.2.3}
     networks: [lab]
     environment:
       MOCK_IDP_ISSUER: http://mock-idp:9100
@@ -28,7 +28,7 @@ services:
       retries: 10
 
   visa-registry:
-    image: ${GA4GH_IMAGE_PREFIX:-ghcr.io/synapticfour}/visa-registry:${VISA_REGISTRY_VERSION:-0.1.0}
+    image: ${GA4GH_IMAGE_PREFIX:-ghcr.io/synapticfour}/visa-registry:${VISA_REGISTRY_VERSION:-0.2.3}
     networks: [lab]
     command: ["/config/visa-registry.toml"]
     environment:
@@ -47,7 +47,7 @@ services:
       retries: 10
 
   duo-service:
-    image: ${GA4GH_IMAGE_PREFIX:-ghcr.io/synapticfour}/duo-service:${DUO_SERVICE_VERSION:-0.1.0}
+    image: ${GA4GH_IMAGE_PREFIX:-ghcr.io/synapticfour}/duo-service:${DUO_SERVICE_VERSION:-0.2.3}
     networks: [lab]
     command: ["/config/duo-service.toml"]
     environment:
@@ -63,7 +63,7 @@ services:
       retries: 10
 
   service-registry:
-    image: ${GA4GH_IMAGE_PREFIX:-ghcr.io/synapticfour}/service-registry:${SERVICE_REGISTRY_VERSION:-0.1.0}
+    image: ${GA4GH_IMAGE_PREFIX:-ghcr.io/synapticfour}/service-registry:${SERVICE_REGISTRY_VERSION:-0.2.3}
     networks: [lab]
     command: ["/config/service-registry.toml"]
     environment:
@@ -81,7 +81,7 @@ services:
       retries: 10
 
   access-decision-service:
-    image: ${GA4GH_IMAGE_PREFIX:-ghcr.io/synapticfour}/access-decision-service:${ACCESS_DECISION_SERVICE_VERSION:-0.1.0}
+    image: ${GA4GH_IMAGE_PREFIX:-ghcr.io/synapticfour}/access-decision-service:${ACCESS_DECISION_SERVICE_VERSION:-0.2.3}
     networks: [lab]
     command: ["/config/access-decision-service.toml"]
     environment:
@@ -103,7 +103,7 @@ services:
       retries: 10
 
   aai-broker:
-    image: ${GA4GH_IMAGE_PREFIX:-ghcr.io/synapticfour}/aai-broker:${AAI_BROKER_VERSION:-0.1.0}
+    image: ${GA4GH_IMAGE_PREFIX:-ghcr.io/synapticfour}/aai-broker:${AAI_BROKER_VERSION:-0.2.3}
     networks: [lab]
     command: ["/config/broker.toml"]
     environment:

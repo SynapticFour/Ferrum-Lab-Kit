@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Pin Ferrum **v0.3.0** (`6444469a`) for `ferrum-core` and GHCR variant tags (full / edge / edge-infra).
 - Solum sidecar pin matches Solum-Demo baseline `6b4519c`.
+- ga4gh-infra Compose image tags **0.2.3** (`ga4gh-infra-v0.2.3` stack publish).
 
 ## [0.2.0-alpha] - 2026-08-15
 
