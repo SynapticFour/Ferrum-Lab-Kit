@@ -4,7 +4,11 @@ This repository follows Semantic Versioning (`MAJOR.MINOR.PATCH`).
 
 ## First tag
 
-**`v0.1.0-alpha`** was cut on **2026-08-15**. It pins Ferrum `6788bfe11860b5fe49bae72d120373f78a0b023f`. The GHCR tag `ghcr.io/synapticfour/ferrum:<sha>` is produced by Ferrum’s `ghcr.yml` on that commit. If a pull fails, build Ferrum from that SHA (`deploy/Dockerfile`) or set `FERRUM_IMAGE`.
+**`v0.1.0-alpha`** was cut on **2026-08-15**. It pins Ferrum `6788bfe11860b5fe49bae72d120373f78a0b023f`.
+
+**`v0.2.0-alpha`** (2026-08-15) pins Ferrum `a4ba89911e207b9597e03c321f0e18ea9112d57a` and selects GHCR variants `:<sha>` (full), `:<sha>-edge`, `:<sha>-edge-infra`. If a pull fails, build Ferrum from that SHA (`./scripts/build-variant-image.sh` or `deploy/Dockerfile`) or set `FERRUM_IMAGE`. `lab-kit build image` wraps the same Dockerfile for a local/custom architecture.
+
+Subsequent tags follow the process below. Do **not** tag until CI is green on `main` and image pins match a published (or documented build-from-source) Ferrum revision.
 
 Subsequent tags follow the process below. Do **not** tag until CI is green on `main` and image pins match a published (or documented build-from-source) Ferrum revision.
 

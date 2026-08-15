@@ -7,9 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0-alpha] - 2026-08-15
+
+Named Ferrum image variants so a Beacon/DRS stack can pull a smaller gateway binary. Ferrum pin: `a4ba89911e207b9597e03c321f0e18ea9112d57a`.
+
 ### Added
 
-- **Ferrum image variants** — generated Compose/Helm pin `:<sha>-edge` (Beacon/DRS) or `:<sha>-edge-infra` (ga4gh-infra co-deploy) instead of always the full monolith. `lab-kit build image --variant edge --platform linux/arm64` builds from the pinned Ferrum SHA. Ferrum pin: `a4ba89911e207b9597e03c321f0e18ea9112d57a`.
+- **Ferrum image variants** — generated Compose/Helm pin `:<sha>-edge` (Beacon/DRS) or `:<sha>-edge-infra` (ga4gh-infra co-deploy) instead of always the full monolith. `lab-kit build image --variant edge --platform linux/arm64` builds from the pinned Ferrum SHA.
 
 ## [0.1.0-alpha] - 2026-08-15
 
@@ -55,4 +59,5 @@ First tagged on-ramp: generate Compose/Helm/systemd for a **selected** Ferrum GA
 - Field-edge profile environment is `field`; `auth.mode` is accepted as an alias for `auth.provider`.
 - Edge / co-deploy overlays now apply to a real `ferrum-gateway` service (previously orphaned patches).
 
+[0.2.0-alpha]: https://github.com/SynapticFour/Ferrum-Lab-Kit/releases/tag/v0.2.0-alpha
 [0.1.0-alpha]: https://github.com/SynapticFour/Ferrum-Lab-Kit/releases/tag/v0.1.0-alpha
