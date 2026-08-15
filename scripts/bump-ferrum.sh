@@ -79,6 +79,11 @@ if [[ "$DRY_RUN" -eq 1 ]]; then
   exit 0
 fi
 
+OLD_SHA="$(
+  grep -E 'rev = "[0-9a-f]{40}"' "$ROOT/crates/lab-kit-ferrum/Cargo.toml" \
+    | sed -E 's/.*"([0-9a-f]{40})".*/\1/' | head -n1
+)"
+
 # perl in-place edit: works the same on macOS and Linux
 perl -i -pe "s/rev = \"[0-9a-f]{40}\"/rev = \"$FERRUM_REV\"/" \
   "$ROOT/crates/lab-kit-ferrum/Cargo.toml"
@@ -107,11 +112,25 @@ write_image_pin "$ROOT/config/ci/ferrum-image-arm64.txt" \
   "# ARM64 Ferrum monolith image. Override with FERRUM_IMAGE on Raspberry Pi.
 # Prefer a multi-arch SHA tag when published; otherwise set latest-arm64 explicitly."
 
+if [[ -n "$OLD_SHA" && "$OLD_SHA" != "$FERRUM_REV" ]]; then
+  for f in \
+    "$ROOT/.env.example" \
+    "$ROOT/deploy/docker-compose/docker-compose.gateway.yml" \
+    "$ROOT/deploy/helm/values.yaml" \
+    "$ROOT/install-edge.sh" \
+    "$ROOT/crates/lab-kit-deploy/src/images.rs"
+  do
+    [[ -f "$f" ]] || continue
+    perl -i -pe "s/$OLD_SHA/$FERRUM_REV/g" "$f"
+  done
+fi
+
 echo "Updated:"
 echo "  - crates/lab-kit-ferrum/Cargo.toml"
 echo "  - config/ci/ferrum-revision.txt"
 echo "  - config/ci/ferrum-image.txt"
 echo "  - config/ci/ferrum-image-arm64.txt"
+echo "  - operator defaults (.env.example, gateway compose, helm values, install-edge fallback)"
 echo ""
 echo "Next:"
 echo "  cargo update -p ferrum-core"

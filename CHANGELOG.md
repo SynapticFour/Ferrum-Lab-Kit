@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0-alpha] - 2026-08-15
+
+First tagged on-ramp: generate Compose/Helm/systemd for a **selected** Ferrum GA4GH subset (one monolith image, `FERRUM_SERVICES__ENABLE_*`). Ferrum pin: `6788bfe11860b5fe49bae72d120373f78a0b023f` (`ghcr.io/synapticfour/ferrum:<sha>`, published by Ferrum’s GHCR workflow on that commit).
+
 ### Added
 
 - **`lab-kit adapters check`** — probes POSIX/SQLite locally and reports SLURM/S3/Nextflow configuration without submitting jobs. Ferrum still owns runtime GA4GH I/O.
@@ -31,6 +35,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Helm `values.yaml` gateway image uses the SHA pin. Legacy per-service `:latest` images remain unpublished placeholders (`--legacy-per-service`). Solum `lab-kit` tag is a local compose-build name, not GHCR.
 - Default compose/Helm/systemd no longer depend on unpublished per-service images; `--legacy-per-service` retains the old fragments.
 - Health checks and edge installer wait on gateway port **8080**.
+- Ferrum `ferrum-core` and container image pins moved to `6788bfe11860b5fe49bae72d120373f78a0b023f`. `./scripts/bump-ferrum.sh` also rewrites operator defaults (`.env.example`, gateway compose, Helm values, `install-edge` fallback).
 
 ### Security
 
@@ -46,6 +51,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Field-edge profile environment is `field`; `auth.mode` is accepted as an alias for `auth.provider`.
 - Edge / co-deploy overlays now apply to a real `ferrum-gateway` service (previously orphaned patches).
 
-## [0.1.0-alpha] — unreleased tag
-
-Intended first SemVer tag when release artifacts (verified images/docs) are ready. **Do not cut `v0.1.0-alpha` until those artifacts exist** — see [RELEASING.md](RELEASING.md).
+[0.1.0-alpha]: https://github.com/SynapticFour/Ferrum-Lab-Kit/releases/tag/v0.1.0-alpha

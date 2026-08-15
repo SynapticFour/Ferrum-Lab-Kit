@@ -96,7 +96,7 @@ default_ferrum_image() {
     grep -vE '^[[:space:]]*(#|$)' "$pin_file" | head -n1
     return
   fi
-  echo "ghcr.io/synapticfour/ferrum:fd6c9ee49cbe356e7986bf174d8710023a0c1c4f"
+  echo "ghcr.io/synapticfour/ferrum:6788bfe11860b5fe49bae72d120373f78a0b023f"
 }
 
 merge_env_file() {

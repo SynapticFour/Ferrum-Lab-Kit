@@ -1447,7 +1447,7 @@ dependencies = [
 [[package]]
 name = "ferrum-core"
 version = "0.2.0"
-source = "git+https://github.com/SynapticFour/Ferrum.git?rev=fd6c9ee49cbe356e7986bf174d8710023a0c1c4f#fd6c9ee49cbe356e7986bf174d8710023a0c1c4f"
+source = "git+https://github.com/SynapticFour/Ferrum.git?rev=6788bfe11860b5fe49bae72d120373f78a0b023f#6788bfe11860b5fe49bae72d120373f78a0b023f"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -2062,7 +2062,7 @@ dependencies = [
  "libc",
  "percent-encoding",
  "pin-project-lite",
- "socket2 0.6.3",
+ "socket2 0.5.10",
  "tokio",
  "tower-service",
  "tracing",
@@ -3229,7 +3229,7 @@ dependencies = [
  "quinn-udp",
  "rustc-hash",
  "rustls 0.23.43",
- "socket2 0.6.3",
+ "socket2 0.5.10",
  "thiserror 2.0.18",
  "tokio",
  "tracing",
@@ -3266,7 +3266,7 @@ dependencies = [
  "cfg_aliases",
  "libc",
  "once_cell",
- "socket2 0.6.3",
+ "socket2 0.5.10",
  "tracing",
  "windows-sys 0.60.2",
 ]
@@ -4509,7 +4509,6 @@ dependencies = [
  "bytes",
  "libc",
  "mio",
- "parking_lot",
  "pin-project-lite",
  "signal-hook-registry",
  "socket2 0.6.3",

@@ -4,9 +4,11 @@ This repository follows Semantic Versioning (`MAJOR.MINOR.PATCH`).
 
 ## First tag
 
-The intended first SemVer tag is **`v0.1.0-alpha`**.
+**`v0.1.0-alpha`** was cut on **2026-08-15**. It pins Ferrum `6788bfe11860b5fe49bae72d120373f78a0b023f`. The GHCR tag `ghcr.io/synapticfour/ferrum:<sha>` is produced by Ferrum’s `ghcr.yml` on that commit. If a pull fails, build Ferrum from that SHA (`deploy/Dockerfile`) or set `FERRUM_IMAGE`.
 
-Do **not** cut that tag (or any release tag) until release artifacts truly exist — at minimum: changelog section closed for the release, CI green on `main`, and deploy image references that operators can actually pull (or an explicit, documented build-from-source path). Compose/Helm still ship **placeholder** per-service image names; Ferrum’s published GHCR images today are the monolith gateway/UI only (see [docs/FERRUM-INTEGRATION.md](docs/FERRUM-INTEGRATION.md)).
+Subsequent tags follow the process below. Do **not** tag until CI is green on `main` and image pins match a published (or documented build-from-source) Ferrum revision.
+
+Compose/Helm still ship **placeholder** per-service image names behind `--legacy-per-service`; the default path is the monolith gateway only (see [docs/FERRUM-INTEGRATION.md](docs/FERRUM-INTEGRATION.md)).
 
 ## Release process
 
