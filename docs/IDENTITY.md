@@ -19,3 +19,5 @@ lab-kit init --profile field-edge --non-interactive
 ```
 
 HelixTest pin for CI: tag **v0.1.1** (same as Ferrum `VERSIONS.lock`).
+
+Subset proof: `beacon-only` + `helixtest --only beacon`, `drs-wes` + `--only drs --only wes`. See [CONFORMANCE.md](CONFORMANCE.md).

@@ -15,6 +15,23 @@ lab-kit conformance run --config lab-kit.toml
 
 `lab-kit conformance run` always passes HelixTest **`--all --mode ferrum --report json`** plus `--only` for enabled surfaces. Invoking bare `helixtest` prints “Nothing to do” and exits 0 — that is **not** treated as a pass. The runner kills the process on timeout.
 
+## Subset profiles (companion story)
+
+Lab Kit is one, two, or three Ferrum surfaces — not a second monolith. After compose is up:
+
+```bash
+# Beacon-only profile → HelixTest Beacon
+lab-kit init --profile beacon-only --non-interactive
+# … generate compose, docker compose up …
+helixtest --all --mode ferrum --report json --only beacon
+
+# DRS + WES profile
+lab-kit init --profile drs-wes --non-interactive
+helixtest --all --mode ferrum --report json --only drs --only wes
+```
+
+CI generates `beacon-only` and `field-edge` compose on every relevant push. A live HelixTest run against those stacks is **opt-in** (`workflow_dispatch` + `run_live_suite=true`).
+
 HelixTest should emit JSON results (format may vary; `lab-kit-report` accepts flexible shapes).
 
 ## Reports
