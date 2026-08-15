@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Ferrum image variants** — generated Compose/Helm pin `:<sha>-edge` (Beacon/DRS) or `:<sha>-edge-infra` (ga4gh-infra co-deploy) instead of always the full monolith. `lab-kit build image --variant edge --platform linux/arm64` builds from the pinned Ferrum SHA. Ferrum pin: `a4ba89911e207b9597e03c321f0e18ea9112d57a`.
+
 ## [0.1.0-alpha] - 2026-08-15
 
 First tagged on-ramp: generate Compose/Helm/systemd for a **selected** Ferrum GA4GH subset (one monolith image, `FERRUM_SERVICES__ENABLE_*`). Ferrum pin: `6788bfe11860b5fe49bae72d120373f78a0b023f` (`ghcr.io/synapticfour/ferrum:<sha>`, published by Ferrum’s GHCR workflow on that commit).

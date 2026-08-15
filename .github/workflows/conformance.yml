@@ -67,6 +67,7 @@ jobs:
         run: |
           grep -q 'ferrum-gateway:' generated/docker-compose-field-edge.yml
           grep -q 'ghcr.io/synapticfour/ferrum' generated/docker-compose-field-edge.yml
+          grep -q '\-edge' generated/docker-compose-field-edge.yml
           grep -q 'FERRUM_SERVICES__ENABLE_BEACON' generated/docker-compose-field-edge.yml
           grep -q 'FERRUM_AFRICA__OFFLINE_FIRST' generated/docker-compose-field-edge.yml
           echo "field-edge profile: monolith gateway + Beacon/DRS ENABLE flags + edge overlay"

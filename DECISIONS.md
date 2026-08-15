@@ -12,6 +12,14 @@ Track important architectural and operational decisions here.
 
 ---
 
+### 2026-08-15 - Ferrum image variants, not a Lab Kit compiler
+
+- **Context:** Operators want Beacon+DRS (or field+infra) without pulling the full WES/TES/TRS binary, and sometimes a local image for arm64.
+- **Decision:** Lab Kit **selects** Ferrum GHCR tags `:<sha>`, `:<sha>-edge`, `:<sha>-edge-infra` from the profile. `lab-kit build image` wraps Ferrum’s Dockerfile for a custom platform. Lab Kit does not invent per-surface images.
+- **Consequences:** Needs Ferrum GHCR to publish those tags. htsget stays in the `edge` binary (disabled at runtime for `field-edge`). `--legacy-per-service` remains unpublished placeholders.
+
+---
+
 ### 2026-08-15 - Runtime is the Ferrum monolith, not Lab Kit adapters
 
 - **Context:** Marketing and README described Lab Kit as a BYO-SLURM/S3/OIDC platform. The CLI runtime path only generates Compose/Helm/systemd around `ghcr.io/synapticfour/ferrum`.

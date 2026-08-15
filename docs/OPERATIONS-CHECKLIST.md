@@ -61,7 +61,7 @@ Use this as a **runbook scaffold** when bringing up or handing over an environme
 
 | Variable | Purpose |
 |----------|---------|
-| `FERRUM_IMAGE` | Monolith image for generated compose (default: SHA pin in `config/ci/ferrum-image.txt`). |
+| `FERRUM_IMAGE` | Override generated variant pin (`full` / `-edge` / `-edge-infra`). |
 | `FERRUM_PORT` | Host port for `ferrum-gateway` (default **8080**). |
 | `FERRUM_DATA_DIR` | Edge data bind mount (default `~/.ferrum`). |
 | `FERRUM_GATEWAY_URL` | Base URL of ferrum-gateway for **`lab-kit ingest`**. |

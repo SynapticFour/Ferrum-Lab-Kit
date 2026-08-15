@@ -41,7 +41,7 @@ lab-kit generate pi --with-solum --ram-gb 8 -o ./pi-kit
 
 Details: [docs/RASPBERRY-PI.md](docs/RASPBERRY-PI.md).
 
-**Selektion:** Profile/`lab-kit.toml` wählen Surfaces; Compose startet den **Monolith** `ghcr.io/synapticfour/ferrum` und setzt `FERRUM_SERVICES__ENABLE_*`. Details: [docs/FERRUM-INTEGRATION.md](docs/FERRUM-INTEGRATION.md).
+**Selektion:** Profile/`lab-kit.toml` wählen Surfaces; Compose startet **eine** Ferrum-Variante (`:<sha>-edge` für Beacon/DRS, `:<sha>-edge-infra` mit ga4gh-infra, sonst `:<sha>` full) und setzt `FERRUM_SERVICES__ENABLE_*`. Eigenes Image: `lab-kit build image --variant edge`. Details: [docs/FERRUM-INTEGRATION.md](docs/FERRUM-INTEGRATION.md).
 
 ## Co-Deploy mit ga4gh-infra
 

@@ -11,9 +11,10 @@ use lab_kit_core::{
     LS_LOGIN_CLIENT_SECRET_ENV,
 };
 use lab_kit_deploy::{
-    generate_compose_file, generate_helm_values, generate_infra_secrets,
+    build_ferrum_image, generate_compose_file, generate_helm_values, generate_infra_secrets,
     generate_raspberry_pi_bundle, generate_systemd_units, render_compose_yaml,
-    write_compose_sidecars, ComposeOptions, RaspberryPiBundleOptions,
+    write_compose_sidecars, BuildImageOptions, ComposeOptions, FerrumImageVariant,
+    RaspberryPiBundleOptions,
 };
 use lab_kit_ingest::{IngestClient, RegisterItem, RegisterRequest, UploadOptions};
 use lab_kit_report::generate_reports;
@@ -84,6 +85,11 @@ enum Command {
     Adapters {
         #[command(subcommand)]
         action: AdaptersAction,
+    },
+    /// Build a Ferrum gateway image (named variant, optional target platform).
+    Build {
+        #[command(subcommand)]
+        target: BuildTarget,
     },
 }
 
@@ -279,6 +285,32 @@ enum AdaptersAction {
     Check {
         #[arg(short, long, default_value = "lab-kit.toml")]
         config: PathBuf,
+    },
+}
+
+#[derive(Subcommand)]
+enum BuildTarget {
+    /// Build `ghcr.io/synapticfour/ferrum` locally (named variant + optional `--platform`).
+    Image {
+        #[arg(short, long)]
+        config: Option<PathBuf>,
+        /// `auto` (from --config), `full`, `edge`, or `edge-infra`.
+        #[arg(long, default_value = "auto")]
+        variant: String,
+        /// Docker platform, e.g. `linux/arm64` or `linux/amd64`.
+        #[arg(long)]
+        platform: Option<String>,
+        /// Existing Ferrum checkout (otherwise clone the pinned SHA into cache).
+        #[arg(long)]
+        ferrum_src: Option<PathBuf>,
+        /// Image tag (default: `ferrum:lab-kit-<variant>`).
+        #[arg(long)]
+        tag: Option<String>,
+        /// Override cargo features (comma-separated; implies --no-default-features).
+        #[arg(long)]
+        features: Option<String>,
+        #[arg(long, default_value_t = false)]
+        dry_run: bool,
     },
 }
 
@@ -520,6 +552,35 @@ async fn main() -> anyhow::Result<()> {
                 adapters_check::run_adapters_check(&cfg).await?;
             }
         },
+        Command::Build { target } => match target {
+            BuildTarget::Image {
+                config,
+                variant,
+                platform,
+                ferrum_src,
+                tag,
+                features,
+                dry_run,
+            } => {
+                let resolved = resolve_build_variant(config.as_deref(), &variant)?;
+                let tag = tag.unwrap_or_else(|| BuildImageOptions::tag_for(resolved));
+                let built = build_ferrum_image(&BuildImageOptions {
+                    variant: resolved,
+                    features,
+                    platform,
+                    ferrum_src,
+                    tag: tag.clone(),
+                    dry_run,
+                })?;
+                println!("image: {built}");
+                println!(
+                    "Use it with: FERRUM_IMAGE={built} docker compose -f docker-compose.yml up -d"
+                );
+                if dry_run {
+                    tracing::info!("dry-run: docker was not invoked");
+                }
+            }
+        },
     }
     Ok(())
 }
@@ -641,6 +702,29 @@ fn resolve_gateway_url(flag: Option<String>, cfg: Option<&LabKitConfig>) -> anyh
 fn resolve_token(flag: Option<String>) -> Option<String> {
     flag.filter(|s| !s.is_empty())
         .or_else(|| std::env::var("FERRUM_TOKEN").ok().filter(|s| !s.is_empty()))
+}
+
+fn resolve_build_variant(
+    config: Option<&Path>,
+    variant: &str,
+) -> anyhow::Result<FerrumImageVariant> {
+    let v = variant.trim();
+    if v.eq_ignore_ascii_case("auto") {
+        let path = config
+            .map(Path::to_path_buf)
+            .unwrap_or_else(|| PathBuf::from("lab-kit.toml"));
+        if !path.is_file() {
+            anyhow::bail!(
+                "--variant auto needs {} (or pass --variant edge|edge-infra|full)",
+                path.display()
+            );
+        }
+        let cfg = load_config(&path).with_context(|| format!("load {}", path.display()))?;
+        return Ok(FerrumImageVariant::from_config(&cfg));
+    }
+    FerrumImageVariant::parse(v).ok_or_else(|| {
+        anyhow::anyhow!("unknown --variant {v} (expected auto|full|edge|edge-infra)")
+    })
 }
 
 async fn run_ingest(cmd: IngestCmd) -> anyhow::Result<()> {

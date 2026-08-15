@@ -6,7 +6,7 @@ Lab Kit targets three environments equally (see `lab-kit generate …`).
 
 - **Use case:** single server, laptops, CI, demos.
 - **Flow:** `lab-kit generate compose` → `docker compose -f docker-compose.yml up -d`.
-- **Default runtime:** monolith `ghcr.io/synapticfour/ferrum` as `ferrum-gateway` on **8080**, with `FERRUM_SERVICES__ENABLE_*` from your profile.
+- **Default runtime:** named Ferrum variant as `ferrum-gateway` on **8080** (`:<sha>` full, `:<sha>-edge`, `:<sha>-edge-infra`) plus `FERRUM_SERVICES__ENABLE_*` from your profile.
 - **Fragments:** `docker-compose.base.yml` + `docker-compose.gateway.yml` (+ `edge.yml` / `infra.yml` / `solum.yml` as needed).
 - **Platforms:** Ubuntu 22.04/24.04, macOS (Apple Silicon), x86_64 Linux, Raspberry Pi 5 (use the SHA pin in `config/ci/ferrum-image-arm64.txt`, override with `FERRUM_IMAGE`).
 - **Env:** copy [`.env.example`](../.env.example) → `.env`.

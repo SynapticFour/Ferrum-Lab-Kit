@@ -93,6 +93,7 @@ pub fn render_compose_yaml(
     } else if any_ga4gh_deploy {
         merge_fragment(&mut merged, fragments_dir, "docker-compose.gateway.yml")?;
         apply_enable_flags(&mut merged, &registry)?;
+        apply_gateway_image(&mut merged, cfg, options.with_ga4gh_infra)?;
     }
 
     if lab_kit_core::is_field_edge(cfg) {
@@ -177,6 +178,33 @@ fn gateway_env_map(merged: &mut Value) -> Result<&mut Mapping, DeployError> {
 
 fn insert_env(env: &mut Mapping, key: &str, value: impl Into<String>) {
     env.insert(Value::String(key.into()), Value::String(value.into()));
+}
+
+fn apply_gateway_image(
+    merged: &mut Value,
+    cfg: &LabKitConfig,
+    with_ga4gh_infra: bool,
+) -> Result<(), DeployError> {
+    let mut variant = crate::FerrumImageVariant::from_config(cfg);
+    if with_ga4gh_infra && variant == crate::FerrumImageVariant::Edge {
+        variant = crate::FerrumImageVariant::EdgeInfra;
+    }
+    let pin = crate::default_ferrum_image_for(variant);
+    let services = merged
+        .as_mapping_mut()
+        .ok_or_else(|| DeployError::Msg("compose root must be a mapping".into()))?
+        .get_mut(Value::String("services".into()))
+        .and_then(|s| s.as_mapping_mut())
+        .ok_or_else(|| DeployError::Msg("services must be a mapping".into()))?;
+    let gateway = services
+        .get_mut(Value::String("ferrum-gateway".into()))
+        .and_then(|g| g.as_mapping_mut())
+        .ok_or_else(|| DeployError::Msg("ferrum-gateway must be a mapping".into()))?;
+    gateway.insert(
+        Value::String("image".into()),
+        Value::String(format!("${{FERRUM_IMAGE:-{pin}}}")),
+    );
+    Ok(())
 }
 
 fn apply_enable_flags(merged: &mut Value, registry: &ServiceRegistry) -> Result<(), DeployError> {
@@ -475,6 +503,11 @@ mod tests {
         let merged = std::fs::read_to_string(&out).unwrap();
         assert!(merged.contains("ferrum-gateway"));
         assert!(merged.contains("ghcr.io/synapticfour/ferrum"));
+        assert!(
+            merged.contains("-edge"),
+            "field-edge should pin the edge image variant, got compose without -edge"
+        );
+        assert!(!merged.contains("-edge-infra"));
         assert!(merged.contains("FERRUM_SERVICES__ENABLE_BEACON"));
         assert!(merged.contains("FERRUM_AFRICA__OFFLINE_FIRST"));
         assert!(!merged.contains("synapticfour/ferrum-beacon"));
@@ -496,7 +529,10 @@ mod tests {
         assert!(merged.contains("FERRUM_SERVICES__ENABLE_PASSPORTS"));
         assert!(merged.contains("FERRUM_DISCOVERY__ENABLED"));
         assert!(merged.contains("8180:8080"));
-        assert!(merged.contains("ghcr.io/synapticfour/ferrum"));
+        assert!(
+            merged.contains("-edge-infra"),
+            "field-edge+infra should pin edge-infra"
+        );
         serde_yaml::from_str::<serde_yaml::Value>(&merged).expect("valid YAML");
     }
 
@@ -520,6 +556,10 @@ mod tests {
         let merged = std::fs::read_to_string(&out).unwrap();
         assert!(merged.contains("aai-broker"));
         assert!(merged.contains("FERRUM_AUTH__JWKS_URL"));
+        assert!(
+            merged.contains("-edge-infra"),
+            "--with-ga4gh-infra should upgrade the edge pin to edge-infra"
+        );
         serde_yaml::from_str::<serde_yaml::Value>(&merged).expect("valid YAML");
     }
 
@@ -532,6 +572,11 @@ mod tests {
         generate_compose_file(&cfg, &fragments(), &out, &ComposeOptions::default()).unwrap();
         let merged = std::fs::read_to_string(&out).unwrap();
         assert!(merged.contains("ferrum-gateway:"));
+        assert!(
+            merged.contains("-edge"),
+            "beacon-only should pin the edge image"
+        );
+        assert!(!merged.contains("-edge-infra"));
         assert!(merged.contains("ghcr.io/synapticfour/ferrum"));
         assert!(
             merged.contains("FERRUM_SERVICES__ENABLE_BEACON"),

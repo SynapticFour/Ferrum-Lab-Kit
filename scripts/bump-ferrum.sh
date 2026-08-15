@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Bump the Ferrum git pin (ferrum-core) to latest main or a given full SHA.
 # Updates: crates/lab-kit-ferrum/Cargo.toml, config/ci/ferrum-revision.txt,
-#          config/ci/ferrum-image.txt, config/ci/ferrum-image-arm64.txt
+#          config/ci/ferrum-image.txt, ferrum-image-edge.txt,
+#          ferrum-image-edge-infra.txt, ferrum-image-arm64.txt
 #
 # Usage:
 #   ./scripts/bump-ferrum.sh              # use origin/main tip
@@ -99,18 +100,29 @@ mv "$TMP" "$ROOT/config/ci/ferrum-revision.txt"
 write_image_pin() {
   local file="$1"
   local comment="$2"
+  local image="$3"
   cat >"$file" <<EOF
 $comment
-ghcr.io/synapticfour/ferrum:$FERRUM_REV
+$image
 EOF
 }
 
 write_image_pin "$ROOT/config/ci/ferrum-image.txt" \
-  "# Default Ferrum monolith image for generated Compose/Helm (git SHA tag).
-# Bumped with ./scripts/bump-ferrum.sh. Override with FERRUM_IMAGE."
+  "# Default Ferrum monolith image for generated Compose/Helm (full variant, unsuffixed SHA tag).
+# Bumped with ./scripts/bump-ferrum.sh. Override with FERRUM_IMAGE." \
+  "ghcr.io/synapticfour/ferrum:$FERRUM_REV"
+write_image_pin "$ROOT/config/ci/ferrum-image-edge.txt" \
+  "# Default Ferrum edge image (DRS + Beacon + htsget compiled in; Lab Kit disables unused routes).
+# Bumped with ./scripts/bump-ferrum.sh. Override with FERRUM_IMAGE." \
+  "ghcr.io/synapticfour/ferrum:$FERRUM_REV-edge"
+write_image_pin "$ROOT/config/ci/ferrum-image-edge-infra.txt" \
+  "# Ferrum edge + ga4gh-infra hooks (clearinghouse / discovery). Override with FERRUM_IMAGE.
+# Bumped with ./scripts/bump-ferrum.sh." \
+  "ghcr.io/synapticfour/ferrum:$FERRUM_REV-edge-infra"
 write_image_pin "$ROOT/config/ci/ferrum-image-arm64.txt" \
-  "# ARM64 Ferrum monolith image. Override with FERRUM_IMAGE on Raspberry Pi.
-# Prefer a multi-arch SHA tag when published; otherwise set latest-arm64 explicitly."
+  "# ARM64 Ferrum image for Pi kits (edge variant; same tag when GHCR is multi-arch).
+# Override with FERRUM_IMAGE. Prefer lab-kit build image --platform linux/arm64 when the tag is amd64-only." \
+  "ghcr.io/synapticfour/ferrum:$FERRUM_REV-edge"
 
 if [[ -n "$OLD_SHA" && "$OLD_SHA" != "$FERRUM_REV" ]]; then
   for f in \
@@ -128,8 +140,10 @@ fi
 echo "Updated:"
 echo "  - crates/lab-kit-ferrum/Cargo.toml"
 echo "  - config/ci/ferrum-revision.txt"
-echo "  - config/ci/ferrum-image.txt"
-echo "  - config/ci/ferrum-image-arm64.txt"
+echo "  - config/ci/ferrum-image.txt (full)"
+echo "  - config/ci/ferrum-image-edge.txt"
+echo "  - config/ci/ferrum-image-edge-infra.txt"
+echo "  - config/ci/ferrum-image-arm64.txt (edge)"
 echo "  - operator defaults (.env.example, gateway compose, helm values, install-edge fallback)"
 echo ""
 echo "Next:"

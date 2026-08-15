@@ -7,7 +7,7 @@ Lab Kit depends on the **[Ferrum](https://github.com/SynapticFour/Ferrum)** plat
 - Crate: **`lab-kit-ferrum`** → `ferrum-core` from
   `https://github.com/SynapticFour/Ferrum.git` pinned by **full git `rev`** (see `crates/lab-kit-ferrum/Cargo.toml`).
 - **Bump procedure:** pick a Ferrum commit (often `main` HEAD), set the same SHA in `Cargo.toml` and **`config/ci/ferrum-revision.txt`**, then `cargo update -p ferrum-core` and run tests.
-- **Script:** `./scripts/bump-ferrum.sh` updates `Cargo.toml`, `config/ci/ferrum-revision.txt`, and the **image pin files** (`config/ci/ferrum-image.txt`, `ferrum-image-arm64.txt`) from **`refs/heads/main`** (or pass an explicit 40-char SHA). Use `./scripts/bump-ferrum.sh --dry-run` to preview. Then run `cargo update -p ferrum-core` and `cargo test --workspace`. `lab-kit ferrum check` reads the revision from that text file.
+- **Script:** `./scripts/bump-ferrum.sh` updates `Cargo.toml`, `config/ci/ferrum-revision.txt`, and the **image pin files** (`ferrum-image.txt`, `ferrum-image-edge.txt`, `ferrum-image-edge-infra.txt`, `ferrum-image-arm64.txt`) from **`refs/heads/main`** (or pass an explicit 40-char SHA). Use `./scripts/bump-ferrum.sh --dry-run` to preview. Then run `cargo update -p ferrum-core` and `cargo test --workspace`. `lab-kit ferrum check` reads the revision from that text file.
 
 ## CLI check
 
@@ -19,20 +19,27 @@ Prints the linked `ferrum_core::FerrumError` type name and the pinned revision.
 
 ## Runtime wiring / container images
 
-**Default path (usable today):** `lab-kit generate compose` merges the **monolith** gateway fragment and sets selective surfaces with Ferrum env flags:
+**Default path (usable today):** `lab-kit generate compose` merges the **monolith** gateway fragment, selects a **Ferrum image variant**, and sets selective surfaces with Ferrum env flags:
 
-| Lab Kit selection | Injected env |
-|-------------------|--------------|
-| `[services.beacon]` | `FERRUM_SERVICES__ENABLE_BEACON=true` |
-| `[services.drs]` | `FERRUM_SERVICES__ENABLE_DRS=true` |
-| … | `ENABLE_HTSGET` / `WES` / `TES` / `TRS` |
+| Lab Kit selection | Image variant | Injected env |
+|-------------------|---------------|--------------|
+| Beacon / DRS / htsget only (`field-edge`, `beacon-only`) | `:<sha>-edge` | `FERRUM_SERVICES__ENABLE_*` |
+| Same + ga4gh-infra co-deploy | `:<sha>-edge-infra` | plus clearinghouse / discovery env |
+| Any WES / TES / TRS (`institute`, `drs-wes`, …) | `:<sha>` (**full**) | `ENABLE_WES` / `TES` / `TRS` / … |
 
 | Package | Typical tags |
 |---------|----------------|
-| `ghcr.io/synapticfour/ferrum` | SHA tag in `config/ci/ferrum-image.txt` (do not float `:latest` for generated artefacts) |
-| `ghcr.io/synapticfour/ferrum-ui` | same scheme (optional UI; not required by Lab Kit) |
+| `ghcr.io/synapticfour/ferrum` | `:<sha>` (full), `:<sha>-edge`, `:<sha>-edge-infra` — see Ferrum [IMAGE-VARIANTS.md](https://github.com/SynapticFour/Ferrum/blob/main/docs/IMAGE-VARIANTS.md) |
+| `ghcr.io/synapticfour/ferrum-ui` | SHA tag (optional UI; not required by Lab Kit) |
 
 Override with `FERRUM_IMAGE` / `FERRUM_PORT` (see [`.env.example`](../.env.example)).
+
+Custom architecture or air-gap (clones the pinned Ferrum SHA, runs `deploy/Dockerfile`):
+
+```bash
+lab-kit build image --variant edge --platform linux/arm64
+# then: FERRUM_IMAGE=ferrum:lab-kit-edge docker compose up -d
+```
 
 **Legacy path:** `--legacy-per-service` still emits unpublished `synapticfour/ferrum-beacon` (etc.) fragments for operators who build their own multi-container images. Those tags are **not** on GHCR today — see `deploy/docker-compose/legacy/README.md`.
 

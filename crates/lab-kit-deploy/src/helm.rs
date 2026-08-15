@@ -29,7 +29,8 @@ pub fn generate_helm_values(cfg: &LabKitConfig, output_path: &Path) -> Result<()
         },
         gateway: GatewayVals {
             enabled: enable.any(),
-            image: crate::default_ferrum_image().into(),
+            image: crate::default_ferrum_image_for(crate::FerrumImageVariant::from_config(cfg))
+                .into(),
             port: 8080,
             enable,
         },
@@ -159,6 +160,10 @@ dataset_id = "ds1"
         assert!(yaml.contains("name: Helm Lab"));
         assert!(yaml.contains("gateway:"));
         assert!(yaml.contains("ghcr.io/synapticfour/ferrum"));
+        assert!(
+            yaml.contains("-edge"),
+            "beacon-only helm values should pin the edge image"
+        );
         assert!(yaml.contains("beacon: true"));
         assert!(yaml.contains("drs: false"));
     }

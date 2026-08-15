@@ -9,7 +9,7 @@ Public Ferrum overview: [synapticfour.com/en/ferrum-field](https://synapticfour.
 | Promise | Where it lives | Lab Kit delivers |
 |---------|----------------|------------------|
 | Pi 5 as primary edge hardware | Ferrum AFRICA-DEPLOYMENT, Lab Kit DEPLOYMENT-TARGETS | ARM64 image + RAM checks |
-| Minimal surfaces (Beacon + DRS) | `field-edge` profile | `FERRUM_SERVICES__ENABLE_*` |
+| Minimal surfaces (Beacon + DRS) | `field-edge` profile | `:<sha>-edge` image + `FERRUM_SERVICES__ENABLE_*` |
 | Offline-capable / SQLite | Ferrum Edge mode + Lab Kit `edge.yml` | Compose overlay + data dir |
 | Optional auth plane | ga4gh-infra co-deploy | `--with-ga4gh-infra` / `field-edge+infra` |
 | Optional consent on Pi | Solum H4 (Track A only) | `--with-solum` / `field-edge+solum` |

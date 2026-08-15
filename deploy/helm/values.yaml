@@ -11,7 +11,7 @@ lab:
 
 gateway:
   enabled: false
-  image: ghcr.io/synapticfour/ferrum:6788bfe11860b5fe49bae72d120373f78a0b023f
+  image: ghcr.io/synapticfour/ferrum:a4ba89911e207b9597e03c321f0e18ea9112d57a
   port: 8080
   enable:
     drs: false

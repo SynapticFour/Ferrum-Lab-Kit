@@ -46,16 +46,17 @@ Full guide: [docs/RASPBERRY-PI.md](docs/RASPBERRY-PI.md).
 
 ### How selective deploy works
 
-`lab-kit.toml` / profiles choose GA4GH surfaces. Generators emit a **single monolith** service (`ferrum-gateway` → `ghcr.io/synapticfour/ferrum`) and set:
+`lab-kit.toml` / profiles choose GA4GH surfaces. Generators emit a **single monolith** service (`ferrum-gateway`) from a **named Ferrum variant** and set:
 
 `FERRUM_SERVICES__ENABLE_BEACON|DRS|HTSGET|WES|TES|TRS`
 
-| Image | Notes |
-|-------|--------|
-| `ghcr.io/synapticfour/ferrum` | Gateway / platform (SHA tag in `config/ci/ferrum-image.txt`; override with `FERRUM_IMAGE`) |
-| `ghcr.io/synapticfour/ferrum-ui` | Optional UI (not required by Lab Kit) |
+| Image | When |
+|-------|------|
+| `ghcr.io/synapticfour/ferrum:<sha>-edge` | Beacon/DRS (and optional htsget) only — `field-edge`, `beacon-only` |
+| `ghcr.io/synapticfour/ferrum:<sha>-edge-infra` | Same + ga4gh-infra co-deploy |
+| `ghcr.io/synapticfour/ferrum:<sha>` | Full stack (WES/TES/TRS) — `institute`, `drs-wes` |
 
-Override with `FERRUM_IMAGE` in `.env`. Details: [docs/FERRUM-INTEGRATION.md](docs/FERRUM-INTEGRATION.md).
+Override with `FERRUM_IMAGE` in `.env`. Custom arch: `lab-kit build image --variant edge --platform linux/arm64`. Details: [docs/FERRUM-INTEGRATION.md](docs/FERRUM-INTEGRATION.md).
 
 ## Co-deploy with ga4gh-infra
 

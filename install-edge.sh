@@ -25,8 +25,7 @@ Usage: install-edge.sh [--with-infra] [--with-solum]
   --with-solum   Co-deploy Solum sidecar (consent companion on 8787)
 
 Environment:
-  FERRUM_IMAGE   Override monolith image (default: SHA pin in config/ci/ferrum-image.txt
-                 or ferrum-image-arm64.txt on aarch64)
+  FERRUM_IMAGE   Override monolith image (default: edge SHA pin; --with-infra uses edge-infra)
   FERRUM_PORT    Gateway host port (default: 8080)
   FERRUM_DATA_DIR  Persistent data (default: ~/.ferrum)
 EOF
@@ -88,15 +87,19 @@ detect_arch() {
 
 default_ferrum_image() {
   local pin_file
-  case "$(detect_arch)" in
-    aarch64) pin_file="$ROOT/config/ci/ferrum-image-arm64.txt" ;;
-    *) pin_file="$ROOT/config/ci/ferrum-image.txt" ;;
-  esac
+  if [[ "${WITH_INFRA:-0}" -eq 1 ]]; then
+    pin_file="$ROOT/config/ci/ferrum-image-edge-infra.txt"
+  else
+    case "$(detect_arch)" in
+      aarch64) pin_file="$ROOT/config/ci/ferrum-image-arm64.txt" ;;
+      *) pin_file="$ROOT/config/ci/ferrum-image-edge.txt" ;;
+    esac
+  fi
   if [[ -f "$pin_file" ]]; then
     grep -vE '^[[:space:]]*(#|$)' "$pin_file" | head -n1
     return
   fi
-  echo "ghcr.io/synapticfour/ferrum:6788bfe11860b5fe49bae72d120373f78a0b023f"
+  echo "ghcr.io/synapticfour/ferrum:a4ba89911e207b9597e03c321f0e18ea9112d57a"
 }
 
 merge_env_file() {
