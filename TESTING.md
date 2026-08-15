@@ -12,7 +12,6 @@
 | Live HelixTest suite | `conformance.yml` **opt-in only** (`workflow_dispatch` + `run_live_suite=true`) | `helixtest --all … --only beacon` against generated compose — **fails the job on failure** (requires pullable Ferrum images) |
 | CodeQL | `.github/workflows/codeql.yml` | Weekly / configured schedule; SARIF upload per `.github/ci-config.json` |
 | Secret scan / dependency review | respective workflows | PRs/pushes; dependency-review is **blocking** |
-| Dependabot | `.github/dependabot.yml` | Monthly grouped cargo + GitHub Actions PRs |
 
 Postgres adapter tests under `lab-kit-adapters` with `--features integration-tests` are **local/opt-in** (Docker required) and are not part of the default CI matrix.
 
