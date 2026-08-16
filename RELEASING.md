@@ -12,6 +12,10 @@ This repository follows Semantic Versioning (`MAJOR.MINOR.PATCH`).
 
 Subsequent tags follow the process below. Do **not** tag until CI is green on `main` and image pins match a published (or documented build-from-source) Ferrum revision.
 
+## Release train (portfolio)
+
+When **Ferrum** is tagged: the same week, bump this Lab Kit image/git pin to that Ferrum tag. When **ga4gh-infra** is tagged (`ga4gh-infra-v*`): Ferrum `VERSIONS.lock` and Ferrum-GA4GH-Demo follow; Lab Kit only if the Ferrum image itself moved. Showcase pins **tags that exist on origin/main**. See [Ferrum PORTFOLIO.md](https://github.com/SynapticFour/Ferrum/blob/main/docs/PORTFOLIO.md).
+
 Compose/Helm still ship **placeholder** per-service image names behind `--legacy-per-service`; the default path is the monolith gateway only (see [docs/FERRUM-INTEGRATION.md](docs/FERRUM-INTEGRATION.md)).
 
 ## Release process

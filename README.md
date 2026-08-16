@@ -159,3 +159,7 @@ See [README.de.md](README.de.md).
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md).
+
+---
+
+**Synaptic Four** · [contact@synapticfour.com](mailto:contact@synapticfour.com) · [synapticfour.com](https://synapticfour.com) · BUSL-1.1 (comes with Ferrum; not sold separately)
