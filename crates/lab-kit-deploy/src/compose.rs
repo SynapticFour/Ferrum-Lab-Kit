@@ -1,9 +1,10 @@
+// SPDX-License-Identifier: BUSL-1.1
 use std::fs;
 use std::path::{Path, PathBuf};
 
 use lab_kit_core::{
-    is_co_deploy, is_solum_enabled, tes_slurm_config, Ga4ghInfraMode, LabKitConfig, ServiceId,
-    ServiceRegistry,
+    is_bra_enabled, is_co_deploy, is_solum_enabled, tes_slurm_config, Ga4ghInfraMode, LabKitConfig,
+    ServiceId, ServiceRegistry,
 };
 use serde_yaml::{Mapping, Value};
 
@@ -19,6 +20,8 @@ pub struct ComposeOptions {
     pub with_ga4gh_infra: bool,
     /// Merge Solum sidecar even when `[solum]` is unset.
     pub with_solum: bool,
+    /// Merge BRA workbench even when `[bra]` is unset.
+    pub with_bra: bool,
     /// Use unpublished per-service image fragments instead of the monolith gateway.
     pub legacy_per_service: bool,
 }
@@ -124,6 +127,11 @@ pub fn render_compose_yaml(
     if solum {
         merge_fragment(&mut merged, fragments_dir, "solum.yml")?;
         apply_solum_defaults(&mut merged, cfg)?;
+    }
+
+    let bra = options.with_bra || is_bra_enabled(cfg);
+    if bra {
+        merge_fragment(&mut merged, fragments_dir, "bra.yml")?;
     }
 
     Ok(serde_yaml::to_string(&merged)?)
@@ -660,6 +668,26 @@ default_purpose = "research"
         assert!(merged.contains("FERRUM_SOLUM__BASE_URL"));
         assert!(merged.contains("FERRUM_SOLUM__DEFAULT_SUBJECT"));
         assert!(merged.contains("patient-1"));
+        serde_yaml::from_str::<serde_yaml::Value>(&merged).expect("valid YAML");
+    }
+
+    #[test]
+    fn with_bra_merges_workbench_and_ferrum_urls() {
+        let raw = include_str!("../../../config/profiles/bra-companion.toml");
+        let cfg = parse_config(raw).unwrap();
+        let dir = tempfile::tempdir().unwrap();
+        let out = dir.path().join("docker-compose.yml");
+        generate_compose_file(&cfg, &fragments(), &out, &ComposeOptions::default()).unwrap();
+        let merged = std::fs::read_to_string(&out).unwrap();
+        assert!(merged.contains("FERRUM_DRS_URL"));
+        assert!(merged.contains("FERRUM_WES_URL"));
+        assert!(merged.contains("/ga4gh/drs/v1"));
+        assert!(merged.contains("/ga4gh/wes/v1"));
+        assert!(merged.contains("BRA_IMAGE"));
+        assert!(
+            !merged.contains("solum-sidecar"),
+            "BRA companion is not a Solum combo SKU"
+        );
         serde_yaml::from_str::<serde_yaml::Value>(&merged).expect("valid YAML");
     }
 

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: BUSL-1.1
 //! Build the HelixTest argv. Bare `helixtest` is a successful no-op — always pass `--all`.
 
 pub fn helix_test_command_args(enabled_services: &[String]) -> Vec<String> {

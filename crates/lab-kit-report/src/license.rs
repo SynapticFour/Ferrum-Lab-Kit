@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: BUSL-1.1
 //! Signed license tokens for PDF reports.
 //!
 //! A valid key is `flk1.<base64url-json>.<base64url-ed25519-sig>` issued by

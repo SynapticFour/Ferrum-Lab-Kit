@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: BUSL-1.1
 //! Portable Raspberry Pi field-edge install kit.
 
 use std::fs;

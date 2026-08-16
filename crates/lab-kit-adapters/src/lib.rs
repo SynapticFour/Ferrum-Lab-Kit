@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: BUSL-1.1
 //! Adapter traits for storage, compute, metadata, and workflow engines.
 //! Ferrum services consume these boundaries; Lab Kit supplies defaults for common lab setups.
 

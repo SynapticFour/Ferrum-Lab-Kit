@@ -107,7 +107,7 @@ helixtest --all --mode ferrum+infra --profile ferrum-infra
 |-------|----------|
 | Ferrum ↔ ga4gh-infra wiring | [Ferrum GA4GH-INFRA-INTEGRATION.md](https://github.com/SynapticFour/Ferrum/blob/main/docs/GA4GH-INFRA-INTEGRATION.md) |
 | Demo compose merge order | [Ferrum-GA4GH-Demo architecture.md](https://github.com/SynapticFour/Ferrum-GA4GH-Demo/blob/main/docs/architecture.md) |
-| Co-deploy profiles | [field-edge+infra.toml](../config/profiles/field-edge+infra.toml), [field-edge+solum.toml](../config/profiles/field-edge+solum.toml), [institute.toml](../config/profiles/institute.toml) |
+| Co-deploy profiles | [field-edge+infra.toml](../config/profiles/field-edge+infra.toml), [field-edge+solum.toml](../config/profiles/field-edge+solum.toml), [bra-companion.toml](../config/profiles/bra-companion.toml), [institute.toml](../config/profiles/institute.toml) |
 | HelixTest co-deploy mode | [helixtest/docs/ferrum.md](https://github.com/SynapticFour/HelixTest/blob/main/helixtest/docs/ferrum.md) |
 | Africa-Mode (SQLite) | [ga4gh-infra AFRICA-DEPLOYMENT](https://github.com/SynapticFour/ga4gh-infra/blob/main/docs/AFRICA-DEPLOYMENT.md) |
 

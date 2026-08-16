@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: BUSL-1.1
 //! Generate deployment artifacts from [`lab_kit_core::LabKitConfig`] and [`lab_kit_core::ServiceRegistry`].
 
 #![forbid(unsafe_code)]

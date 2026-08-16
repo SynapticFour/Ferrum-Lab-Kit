@@ -54,6 +54,23 @@ jobs:
             --output /tmp/docker-compose-edge.yml
       - name: Validate generated compose YAML
         run: python3 -c "import yaml; yaml.safe_load(open('/tmp/docker-compose-edge.yml'))"
+      - name: init bra-companion (non-interactive)
+        run: |
+          cargo run -p lab-kit-selector --release -- init \
+            --profile bra-companion \
+            --non-interactive \
+            --output /tmp/lab-kit-bra.toml
+      - name: Generate compose from bra-companion
+        run: |
+          cargo run -p lab-kit-selector --release -- generate compose \
+            --config /tmp/lab-kit-bra.toml \
+            --fragments deploy/docker-compose \
+            --output /tmp/docker-compose-bra.yml
+      - name: BRA compose wires Ferrum DRS/WES URLs
+        run: |
+          python3 -c "import yaml; yaml.safe_load(open('/tmp/docker-compose-bra.yml'))"
+          grep -q FERRUM_DRS_URL /tmp/docker-compose-bra.yml
+          grep -q FERRUM_WES_URL /tmp/docker-compose-bra.yml
       - name: install-edge.sh syntax check
         run: bash -n install-edge.sh
 

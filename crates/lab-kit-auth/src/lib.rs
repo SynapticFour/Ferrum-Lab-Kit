@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: BUSL-1.1
 //! Authentication adapters for **ELIXIR Life Science Login** and pluggable IdPs.
 //! GA4GH Passport / visa evaluation helpers live in [`passport`].
 

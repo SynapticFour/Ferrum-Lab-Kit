@@ -36,6 +36,8 @@ docker compose -f docker-compose.yml up -d
 
 Or one-shot: `./install-edge.sh` / `make up`.
 
+Optional BRA workbench (bring `BRA_IMAGE`; not a combo SKU): `lab-kit init --profile bra-companion --non-interactive` then `lab-kit generate compose --with-bra`. See [docs/BRA-CO-DEPLOY.md](docs/BRA-CO-DEPLOY.md).
+
 ### Raspberry Pi kit
 
 ```bash

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: BUSL-1.1
 //! GA4GH Passport claim handling (`ga4gh_passport_v1`) and Beacon v2 access tiers.
 //!
 //! Nested visa JWTs are **signature-verified** against the visa issuer JWKS before

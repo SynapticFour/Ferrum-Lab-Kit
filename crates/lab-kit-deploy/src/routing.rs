@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: BUSL-1.1
 use std::collections::BTreeMap;
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -219,6 +220,7 @@ mod tests {
             conformance: None,
             ga4gh_infra: None,
             solum: None,
+            bra: None,
         }
     }
 

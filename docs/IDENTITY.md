@@ -21,3 +21,5 @@ lab-kit init --profile field-edge --non-interactive
 HelixTest pin for CI: tag **v0.1.1** (same as Ferrum `VERSIONS.lock`). Ferrum image/git pin: **v0.3.1** (`f28f2780…`) — same SHA as `config/ci/ferrum-revision.txt` / `ferrum-image.txt`. Lab Kit crate `0.1.0` is the companion train, not a second product version.
 
 Subset proof: `beacon-only` + `helixtest --only beacon`, `drs-wes` + `--only drs --only wes`. See [CONFORMANCE.md](CONFORMANCE.md).
+
+Optional **BRA workbench companion** (same pattern as Solum): profile `bra-companion` / `--with-bra`. Lab Kit only sets `FERRUM_DRS_URL` / `FERRUM_WES_URL`. Bring `BRA_IMAGE`. See [BRA-CO-DEPLOY.md](BRA-CO-DEPLOY.md).

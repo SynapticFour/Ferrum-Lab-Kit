@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: BUSL-1.1
 //! Client for Ferrum’s versioned ingest API (`/api/v1/ingest/*`).
 //!
 //! Contract: [Ferrum `docs/INGEST-LAB-KIT.md`](https://github.com/SynapticFour/Ferrum/blob/main/docs/INGEST-LAB-KIT.md).

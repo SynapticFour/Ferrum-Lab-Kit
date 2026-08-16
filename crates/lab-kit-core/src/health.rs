@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: BUSL-1.1
 //! Poll enabled services for readiness (dashboard + HelixTest pre-flight).
 
 use std::collections::HashSet;

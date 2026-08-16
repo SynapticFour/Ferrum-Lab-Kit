@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: BUSL-1.1
 use std::path::{Path, PathBuf};
 
 use anyhow::Context;
@@ -222,6 +223,9 @@ enum GenerateTarget {
         /// Merge Solum sidecar (`solum.yml`) even when `[solum]` is unset.
         #[arg(long)]
         with_solum: bool,
+        /// Merge BRA workbench (`bra.yml`) even when `[bra]` is unset. Bring BRA_IMAGE.
+        #[arg(long)]
+        with_bra: bool,
         /// Emit unpublished per-service image fragments instead of the monolith gateway.
         #[arg(long)]
         legacy_per_service: bool,
@@ -360,6 +364,7 @@ async fn main() -> anyhow::Result<()> {
                 output,
                 with_ga4gh_infra,
                 with_solum,
+                with_bra,
                 legacy_per_service,
                 stdout,
             } => {
@@ -368,6 +373,7 @@ async fn main() -> anyhow::Result<()> {
                 let options = ComposeOptions {
                     with_ga4gh_infra,
                     with_solum,
+                    with_bra,
                     legacy_per_service,
                 };
                 if stdout {
@@ -434,6 +440,7 @@ async fn main() -> anyhow::Result<()> {
                 let compose = ComposeOptions {
                     with_ga4gh_infra: with_ga4gh_infra || lab_kit_core::is_co_deploy(&cfg),
                     with_solum: with_solum || lab_kit_core::is_solum_enabled(&cfg),
+                    with_bra: lab_kit_core::is_bra_enabled(&cfg),
                     legacy_per_service: false,
                 };
                 let opts = RaspberryPiBundleOptions {
@@ -817,10 +824,11 @@ async fn init_non_interactive(
         "field-edge+solum",
         "field-edge+infra+solum",
         "institute",
+        "bra-companion",
     ];
     if !NON_INTERACTIVE_PROFILES.contains(&name) {
         anyhow::bail!(
-            "--non-interactive requires --profile field-edge, field-edge+infra, field-edge+solum, field-edge+infra+solum, or institute (got {name})"
+            "--non-interactive requires --profile field-edge, field-edge+infra, field-edge+solum, field-edge+infra+solum, institute, or bra-companion (got {name})"
         );
     }
 
@@ -830,7 +838,7 @@ async fn init_non_interactive(
     let data = data_dir.unwrap_or_else(|| "~/.ferrum".into());
 
     let (lab_name, dataset_id) = match name {
-        "institute" => ("Institute Lab", "institute-cohort-001"),
+        "institute" | "bra-companion" => ("Institute Lab", "institute-cohort-001"),
         _ => ("Field Lab", "field-cohort-001"),
     };
 
@@ -935,7 +943,8 @@ async fn init_wizard(output: &Path, preset: Option<&str>) -> anyhow::Result<()> 
             "field-edge+solum" => 5,
             "field-edge+infra+solum" => 6,
             "institute" => 7,
-            "custom" => 8,
+            "bra-companion" => 8,
+            "custom" => 9,
             other => anyhow::bail!("unknown profile preset: {other}"),
         }
     } else {
@@ -950,6 +959,7 @@ async fn init_wizard(output: &Path, preset: Option<&str>) -> anyhow::Result<()> 
                 "Field / Edge + Solum (consent companion)",
                 "Field / Edge + ga4gh-infra + Solum",
                 "Institute node + ga4gh-infra (co-deploy)",
+                "Institute DRS/WES + BRA workbench (companion, not a second archive)",
                 "Custom",
             ])
             .default(0)
@@ -993,6 +1003,13 @@ async fn init_wizard(output: &Path, preset: Option<&str>) -> anyhow::Result<()> 
     }
 
     if profile_idx == 8 {
+        let mut cfg = load_named_config("bra-companion").context("load bra-companion profile")?;
+        customize_lab_name(&theme, &mut cfg.lab)?;
+        write_config(output, &cfg)?;
+        return Ok(());
+    }
+
+    if profile_idx == 9 {
         return init_custom_wizard(output, &theme).await;
     }
 
@@ -1172,6 +1189,7 @@ async fn init_standard_wizard(output: &Path, theme: &ColorfulTheme) -> anyhow::R
         conformance: None,
         ga4gh_infra: None,
         solum: None,
+        bra: None,
     };
     write_config(output, &cfg)?;
     Ok(())
@@ -1286,6 +1304,7 @@ async fn init_custom_wizard(output: &Path, theme: &ColorfulTheme) -> anyhow::Res
         conformance: None,
         ga4gh_infra: None,
         solum: None,
+        bra: None,
     };
     write_config(output, &cfg)?;
     Ok(())

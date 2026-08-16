@@ -1,0 +1,34 @@
+schema_version = 1
+
+# Ferrum DRS/WES + BioResearch Assistant as GA4GH client.
+# BRA is a separate product. Lab Kit only sets FERRUM_* URLs. Bring BRA_IMAGE.
+
+[meta]
+profile = "bra-companion"
+description = "Institute DRS/WES with BRA workbench client (not a second archive)"
+target_hardware = ["server", "institute-vm"]
+
+[services]
+beacon = true
+drs = true
+htsget = true
+wes = true
+tes = false
+trs = true
+
+[backend]
+database = "sqlite"
+storage = "local-filesystem"
+sqlite_path = "/srv/ferrum/ferrum.db"
+objects_path = "/srv/ferrum/objects"
+
+[auth]
+mode = "local"
+
+[bra]
+enabled = true
+port = 5173
+bra_tag = "v0.2.0"
+
+[conformance]
+helixtest_timeout_seconds = 120

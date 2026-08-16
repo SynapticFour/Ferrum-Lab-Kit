@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: BUSL-1.1
 //! PostgreSQL metadata store using `sqlx` with embedded migrations.
 
 use async_trait::async_trait;

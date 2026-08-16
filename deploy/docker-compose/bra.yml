@@ -1,0 +1,24 @@
+# Optional BioResearch Assistant workbench (GA4GH client of Ferrum).
+# Merged when [bra].enabled or `lab-kit generate compose --with-bra`.
+#
+# Product stays in bioresearch-assistant. Lab Kit does not publish a BRA image.
+# Set BRA_IMAGE to a build you already run (tag v0.2.0 or later).
+
+services:
+  bra:
+    image: ${BRA_IMAGE:?set BRA_IMAGE to a BioResearch Assistant image — Lab Kit does not ship BRA}
+    networks: [lab]
+    environment:
+      FERRUM_DRS_URL: http://ferrum-gateway:8080/ga4gh/drs/v1
+      FERRUM_WES_URL: http://ferrum-gateway:8080/ga4gh/wes/v1
+      FERRUM_BEARER_TOKEN: ${FERRUM_BEARER_TOKEN:-}
+      OIDC_ISSUER: ${BRA_OIDC_ISSUER:-}
+      OIDC_CLIENT_ID: ${BRA_OIDC_CLIENT_ID:-}
+      OIDC_CLIENT_SECRET: ${BRA_OIDC_CLIENT_SECRET:-}
+      DEPLOYMENT: ${BRA_DEPLOYMENT:-local}
+    ports:
+      - "${BRA_PORT:-5173}:5173"
+    depends_on:
+      ferrum-gateway:
+        condition: service_started
+    restart: unless-stopped

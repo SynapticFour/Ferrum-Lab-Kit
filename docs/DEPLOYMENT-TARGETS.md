@@ -7,7 +7,7 @@ Lab Kit targets three environments equally (see `lab-kit generate …`).
 - **Use case:** single server, laptops, CI, demos.
 - **Flow:** `lab-kit generate compose` → `docker compose -f docker-compose.yml up -d`.
 - **Default runtime:** named Ferrum variant as `ferrum-gateway` on **8080** (`:<sha>` full, `:<sha>-edge`, `:<sha>-edge-infra`) plus `FERRUM_SERVICES__ENABLE_*` from your profile.
-- **Fragments:** `docker-compose.base.yml` + `docker-compose.gateway.yml` (+ `edge.yml` / `infra.yml` / `solum.yml` as needed).
+- **Fragments:** `docker-compose.base.yml` + `docker-compose.gateway.yml` (+ `edge.yml` / `infra.yml` / `solum.yml` / `bra.yml` as needed).
 - **Platforms:** Ubuntu 22.04/24.04, macOS (Apple Silicon), x86_64 Linux, Raspberry Pi 5 (use the SHA pin in `config/ci/ferrum-image-arm64.txt`, override with `FERRUM_IMAGE`).
 - **Env:** copy [`.env.example`](../.env.example) → `.env`.
 
@@ -28,7 +28,7 @@ Compose/Helm default to the **published monolith**. Legacy per-service placehold
 
 ## Managed single-tenant (portfolio H5)
 
-When Synaptic Four (or a partner) **hosts** Ferrum for a customer, prefer a **dedicated** Compose/Helm install per customer (isolated project/VPC) — “hosted on-prem”, not shared multi-tenant SaaS. Align secrets, keys, and Solum profile per deployment. Portfolio contract: Showcase [ADR 0003](https://github.com/SynapticFour/SynapticFour-Showcase/blob/main/docs/adr/0003-tenant-boundaries.md) · [H5-MANAGED-SINGLE-TENANT.md](https://github.com/SynapticFour/SynapticFour-Showcase/blob/main/docs/pilots/H5-MANAGED-SINGLE-TENANT.md). Optional Solum companion: [SOLUM-CO-DEPLOY.md](SOLUM-CO-DEPLOY.md).
+When Synaptic Four (or a partner) **hosts** Ferrum for a customer, prefer a **dedicated** Compose/Helm install per customer (isolated project/VPC) — “hosted on-prem”, not shared multi-tenant SaaS. Align secrets, keys, and Solum profile per deployment. Portfolio contract: Showcase [ADR 0003](https://github.com/SynapticFour/SynapticFour-Showcase/blob/main/docs/adr/0003-tenant-boundaries.md) · [H5-MANAGED-SINGLE-TENANT.md](https://github.com/SynapticFour/SynapticFour-Showcase/blob/main/docs/pilots/H5-MANAGED-SINGLE-TENANT.md). Optional Solum companion: [SOLUM-CO-DEPLOY.md](SOLUM-CO-DEPLOY.md). Optional BRA companion: [BRA-CO-DEPLOY.md](BRA-CO-DEPLOY.md).
 
 ## 4. Field / Edge Deployment {#field-edge}
 
@@ -52,6 +52,7 @@ The **`field-edge`** profile enables **Beacon v2** and **DRS** only (minimal foo
 |----------------|------|
 | `field-edge+infra` / `--with-infra` | ga4gh-infra auth plane |
 | `field-edge+solum` / `--with-solum` | Solum sidecar on **8787** |
+| `bra-companion` / `--with-bra` | BRA workbench client (`FERRUM_DRS_URL` / `FERRUM_WES_URL`). Bring `BRA_IMAGE`. |
 | `field-edge+infra+solum` | both |
 
 **Backend:** SQLite metadata + local filesystem object store — **no PostgreSQL or MinIO** required.

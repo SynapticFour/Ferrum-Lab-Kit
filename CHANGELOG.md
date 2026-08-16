@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- **BRA workbench companion** — `[bra]` config, `bra.yml`, CLI `--with-bra`, profile `bra-companion`. Lab Kit does not ship a BRA image (`BRA_IMAGE` required). Not a combo SKU. [docs/BRA-CO-DEPLOY.md](docs/BRA-CO-DEPLOY.md).
+- **SPDX on first-party `.rs`** — `// SPDX-License-Identifier: BUSL-1.1`; CI `spdx.yml`.
 - Pin Ferrum **v0.3.0** (`6444469a`) for `ferrum-core` and GHCR variant tags (full / edge / edge-infra).
 - Solum sidecar pin matches Solum-Demo baseline `6b4519c`.
 - ga4gh-infra Compose image tags **0.2.3** (`ga4gh-infra-v0.2.3` stack publish).

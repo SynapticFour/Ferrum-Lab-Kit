@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: BUSL-1.1
 //! Canonical `lab-kit.toml` schema (see repository `config/lab-kit.example.toml`).
 
 use serde::{Deserialize, Serialize};
@@ -73,6 +74,9 @@ pub struct LabKitConfig {
     /// Optional **Solum** sidecar consent plane (companion only — product stays in Solum).
     #[serde(default)]
     pub solum: Option<SolumSection>,
+    /// Optional **BRA** workbench companion (product stays in bioresearch-assistant).
+    #[serde(default)]
+    pub bra: Option<BraSection>,
 }
 
 fn default_schema_version() -> u32 {
@@ -588,6 +592,39 @@ impl Default for SolumSection {
             default_purpose: None,
             timeout_secs: default_solum_timeout(),
             solum_tag: default_solum_tag(),
+        }
+    }
+}
+
+/// Optional BioResearch Assistant workbench (GA4GH client of Ferrum).
+///
+/// Lab Kit wires Compose env (`FERRUM_DRS_URL` / `FERRUM_WES_URL`). BRA remains
+/// its own product — bring `BRA_IMAGE`.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BraSection {
+    #[serde(default)]
+    pub enabled: bool,
+    #[serde(default = "default_bra_port")]
+    pub port: u16,
+    /// Git tag for docs / pin conversations (image is `BRA_IMAGE`).
+    #[serde(default = "default_bra_tag")]
+    pub bra_tag: String,
+}
+
+fn default_bra_port() -> u16 {
+    5173
+}
+
+fn default_bra_tag() -> String {
+    "v0.2.0".into()
+}
+
+impl Default for BraSection {
+    fn default() -> Self {
+        Self {
+            enabled: false,
+            port: default_bra_port(),
+            bra_tag: default_bra_tag(),
         }
     }
 }

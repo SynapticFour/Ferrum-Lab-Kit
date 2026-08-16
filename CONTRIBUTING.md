@@ -8,7 +8,10 @@ Ferrum Lab Kit is licensed under the **Business Source License 1.1** (BUSL-1.1),
 cargo fmt --all
 cargo clippy --workspace --all-targets -- -D warnings
 cargo test --workspace
+python3 scripts/spdx-rs.py . --license BUSL-1.1 --check
 ```
+
+New first-party Rust files start with `// SPDX-License-Identifier: BUSL-1.1`.
 
 Or `./install.sh` for a release build of the `lab-kit` binary (see [README](README.md#install-cli-optional)).
 

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: BUSL-1.1
 use async_trait::async_trait;
 use serde_json::Value;
 

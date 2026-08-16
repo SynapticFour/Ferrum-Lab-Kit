@@ -1,10 +1,11 @@
+// SPDX-License-Identifier: BUSL-1.1
 //! Deployment profile templates (e.g. `config/profiles/field-edge.toml`) and expansion
 //! into canonical [`LabKitConfig`].
 
 use serde::Deserialize;
 
 use crate::config::{
-    AuthProvider, AuthSection, BackendSection, BeaconAccessLevel, BeaconServiceConfig,
+    AuthProvider, AuthSection, BackendSection, BeaconAccessLevel, BeaconServiceConfig, BraSection,
     ConformanceSection, DrsServiceConfig, Ga4ghInfraMode, Ga4ghInfraSection, HtsgetServiceConfig,
     LabKitConfig, LabSection, LsLoginConfig, MetaSection, PosixNestedConfig, ProfileAfricaSection,
     ProfileAuthSection, ProfileNetworkSection, ProfileResourcesSection, ProfileServicesFlags,
@@ -34,6 +35,8 @@ pub struct ProfileTemplate {
     pub ga4gh_infra: Ga4ghInfraSection,
     #[serde(default)]
     pub solum: SolumSection,
+    #[serde(default)]
+    pub bra: BraSection,
 }
 
 impl ProfileTemplate {
@@ -122,6 +125,7 @@ impl ProfileTemplate {
             conformance: Some(self.conformance),
             ga4gh_infra: ga4gh_infra_from_profile(&self.ga4gh_infra),
             solum: solum_from_profile(&self.solum),
+            bra: bra_from_profile(&self.bra),
         };
         cfg.validate()?;
         Ok(cfg)
@@ -129,6 +133,14 @@ impl ProfileTemplate {
 }
 
 fn solum_from_profile(section: &SolumSection) -> Option<SolumSection> {
+    if section.enabled {
+        Some(section.clone())
+    } else {
+        None
+    }
+}
+
+fn bra_from_profile(section: &BraSection) -> Option<BraSection> {
     if section.enabled {
         Some(section.clone())
     } else {
@@ -285,6 +297,7 @@ pub fn bundled_profile_toml(name: &str) -> Option<&'static str> {
         )),
         "beacon-only" => Some(include_str!("../../../config/profiles/beacon-only.toml")),
         "drs-wes" => Some(include_str!("../../../config/profiles/drs-wes.toml")),
+        "bra-companion" => Some(include_str!("../../../config/profiles/bra-companion.toml")),
         _ => None,
     }
 }
@@ -347,6 +360,11 @@ pub fn is_solum_enabled(cfg: &LabKitConfig) -> bool {
     cfg.solum.as_ref().is_some_and(|s| s.enabled)
 }
 
+/// Whether BRA workbench co-deploy is enabled in config.
+pub fn is_bra_enabled(cfg: &LabKitConfig) -> bool {
+    cfg.bra.as_ref().is_some_and(|s| s.enabled)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -369,5 +387,15 @@ mod tests {
         assert!(is_field_edge(&cfg));
         assert!(is_co_deploy(&cfg));
         assert!(cfg.ga4gh_infra.as_ref().is_some_and(|g| g.enabled));
+    }
+
+    #[test]
+    fn bra_companion_profile_enables_bra_and_wes() {
+        let raw = include_str!("../../../config/profiles/bra-companion.toml");
+        let cfg = parse_config_or_profile(raw).unwrap();
+        assert!(is_bra_enabled(&cfg));
+        assert!(cfg.services.drs.is_some());
+        assert!(cfg.services.wes.is_some());
+        assert_eq!(cfg.bra.as_ref().unwrap().bra_tag, "v0.2.0");
     }
 }

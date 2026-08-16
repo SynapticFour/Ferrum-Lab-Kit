@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: BUSL-1.1
 //! Compile-time link to **[Ferrum](https://github.com/SynapticFour/Ferrum)** (`ferrum-core`).
 //! Lab Kit does not re-export the full platform; integrators use this crate to share types
 //! (config, errors, auth) with Ferrum gateways and services.
