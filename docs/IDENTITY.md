@@ -16,6 +16,8 @@ Ferrum operators who do not want the full monolith surface on day one.
 git clone https://github.com/SynapticFour/Ferrum-Lab-Kit.git && cd Ferrum-Lab-Kit
 make prove
 lab-kit init --profile field-edge --non-interactive
+# Archive bundles (no WES/TES, Metadata Store on):
+# lab-kit init --profile archive-submitter --non-interactive
 ```
 
 HelixTest pin for CI: tag **v0.1.1** (same as Ferrum `VERSIONS.lock`). Ferrum image/git pin: **v0.3.1** (`f28f2780…`) — same SHA as `config/ci/ferrum-revision.txt` / `ferrum-image.txt`. Lab Kit crate `0.1.0` is the companion train, not a second product version.

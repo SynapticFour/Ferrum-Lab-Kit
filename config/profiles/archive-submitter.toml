@@ -1,0 +1,44 @@
+# Ferrum Lab Kit — archive submitter (edge + Metadata Store).
+# DRS + Beacon, no WES/TES/TRS. Output = validated ferrum-meta bundle + DRS IDs.
+# Does not upload to EGA/GHGA. Not a fifth SKU. Not a BRA combo.
+
+[meta]
+profile = "archive-submitter"
+description = "Ferrum-edge with Metadata Store for archive-format bundles (GHGA/EGA/H3Africa export)"
+target_hardware = ["laptop-x86_64", "laptop-arm64", "institute-vm"]
+
+[services]
+beacon = true
+drs = true
+htsget = false
+wes = false
+tes = false
+trs = false
+
+[backend]
+database = "sqlite"
+storage = "local-filesystem"
+sqlite_path = "~/.ferrum/ferrum.db"
+objects_path = "~/.ferrum/objects"
+
+[africa]
+offline_first = true
+max_memory_mb = 3072
+power_monitor = false
+low_power_threshold = 40
+emergency_threshold = 10
+
+[auth]
+mode = "local"
+
+[network]
+bandwidth_adaptive = true
+opportunistic_sync_schedule = "0 2 * * *"
+chunk_size_low_bandwidth_kb = 512
+
+[resources]
+max_concurrent_requests = 8
+background_indexing = false
+
+[conformance]
+helixtest_timeout_seconds = 120

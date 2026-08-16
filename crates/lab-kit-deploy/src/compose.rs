@@ -378,6 +378,10 @@ fn apply_lab_kit_runtime_env(
         }
     }
 
+    if lab_kit_core::is_archive_submitter(cfg) {
+        insert_env(env, "FERRUM_METADATA_STORE__ENABLED", "true");
+    }
+
     Ok(())
 }
 
@@ -519,6 +523,22 @@ mod tests {
         assert!(merged.contains("FERRUM_SERVICES__ENABLE_BEACON"));
         assert!(merged.contains("FERRUM_AFRICA__OFFLINE_FIRST"));
         assert!(!merged.contains("synapticfour/ferrum-beacon"));
+        serde_yaml::from_str::<serde_yaml::Value>(&merged).expect("valid YAML");
+    }
+
+    #[test]
+    fn archive_submitter_enables_metadata_store_and_edge_image() {
+        let raw = include_str!("../../../config/profiles/archive-submitter.toml");
+        let cfg = parse_config(raw).unwrap();
+        let dir = tempfile::tempdir().unwrap();
+        let out = dir.path().join("docker-compose.yml");
+        generate_compose_file(&cfg, &fragments(), &out, &ComposeOptions::default()).unwrap();
+        let merged = std::fs::read_to_string(&out).unwrap();
+        assert!(
+            merged.contains("FERRUM_METADATA_STORE__ENABLED"),
+            "archive-submitter must enable Metadata Store"
+        );
+        assert!(merged.contains("-edge"));
         serde_yaml::from_str::<serde_yaml::Value>(&merged).expect("valid YAML");
     }
 

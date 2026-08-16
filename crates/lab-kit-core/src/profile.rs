@@ -298,6 +298,9 @@ pub fn bundled_profile_toml(name: &str) -> Option<&'static str> {
         "beacon-only" => Some(include_str!("../../../config/profiles/beacon-only.toml")),
         "drs-wes" => Some(include_str!("../../../config/profiles/drs-wes.toml")),
         "bra-companion" => Some(include_str!("../../../config/profiles/bra-companion.toml")),
+        "archive-submitter" => Some(include_str!(
+            "../../../config/profiles/archive-submitter.toml"
+        )),
         _ => None,
     }
 }
@@ -342,10 +345,21 @@ pub fn is_field_edge(cfg: &LabKitConfig) -> bool {
         .map(|m| {
             matches!(
                 m.profile.as_str(),
-                "field-edge" | "field-edge+infra" | "field-edge+solum" | "field-edge+infra+solum"
+                "field-edge"
+                    | "field-edge+infra"
+                    | "field-edge+solum"
+                    | "field-edge+infra+solum"
+                    | "archive-submitter"
             )
         })
         .unwrap_or(false)
+}
+
+/// Archive-submitter: edge surfaces + Metadata Store (no WES/TES).
+pub fn is_archive_submitter(cfg: &LabKitConfig) -> bool {
+    cfg.meta
+        .as_ref()
+        .is_some_and(|m| m.profile == "archive-submitter")
 }
 
 /// Whether Ferrum and ga4gh-infra are co-deployed on the same host (local infra stack).
@@ -397,5 +411,17 @@ mod tests {
         assert!(cfg.services.drs.is_some());
         assert!(cfg.services.wes.is_some());
         assert_eq!(cfg.bra.as_ref().unwrap().bra_tag, "v0.2.0");
+    }
+
+    #[test]
+    fn archive_submitter_is_edge_without_wes() {
+        let raw = include_str!("../../../config/profiles/archive-submitter.toml");
+        let cfg = parse_config_or_profile(raw).unwrap();
+        assert!(is_archive_submitter(&cfg));
+        assert!(is_field_edge(&cfg));
+        assert!(cfg.services.drs.is_some());
+        assert!(cfg.services.wes.is_none());
+        assert!(cfg.services.tes.is_none());
+        assert!(cfg.services.trs.is_none());
     }
 }

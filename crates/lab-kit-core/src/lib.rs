@@ -24,9 +24,9 @@ pub use config::{
 pub use error::CoreError;
 pub use health::{HealthAggregator, ServiceHealth};
 pub use profile::{
-    bundled_profile_toml, is_bra_enabled, is_co_deploy, is_field_edge, is_solum_enabled,
-    load_named_config, load_profile_template, parse_config_or_profile, ProfileOverrides,
-    ProfileTemplate,
+    bundled_profile_toml, is_archive_submitter, is_bra_enabled, is_co_deploy, is_field_edge,
+    is_solum_enabled, load_named_config, load_profile_template, parse_config_or_profile,
+    ProfileOverrides, ProfileTemplate,
 };
 pub use registry::{
     gateway_health, tes_slurm_config, ServiceId, ServiceRegistry, ServiceRegistryEntry,

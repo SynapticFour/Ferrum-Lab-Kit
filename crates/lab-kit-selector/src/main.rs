@@ -825,10 +825,11 @@ async fn init_non_interactive(
         "field-edge+infra+solum",
         "institute",
         "bra-companion",
+        "archive-submitter",
     ];
     if !NON_INTERACTIVE_PROFILES.contains(&name) {
         anyhow::bail!(
-            "--non-interactive requires --profile field-edge, field-edge+infra, field-edge+solum, field-edge+infra+solum, institute, or bra-companion (got {name})"
+            "--non-interactive requires --profile field-edge, field-edge+infra, field-edge+solum, field-edge+infra+solum, institute, bra-companion, or archive-submitter (got {name})"
         );
     }
 
@@ -839,10 +840,11 @@ async fn init_non_interactive(
 
     let (lab_name, dataset_id) = match name {
         "institute" | "bra-companion" => ("Institute Lab", "institute-cohort-001"),
+        "archive-submitter" => ("Archive submitter", "archive-cohort-001"),
         _ => ("Field Lab", "field-cohort-001"),
     };
 
-    let environment = if name.starts_with("field-edge") {
+    let environment = if name.starts_with("field-edge") || name == "archive-submitter" {
         "field"
     } else {
         "production"
@@ -944,7 +946,8 @@ async fn init_wizard(output: &Path, preset: Option<&str>) -> anyhow::Result<()> 
             "field-edge+infra+solum" => 6,
             "institute" => 7,
             "bra-companion" => 8,
-            "custom" => 9,
+            "archive-submitter" => 9,
+            "custom" => 10,
             other => anyhow::bail!("unknown profile preset: {other}"),
         }
     } else {
@@ -960,6 +963,7 @@ async fn init_wizard(output: &Path, preset: Option<&str>) -> anyhow::Result<()> 
                 "Field / Edge + ga4gh-infra + Solum",
                 "Institute node + ga4gh-infra (co-deploy)",
                 "Institute DRS/WES + BRA workbench (companion, not a second archive)",
+                "Archive submitter (edge + Metadata Store, no WES/TES; no EGA upload)",
                 "Custom",
             ])
             .default(0)
@@ -1010,6 +1014,10 @@ async fn init_wizard(output: &Path, preset: Option<&str>) -> anyhow::Result<()> 
     }
 
     if profile_idx == 9 {
+        return init_field_edge_wizard(output, &theme, "archive-submitter").await;
+    }
+
+    if profile_idx == 10 {
         return init_custom_wizard(output, &theme).await;
     }
 

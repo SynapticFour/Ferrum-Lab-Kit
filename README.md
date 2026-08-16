@@ -38,6 +38,8 @@ Or one-shot: `./install-edge.sh` / `make up`.
 
 Optional BRA workbench (bring `BRA_IMAGE`; not a combo SKU): `lab-kit init --profile bra-companion --non-interactive` then `lab-kit generate compose --with-bra`. See [docs/BRA-CO-DEPLOY.md](docs/BRA-CO-DEPLOY.md).
 
+Archive submitter (edge + Metadata Store, **no** EGA upload): `lab-kit init --profile archive-submitter --non-interactive` then `ferrum meta export --profile ghga --output ./bundle.yaml`. Starter YAML without Ferrum: `python3 ../ferrum-meta/scripts/ferrum_meta_cli.py export ghga ./bundle.yaml`.
+
 ### Raspberry Pi kit
 
 ```bash

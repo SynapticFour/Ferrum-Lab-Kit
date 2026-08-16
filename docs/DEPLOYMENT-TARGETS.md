@@ -53,6 +53,7 @@ The **`field-edge`** profile enables **Beacon v2** and **DRS** only (minimal foo
 | `field-edge+infra` / `--with-infra` | ga4gh-infra auth plane |
 | `field-edge+solum` / `--with-solum` | Solum sidecar on **8787** |
 | `bra-companion` / `--with-bra` | BRA workbench client (`FERRUM_DRS_URL` / `FERRUM_WES_URL`). Bring `BRA_IMAGE`. |
+| `archive-submitter` | Edge + Metadata Store, no WES/TES. Reviewable archive YAML + DRS IDs — **not** EGA upload. |
 | `field-edge+infra+solum` | both |
 
 **Backend:** SQLite metadata + local filesystem object store — **no PostgreSQL or MinIO** required.
