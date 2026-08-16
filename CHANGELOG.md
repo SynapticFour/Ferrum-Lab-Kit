@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- **`federated-node` profile** — Beacon v2 boolean+count, DRS, Passport-on-DRS (ga4gh-infra), service-registry auto-register, Traefik TLS on **8443**. TES/WES off unless you opt in. Compose-up is **not** an EGA/GDI/ELIXIR membership card. [docs/FEDERATED-NODE.md](docs/FEDERATED-NODE.md).
 - **`archive-submitter` profile** — Ferrum-edge + Metadata Store, no WES/TES. Writes reviewable GHGA/EGA/H3Africa bundles + DRS IDs via Ferrum `ferrum meta export`. Does **not** upload to EGA. Not a fifth SKU. `lab-kit init --profile archive-submitter --non-interactive`.
 - **BRA workbench companion** — `[bra]` config, `bra.yml`, CLI `--with-bra`, profile `bra-companion`. Lab Kit does not ship a BRA image (`BRA_IMAGE` required). Not a combo SKU. [docs/BRA-CO-DEPLOY.md](docs/BRA-CO-DEPLOY.md).
 - **SPDX on first-party `.rs`** — `// SPDX-License-Identifier: BUSL-1.1`; CI `spdx.yml`.

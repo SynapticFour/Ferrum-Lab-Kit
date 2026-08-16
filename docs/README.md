@@ -17,6 +17,7 @@
 | [ARCHITECTURE.md](ARCHITECTURE.md) | Lab Kit crates and how config drives deploy artefacts |
 | [DEPLOYMENT-TARGETS.md](DEPLOYMENT-TARGETS.md) | Where Lab Kit aims to run (compose, K8s, systemd, …) |
 | [RASPBERRY-PI.md](RASPBERRY-PI.md) | **Pi field kit** — `lab-kit generate raspberry-pi`, on-device install, Solum/hub boundaries |
+| [FEDERATED-NODE.md](FEDERATED-NODE.md) | **Technical federated node** — Beacon+DRS+infra+TLS; operator checklists, not a membership badge |
 | [BRING-YOUR-OWN.md](BRING-YOUR-OWN.md) | External endpoints vs generated stacks |
 
 ## Integration & identity

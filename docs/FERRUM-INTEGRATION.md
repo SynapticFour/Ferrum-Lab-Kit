@@ -24,7 +24,7 @@ Prints the linked `ferrum_core::FerrumError` type name and the pinned revision.
 | Lab Kit selection | Image variant | Injected env |
 |-------------------|---------------|--------------|
 | Beacon / DRS / htsget only (`field-edge`, `beacon-only`) | `:<sha>-edge` | `FERRUM_SERVICES__ENABLE_*` |
-| Same + ga4gh-infra co-deploy | `:<sha>-edge-infra` | plus clearinghouse / discovery env |
+| Same + ga4gh-infra co-deploy (`field-edge+infra`, `federated-node`) | `:<sha>-edge-infra` | plus clearinghouse / discovery env |
 | Any WES / TES / TRS (`institute`, `drs-wes`, …) | `:<sha>` (**full**) | `ENABLE_WES` / `TES` / `TRS` / … |
 
 | Package | Typical tags |

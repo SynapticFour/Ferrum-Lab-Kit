@@ -1,0 +1,54 @@
+# Technical federated node (Beacon v2 boolean+count, DRS, Passport-on-DRS, TLS).
+# Compose-up is the node capability — not an EGA / GHGA / GDI / ELIXIR membership card.
+# Operator onboarding checklists: docs/FEDERATED-NODE.md.
+# Optional TES/WES: set tes/wes = true below (pulls the full Ferrum image).
+
+[meta]
+profile = "federated-node"
+description = "Beacon+DRS+ga4gh-infra with TLS termination and service-registry auto-register"
+target_hardware = ["institute-vm", "server", "hpc-login"]
+
+[ga4gh_infra]
+enabled = true
+mode = "co-deploy"
+africa = false
+broker_port = 8180
+service_registry_url = "http://localhost:8183"
+registration_api_key_env = "SERVICE_REGISTRY_REGISTRATION_KEY"
+
+[services]
+beacon = true
+drs = true
+htsget = false
+wes = false
+tes = false
+trs = false
+
+[backend]
+database = "sqlite"
+storage = "local-filesystem"
+sqlite_path = "/srv/ferrum/ferrum.db"
+objects_path = "/srv/ferrum/objects"
+
+[africa]
+offline_first = false
+max_memory_mb = 4096
+power_monitor = false
+low_power_threshold = 40
+emergency_threshold = 10
+
+[auth]
+mode = "local"
+
+[network]
+bandwidth_adaptive = false
+opportunistic_sync_schedule = "0 2 * * *"
+chunk_size_low_bandwidth_kb = 1024
+tls = true
+
+[resources]
+max_concurrent_requests = 16
+background_indexing = true
+
+[conformance]
+helixtest_timeout_seconds = 180

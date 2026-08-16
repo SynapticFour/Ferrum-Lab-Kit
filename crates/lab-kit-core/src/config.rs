@@ -277,6 +277,9 @@ pub struct ProfileNetworkSection {
     pub opportunistic_sync_schedule: String,
     #[serde(default = "default_chunk_kb")]
     pub chunk_size_low_bandwidth_kb: u32,
+    /// Terminate TLS in front of the gateway (Traefik sidecar). Not an EGA membership flag.
+    #[serde(default)]
+    pub tls: bool,
 }
 
 fn default_sync_schedule() -> String {

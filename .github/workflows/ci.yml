@@ -71,6 +71,23 @@ jobs:
           python3 -c "import yaml; yaml.safe_load(open('/tmp/docker-compose-bra.yml'))"
           grep -q FERRUM_DRS_URL /tmp/docker-compose-bra.yml
           grep -q FERRUM_WES_URL /tmp/docker-compose-bra.yml
+      - name: init federated-node (non-interactive)
+        run: |
+          cargo run -p lab-kit-selector --release -- init \
+            --profile federated-node \
+            --non-interactive \
+            --output /tmp/lab-kit-federated.toml
+      - name: Generate compose from federated-node
+        run: |
+          cargo run -p lab-kit-selector --release -- generate compose \
+            --config /tmp/lab-kit-federated.toml \
+            --fragments deploy/docker-compose \
+            --output /tmp/docker-compose-federated.yml
+          python3 -c "import yaml; yaml.safe_load(open('/tmp/docker-compose-federated.yml'))"
+          grep -q tls-proxy /tmp/docker-compose-federated.yml
+          grep -q FERRUM_AUTH__REQUIRE_AUTH /tmp/docker-compose-federated.yml
+          grep -q aai-broker /tmp/docker-compose-federated.yml
+          test -f /tmp/tls-traefik-dynamic.yaml
       - name: install-edge.sh syntax check
         run: bash -n install-edge.sh
 

@@ -40,6 +40,8 @@ Optional BRA workbench (bring `BRA_IMAGE`; not a combo SKU): `lab-kit init --pro
 
 Archive submitter (edge + Metadata Store, **no** EGA upload): `lab-kit init --profile archive-submitter --non-interactive` then `ferrum meta export --profile ghga --output ./bundle.yaml`. Starter YAML without Ferrum: `python3 ../ferrum-meta/scripts/ferrum_meta_cli.py export ghga ./bundle.yaml`.
 
+Federated node (Beacon+DRS+infra+TLS; **not** EGA/GDI membership): `lab-kit init --profile federated-node --non-interactive`. See [docs/FEDERATED-NODE.md](docs/FEDERATED-NODE.md).
+
 ### Raspberry Pi kit
 
 ```bash
@@ -59,7 +61,7 @@ Full guide: [docs/RASPBERRY-PI.md](docs/RASPBERRY-PI.md).
 | Image | When |
 |-------|------|
 | `ghcr.io/synapticfour/ferrum:<sha>-edge` | Beacon/DRS (and optional htsget) only — `field-edge`, `beacon-only` |
-| `ghcr.io/synapticfour/ferrum:<sha>-edge-infra` | Same + ga4gh-infra co-deploy |
+| `ghcr.io/synapticfour/ferrum:<sha>-edge-infra` | Same + ga4gh-infra co-deploy — `field-edge+infra`, `federated-node` |
 | `ghcr.io/synapticfour/ferrum:<sha>` | Full stack (WES/TES/TRS) — `institute`, `drs-wes` |
 
 Override with `FERRUM_IMAGE` in `.env`. Custom arch: `lab-kit build image --variant edge --platform linux/arm64`. Details: [docs/FERRUM-INTEGRATION.md](docs/FERRUM-INTEGRATION.md).
@@ -71,7 +73,7 @@ Ferrum and [ga4gh-infra](https://github.com/SynapticFour/ga4gh-infra) belong tog
 ```bash
 ./install-edge.sh --with-infra
 # or: make up-with-infra
-# Profiles: field-edge+infra.toml, institute.toml
+# Profiles: field-edge+infra.toml, federated-node.toml, institute.toml
 ```
 
 ## Optional Solum companion

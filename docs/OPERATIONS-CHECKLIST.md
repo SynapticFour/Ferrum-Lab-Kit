@@ -84,6 +84,7 @@ Commands match `crates/lab-kit-selector` (binary name **`lab-kit`**). From repo 
 | Step | Command |
 |------|---------|
 | Init profile | `lab-kit init --profile field-edge --non-interactive` |
+| Federated node | `lab-kit init --profile federated-node --non-interactive` — [FEDERATED-NODE.md](FEDERATED-NODE.md) (not an EGA badge) |
 | Generate compose | `lab-kit generate compose --config lab-kit.toml -o docker-compose.yml` |
 | + ga4gh-infra | `… --with-ga4gh-infra` or `make up-with-infra` |
 | + Solum | `… --with-solum` or `make up-with-solum` |

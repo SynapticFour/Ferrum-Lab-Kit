@@ -1,3 +1,7 @@
+# LS Login + Beacon-Network URL placeholders for operator onboarding.
+# Not an out-of-the-box federated node and not an ELIXIR membership card.
+# Technical node: `lab-kit init --profile federated-node`. See docs/FEDERATED-NODE.md.
+
 schema_version = 1
 
 [lab]

@@ -301,6 +301,7 @@ pub fn bundled_profile_toml(name: &str) -> Option<&'static str> {
         "archive-submitter" => Some(include_str!(
             "../../../config/profiles/archive-submitter.toml"
         )),
+        "federated-node" => Some(include_str!("../../../config/profiles/federated-node.toml")),
         _ => None,
     }
 }
@@ -360,6 +361,18 @@ pub fn is_archive_submitter(cfg: &LabKitConfig) -> bool {
     cfg.meta
         .as_ref()
         .is_some_and(|m| m.profile == "archive-submitter")
+}
+
+/// Technical federated node (Beacon+DRS+infra+TLS). Not an EGA/GDI membership card.
+pub fn is_federated_node(cfg: &LabKitConfig) -> bool {
+    cfg.meta
+        .as_ref()
+        .is_some_and(|m| m.profile == "federated-node")
+}
+
+/// TLS termination sidecar (federated-node, or `[network].tls = true`).
+pub fn is_tls_enabled(cfg: &LabKitConfig) -> bool {
+    is_federated_node(cfg) || cfg.network.as_ref().is_some_and(|n| n.tls)
 }
 
 /// Whether Ferrum and ga4gh-infra are co-deployed on the same host (local infra stack).
@@ -423,5 +436,20 @@ mod tests {
         assert!(cfg.services.wes.is_none());
         assert!(cfg.services.tes.is_none());
         assert!(cfg.services.trs.is_none());
+    }
+
+    #[test]
+    fn federated_node_is_co_deploy_beacon_drs_tls_without_wes() {
+        let raw = include_str!("../../../config/profiles/federated-node.toml");
+        let cfg = parse_config_or_profile(raw).unwrap();
+        assert!(is_federated_node(&cfg));
+        assert!(is_co_deploy(&cfg));
+        assert!(is_tls_enabled(&cfg));
+        assert!(!is_field_edge(&cfg));
+        assert!(cfg.services.beacon.is_some());
+        assert!(cfg.services.drs.is_some());
+        assert!(cfg.services.wes.is_none());
+        assert!(cfg.services.tes.is_none());
+        assert!(cfg.network.as_ref().is_some_and(|n| n.tls));
     }
 }

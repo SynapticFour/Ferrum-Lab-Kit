@@ -98,6 +98,24 @@ jobs:
           grep -q 'solum-sidecar' generated/docker-compose-field-edge-solum.yml
           grep -q 'FERRUM_SOLUM__BASE_URL' generated/docker-compose-field-edge-solum.yml
 
+      - name: Generate compose (federated-node)
+        run: |
+          cargo run -p lab-kit-selector -- init \
+            --profile federated-node \
+            --non-interactive \
+            --output generated/lab-kit-federated-node.toml
+          cargo run -p lab-kit-selector -- generate compose \
+            --config generated/lab-kit-federated-node.toml \
+            --fragments deploy/docker-compose \
+            --output generated/docker-compose-federated-node.yml
+          grep -q 'aai-broker' generated/docker-compose-federated-node.yml
+          grep -q 'tls-proxy' generated/docker-compose-federated-node.yml
+          grep -q 'FERRUM_AUTH__REQUIRE_AUTH' generated/docker-compose-federated-node.yml
+          grep -q 'FERRUM_DISCOVERY__AUTO_REGISTER' generated/docker-compose-federated-node.yml
+          grep -q '\-edge-infra' generated/docker-compose-federated-node.yml
+          test -f generated/tls-traefik-dynamic.yaml
+          echo "federated-node: infra + TLS + require_auth + discovery (not an EGA badge)"
+
       - name: Show merged compose (head)
         run: head -n 50 generated/docker-compose.yml
 

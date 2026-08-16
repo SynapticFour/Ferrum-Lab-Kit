@@ -30,7 +30,9 @@ lab-kit init --profile drs-wes --non-interactive
 helixtest --all --mode ferrum --report json --only drs --only wes
 ```
 
-CI generates `beacon-only` and `field-edge` compose on every relevant push. A live HelixTest run against those stacks is **opt-in** (`workflow_dispatch` + `run_live_suite=true`).
+CI generates `beacon-only`, `field-edge`, and `federated-node` compose on every relevant push. A live HelixTest run against those stacks is **opt-in** (`workflow_dispatch` + `run_live_suite=true`).
+
+Live **ferrum+infra** (Passport-on-DRS) is Ferrum’s scheduled job; Lab Kit’s federated-node profile generates the matching surfaces. See [FEDERATED-NODE.md](FEDERATED-NODE.md).
 
 HelixTest should emit JSON results (format may vary; `lab-kit-report` accepts flexible shapes).
 

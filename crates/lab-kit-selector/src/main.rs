@@ -826,10 +826,11 @@ async fn init_non_interactive(
         "institute",
         "bra-companion",
         "archive-submitter",
+        "federated-node",
     ];
     if !NON_INTERACTIVE_PROFILES.contains(&name) {
         anyhow::bail!(
-            "--non-interactive requires --profile field-edge, field-edge+infra, field-edge+solum, field-edge+infra+solum, institute, bra-companion, or archive-submitter (got {name})"
+            "--non-interactive requires --profile field-edge, field-edge+infra, field-edge+solum, field-edge+infra+solum, institute, bra-companion, archive-submitter, or federated-node (got {name})"
         );
     }
 
@@ -841,6 +842,7 @@ async fn init_non_interactive(
     let (lab_name, dataset_id) = match name {
         "institute" | "bra-companion" => ("Institute Lab", "institute-cohort-001"),
         "archive-submitter" => ("Archive submitter", "archive-cohort-001"),
+        "federated-node" => ("Federated node", "federated-cohort-001"),
         _ => ("Field Lab", "field-cohort-001"),
     };
 
@@ -947,7 +949,8 @@ async fn init_wizard(output: &Path, preset: Option<&str>) -> anyhow::Result<()> 
             "institute" => 7,
             "bra-companion" => 8,
             "archive-submitter" => 9,
-            "custom" => 10,
+            "federated-node" => 10,
+            "custom" => 11,
             other => anyhow::bail!("unknown profile preset: {other}"),
         }
     } else {
@@ -964,6 +967,7 @@ async fn init_wizard(output: &Path, preset: Option<&str>) -> anyhow::Result<()> 
                 "Institute node + ga4gh-infra (co-deploy)",
                 "Institute DRS/WES + BRA workbench (companion, not a second archive)",
                 "Archive submitter (edge + Metadata Store, no WES/TES; no EGA upload)",
+                "Federated node (Beacon+DRS+infra+TLS; not EGA/GDI membership)",
                 "Custom",
             ])
             .default(0)
@@ -1018,6 +1022,13 @@ async fn init_wizard(output: &Path, preset: Option<&str>) -> anyhow::Result<()> 
     }
 
     if profile_idx == 10 {
+        let mut cfg = load_named_config("federated-node").context("load federated-node profile")?;
+        customize_lab_name(&theme, &mut cfg.lab)?;
+        write_config(output, &cfg)?;
+        return Ok(());
+    }
+
+    if profile_idx == 11 {
         return init_custom_wizard(output, &theme).await;
     }
 

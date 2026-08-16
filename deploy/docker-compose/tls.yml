@@ -1,0 +1,23 @@
+# TLS termination in front of ferrum-gateway (Traefik default / operator certs).
+# Merged when [network].tls is true (federated-node profile).
+# Host 8443 → container 443. Replace the default certificate for production.
+# This is TLS termination, not an EGA Federated Node badge.
+
+services:
+  tls-proxy:
+    image: traefik:v3.3
+    command:
+      - --providers.file.filename=/dynamic/tls.yml
+      - --providers.file.watch=true
+      - --entrypoints.websecure.address=:443
+      - --entrypoints.websecure.http.tls=true
+      - --log.level=INFO
+    ports:
+      - "${FERRUM_TLS_PORT:-8443}:443"
+    volumes:
+      - ./tls-traefik-dynamic.yaml:/dynamic/tls.yml:ro
+    networks: [lab]
+    depends_on:
+      ferrum-gateway:
+        condition: service_started
+    restart: unless-stopped

@@ -3,8 +3,8 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 use lab_kit_core::{
-    is_bra_enabled, is_co_deploy, is_solum_enabled, tes_slurm_config, Ga4ghInfraMode, LabKitConfig,
-    ServiceId, ServiceRegistry,
+    is_bra_enabled, is_co_deploy, is_federated_node, is_solum_enabled, is_tls_enabled,
+    tes_slurm_config, Ga4ghInfraMode, LabKitConfig, ServiceId, ServiceRegistry,
 };
 use serde_yaml::{Mapping, Value};
 
@@ -134,6 +134,10 @@ pub fn render_compose_yaml(
         merge_fragment(&mut merged, fragments_dir, "bra.yml")?;
     }
 
+    if is_tls_enabled(cfg) {
+        merge_fragment(&mut merged, fragments_dir, "tls.yml")?;
+    }
+
     Ok(serde_yaml::to_string(&merged)?)
 }
 
@@ -143,6 +147,36 @@ pub fn write_compose_sidecars(
 ) -> Result<(), DeployError> {
     write_external_upstreams_next_to_compose(cfg, compose_output)?;
     write_traefik_dynamic_proxy_next_to_compose(cfg, compose_output)?;
+    if is_tls_enabled(cfg) {
+        write_tls_dynamic_next_to_compose(compose_output)?;
+    }
+    Ok(())
+}
+
+const TLS_TRAEFIK_DYNAMIC: &str = r#"http:
+  routers:
+    ferrum:
+      rule: PathPrefix(`/`)
+      service: ferrum
+      entryPoints:
+        - websecure
+      tls: {}
+  services:
+    ferrum:
+      loadBalancer:
+        servers:
+          - url: http://ferrum-gateway:8080
+"#;
+
+fn write_tls_dynamic_next_to_compose(compose_output: &Path) -> Result<(), DeployError> {
+    let out_path: PathBuf = compose_output
+        .parent()
+        .unwrap_or(Path::new("."))
+        .join("tls-traefik-dynamic.yaml");
+    if let Some(parent) = out_path.parent() {
+        fs::create_dir_all(parent)?;
+    }
+    fs::write(&out_path, TLS_TRAEFIK_DYNAMIC)?;
     Ok(())
 }
 
@@ -382,6 +416,10 @@ fn apply_lab_kit_runtime_env(
         insert_env(env, "FERRUM_METADATA_STORE__ENABLED", "true");
     }
 
+    if is_federated_node(cfg) {
+        insert_env(env, "FERRUM_AUTH__REQUIRE_AUTH", "true");
+    }
+
     Ok(())
 }
 
@@ -539,6 +577,35 @@ mod tests {
             "archive-submitter must enable Metadata Store"
         );
         assert!(merged.contains("-edge"));
+        serde_yaml::from_str::<serde_yaml::Value>(&merged).expect("valid YAML");
+    }
+
+    #[test]
+    fn federated_node_merges_infra_tls_require_auth_and_edge_infra() {
+        let raw = include_str!("../../../config/profiles/federated-node.toml");
+        let cfg = parse_config(raw).unwrap();
+        assert!(lab_kit_core::is_federated_node(&cfg));
+        let dir = tempfile::tempdir().unwrap();
+        let out = dir.path().join("docker-compose.yml");
+        generate_compose_file(&cfg, &fragments(), &out, &ComposeOptions::default()).unwrap();
+        let merged = std::fs::read_to_string(&out).unwrap();
+        assert!(merged.contains("aai-broker"));
+        assert!(merged.contains("tls-proxy"));
+        assert!(merged.contains("FERRUM_TLS_PORT"));
+        assert!(merged.contains("FERRUM_AUTH__REQUIRE_AUTH"));
+        assert!(merged.contains("FERRUM_DISCOVERY__AUTO_REGISTER"));
+        assert!(merged.contains("FERRUM_SERVICES__ENABLE_BEACON"));
+        assert!(merged.contains("FERRUM_SERVICES__ENABLE_DRS"));
+        assert!(
+            merged.contains("-edge-infra"),
+            "federated-node should pin edge-infra (Beacon/DRS + ga4gh-infra)"
+        );
+        assert!(!merged.contains("FERRUM_SERVICES__ENABLE_WES: \"true\""));
+        let tls_dyn = dir.path().join("tls-traefik-dynamic.yaml");
+        assert!(
+            tls_dyn.is_file(),
+            "federated-node must write tls-traefik-dynamic.yaml next to compose"
+        );
         serde_yaml::from_str::<serde_yaml::Value>(&merged).expect("valid YAML");
     }
 
