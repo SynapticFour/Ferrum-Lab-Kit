@@ -18,6 +18,6 @@ make prove
 lab-kit init --profile field-edge --non-interactive
 ```
 
-HelixTest pin for CI: tag **v0.1.1** (same as Ferrum `VERSIONS.lock`).
+HelixTest pin for CI: tag **v0.1.1** (same as Ferrum `VERSIONS.lock`). Ferrum image/git pin: **v0.3.0** (`6444469…`) — same SHA as `config/ci/ferrum-revision.txt` / `ferrum-image.txt`. Lab Kit crate `0.1.0` is the companion train, not a second product version.
 
 Subset proof: `beacon-only` + `helixtest --only beacon`, `drs-wes` + `--only drs --only wes`. See [CONFORMANCE.md](CONFORMANCE.md).

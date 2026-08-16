@@ -1,6 +1,6 @@
 # Ferrum Lab Kit
 
-**Comes with [Ferrum](https://github.com/SynapticFour/Ferrum) — not sold separately.** On-ramp so a lab can install **one, two, or three** of the GA4GH surfaces Ferrum offers (`FERRUM_SERVICES__ENABLE_*` + edge images). Nobody should pay for this repo alone.
+**Comes with [Ferrum](https://github.com/SynapticFour/Ferrum) v0.3.0 — not sold separately.** On-ramp so a lab can install **one, two, or three** of the GA4GH surfaces Ferrum offers (`FERRUM_SERVICES__ENABLE_*` + edge images). Nobody should pay for this repo alone. Image SHA and git pin stay on that Ferrum tag (`config/ci/ferrum-revision.txt`).
 
 **Ferrum Lab Kit** generates Compose / Helm / systemd around the **Ferrum monolith image** (`ghcr.io/synapticfour/ferrum`, SHA-pinned). It is a **separate repository** — not a fork — and **does not implement GA4GH protocol logic**. Runtime Beacon/DRS/WES/… I/O is the Ferrum container.
 
