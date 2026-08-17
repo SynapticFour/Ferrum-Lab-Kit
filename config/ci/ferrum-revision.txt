@@ -1,3 +1,3 @@
 # Git revision on https://github.com/SynapticFour/Ferrum.git (must match lab-kit-ferrum/Cargo.toml).
 # Current pin: Ferrum tag v0.3.0. Bump in a dedicated PR.
-f28f27800f1d92c6a76670c760d9beb444c368d6
+7a5421d27cfe156a2b344d3279bcd47ba3fa3939
