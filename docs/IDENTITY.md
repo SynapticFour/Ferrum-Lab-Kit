@@ -22,7 +22,7 @@ lab-kit init --profile field-edge --non-interactive
 # lab-kit init --profile federated-node --non-interactive
 ```
 
-HelixTest pin for CI: tag **v0.1.1** (same as Ferrum `VERSIONS.lock`). Ferrum image/git pin: **v0.3.1** (`f28f2780…`) — same SHA as `config/ci/ferrum-revision.txt` / `ferrum-image.txt`. Lab Kit crate `0.1.0` is the companion train, not a second product version.
+HelixTest pin for CI: SHA **`4a10e126c219`** (Ferrum `VERSIONS.lock` `HELIXTEST_SHA`; tag label **v0.1.2**). Ferrum image/git pin: **v0.3.1** (`f28f2780…`) — same SHA as `config/ci/ferrum-revision.txt` / `ferrum-image.txt`. Lab Kit crate `0.1.0` is the companion train, not a second product version.
 
 Subset proof: `beacon-only` + `helixtest --only beacon`, `drs-wes` + `--only drs --only wes`. See [CONFORMANCE.md](CONFORMANCE.md).
 

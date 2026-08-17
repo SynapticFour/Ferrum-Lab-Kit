@@ -1,3 +1,4 @@
 # Pinned Git revision of https://github.com/SynapticFour/HelixTest for CI and reproducible runs.
-# Must match Ferrum VERSIONS.lock HELIXTEST_SHA (tag v0.1.1). Bump in a dedicated PR.
-a8aabf30fa8a8963ca95a4e8c1e6c04cddf34a12
+# Must match Ferrum VERSIONS.lock HELIXTEST_SHA (tag label v0.1.2; SHA is ahead of the tag peel).
+# Bump via a dedicated change — do not cut a HelixTest tag from this pin.
+4a10e126c21960471f439f26d23180058422b507

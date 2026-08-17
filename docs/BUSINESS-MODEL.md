@@ -16,6 +16,8 @@ Licensed under **BUSL-1.1** with parameters aligned to [Ferrum](https://github.c
 - **Managed deployment & sign-off** — consulting engagement.
 - **Priority support SLA** — paid support channel.
 
+Lab Kit **comes with Ferrum**. It is not a fifth SKU. Written Ferrum commercial license: [Ferrum COMMERCIAL.md](https://github.com/SynapticFour/Ferrum/blob/main/docs/COMMERCIAL.md).
+
 ## Non-negotiable
 
 The **license key must never gate** running a GA4GH stack. Only the **PDF report output** (and future paid-only tooling) is gated.
