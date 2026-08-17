@@ -42,7 +42,7 @@ port = 8787
 # default_subject = "patient-1"
 # default_purpose = "research"
 timeout_secs = 5
-solum_tag = "6b4519c98f5c1e905ab5cf3f517787021d1e2604"
+solum_tag = "v0.1.0"
 ```
 
 Env overrides: see [`.env.example`](../.env.example) (`SOLUM_*`, `FERRUM_SOLUM_*`).

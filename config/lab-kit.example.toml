@@ -76,4 +76,4 @@ scopes = ["openid", "profile", "email", "offline_access", "ga4gh_passport_v1"]
 # default_subject = ""
 # default_purpose = ""
 # timeout_secs = 5
-# solum_tag = "6b4519c98f5c1e905ab5cf3f517787021d1e2604"
+# solum_tag = "v0.1.0"

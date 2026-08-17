@@ -14,6 +14,7 @@ on:
       - "crates/**"
       - "config/profiles/**"
       - "config/ci/**"
+      - "config/ci/ferrum-revision.txt"
       - "deploy/docker-compose/**"
       - "deploy/helm/**"
       - ".github/workflows/conformance.yml"
@@ -136,8 +137,10 @@ jobs:
           ./target/release/helixtest --version
           ./target/release/helixtest | grep -q "Nothing to do"
 
-      - name: Live suite (opt-in — fails job on HelixTest failure)
-        if: github.event_name == 'workflow_dispatch' && github.event.inputs.run_live_suite == 'true'
+      - name: Live suite (Ferrum pin bump or dispatch — fails job on HelixTest failure)
+        if: >
+          (github.event_name == 'workflow_dispatch' && github.event.inputs.run_live_suite == 'true')
+          || (github.event_name == 'push' && contains(github.event.head_commit.modified, 'config/ci/ferrum-revision.txt'))
         run: |
           set -euo pipefail
           docker compose -f generated/docker-compose.yml up -d

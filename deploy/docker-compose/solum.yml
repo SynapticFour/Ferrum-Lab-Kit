@@ -13,7 +13,7 @@ services:
       context: ${SOLUM_DOCKER_CONTEXT:-deploy/docker-compose}
       dockerfile: Dockerfile.solum-sidecar
       args:
-        SOLUM_REF: ${SOLUM_REF:-6b4519c98f5c1e905ab5cf3f517787021d1e2604}
+        SOLUM_REF: ${SOLUM_REF:-v0.1.0}
         RUST_VERSION: ${SOLUM_RUST_VERSION:-1.91.1}
     image: ${SOLUM_IMAGE:-synapticfour/solum-sidecar:lab-kit}
     networks: [lab]

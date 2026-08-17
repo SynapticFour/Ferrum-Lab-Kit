@@ -13,8 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`archive-submitter` profile** — Ferrum-edge + Metadata Store, no WES/TES. Writes reviewable GHGA/EGA/H3Africa bundles + DRS IDs via Ferrum `ferrum meta export`. Does **not** upload to EGA. Not a fifth SKU. `lab-kit init --profile archive-submitter --non-interactive`.
 - **BRA workbench companion** — `[bra]` config, `bra.yml`, CLI `--with-bra`, profile `bra-companion`. Lab Kit does not ship a BRA image (`BRA_IMAGE` required). Not a combo SKU. [docs/BRA-CO-DEPLOY.md](docs/BRA-CO-DEPLOY.md).
 - **SPDX on first-party `.rs`** — `// SPDX-License-Identifier: BUSL-1.1`; CI `spdx.yml`.
-- Pin Ferrum **v0.3.0** (`6444469a`) for `ferrum-core` and GHCR variant tags (full / edge / edge-infra).
-- Solum sidecar pin matches Solum-Demo baseline `6b4519c`.
+- Pin Ferrum **v0.3.1** (`f28f2780`) for `ferrum-core` and GHCR variant tags (full / edge / edge-infra). Suite 2026.08-draft.
+- Solum sidecar pin **v0.1.0** (same tag as Solum-Demo). Historical companion SHA `6b4519c` is retired.
 - ga4gh-infra Compose image tags **0.2.3** (`ga4gh-infra-v0.2.3` stack publish).
 
 ## [0.2.0-alpha] - 2026-08-15

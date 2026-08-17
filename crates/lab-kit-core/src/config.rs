@@ -581,8 +581,8 @@ fn default_solum_timeout() -> u64 {
 }
 
 fn default_solum_tag() -> String {
-    // Same SHA as Solum-Demo PINNED_VERSIONS.txt Solum-ref (not Solum HEAD).
-    "6b4519c98f5c1e905ab5cf3f517787021d1e2604".into()
+    // Same git tag as Solum-Demo PINNED_VERSIONS.txt Solum-ref (suite 2026.08-draft).
+    "v0.1.0".into()
 }
 
 impl Default for SolumSection {
