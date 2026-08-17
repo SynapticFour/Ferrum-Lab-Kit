@@ -8,7 +8,7 @@ This repository follows Semantic Versioning (`MAJOR.MINOR.PATCH`).
 
 **`v0.2.0-alpha`** (2026-08-15) pins Ferrum `a4ba89911e207b9597e03c321f0e18ea9112d57a` and selects GHCR variants `:<sha>` (full), `:<sha>-edge`, `:<sha>-edge-infra`.
 
-**main (unreleased)** pins Ferrum **v0.3.1** `f28f27800f1d92c6a76670c760d9beb444c368d6`. If a pull fails, build Ferrum from that SHA (`./scripts/build-variant-image.sh` or `deploy/Dockerfile`) or set `FERRUM_IMAGE`. `lab-kit build image` wraps the same Dockerfile for a local/custom architecture.
+**main (unreleased)** pins Ferrum **v0.3.2** `2bd147c99735866ac9cfb530f62ef984c8efce8b`. If a pull fails, build Ferrum from that SHA (`./scripts/build-variant-image.sh` or `deploy/Dockerfile`) or set `FERRUM_IMAGE`. `lab-kit build image` wraps the same Dockerfile for a local/custom architecture.
 
 Subsequent tags follow the process below. Do **not** tag until CI is green on `main` and image pins match a published (or documented build-from-source) Ferrum revision.
 

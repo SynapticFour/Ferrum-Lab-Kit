@@ -1,6 +1,6 @@
 # Ferrum Lab Kit
 
-Generates Compose / Helm / systemd around a SHA-pinned [Ferrum](https://github.com/SynapticFour/Ferrum) monolith image (`ghcr.io/synapticfour/ferrum`). This repository does **not** implement GA4GH protocol logic. Runtime Beacon/DRS/WES I/O is the Ferrum container. Pin: `config/ci/ferrum-revision.txt` (Ferrum **v0.3.1**).
+Generates Compose / Helm / systemd around a SHA-pinned [Ferrum](https://github.com/SynapticFour/Ferrum) monolith image (`ghcr.io/synapticfour/ferrum`). This repository does **not** implement GA4GH protocol logic. Runtime Beacon/DRS/WES I/O is the Ferrum container. Pin: `config/ci/ferrum-revision.txt` (Ferrum **v0.3.2**).
 
 **Maturity: Early access.** Ferrum companion — not a fifth product.
 
