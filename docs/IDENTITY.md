@@ -1,6 +1,6 @@
 # Who Ferrum Lab Kit is for
 
-Ferrum Lab Kit **comes with Ferrum**. It is not sold separately. It generates Compose / Helm / systemd so a lab can turn on **one, two, or three** GA4GH surfaces (`FERRUM_SERVICES__ENABLE_*`) around the SHA-pinned Ferrum image.
+Ferrum Lab Kit **comes with Ferrum**. It is a Ferrum companion, not a fifth product. It generates Compose / Helm / systemd so a lab can turn on **one, two, or three** GA4GH surfaces (`FERRUM_SERVICES__ENABLE_*`) around the SHA-pinned Ferrum image.
 
 It does **not** implement GA4GH protocol logic.
 
