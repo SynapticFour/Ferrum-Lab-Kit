@@ -1,3 +1,3 @@
 # Ferrum edge + ga4gh-infra hooks (clearinghouse / discovery). Override with FERRUM_IMAGE.
 # Bumped with ./scripts/bump-ferrum.sh.
-ghcr.io/synapticfour/ferrum:f28f27800f1d92c6a76670c760d9beb444c368d6-edge-infra
+ghcr.io/synapticfour/ferrum:7a5421d27cfe156a2b344d3279bcd47ba3fa3939-edge-infra

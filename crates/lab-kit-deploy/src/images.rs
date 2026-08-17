@@ -104,7 +104,7 @@ fn first_pin(raw: &str) -> String {
     raw.lines()
         .map(str::trim)
         .find(|l| !l.is_empty() && !l.starts_with('#'))
-        .unwrap_or("ghcr.io/synapticfour/ferrum:f28f27800f1d92c6a76670c760d9beb444c368d6")
+        .unwrap_or("ghcr.io/synapticfour/ferrum:7a5421d27cfe156a2b344d3279bcd47ba3fa3939")
         .to_string()
 }
 
