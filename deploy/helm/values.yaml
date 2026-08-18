@@ -18,8 +18,16 @@ gateway:
     htsget: false
     wes: false
     tes: false
-    beacon: false
-    trs: false
+  adapters:
+    storage_backend: ""
+    storage_base_path: ""
+    s3_endpoint: ""
+    s3_region: ""
+    s3_bucket: ""
+    wes_backend: ""
+    tes_backend: ""
+    wes_slurm_partition: ""
+    tes_slurm_partition: ""
 
 solum:
   enabled: false

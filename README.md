@@ -6,9 +6,7 @@ Generates Compose / Helm / systemd around a SHA-pinned [Ferrum](https://github.c
 
 > This README describes technical capabilities, not legal advice.
 
-## Ferrum / GA4GH suite
-
-These ten public repositories are from the same organisation and can be composed. They are not a fifth product and not a bundle SKU. Each repository keeps its own version and license. Roles, maturity, and who consumes whom: [SUITE-OVERVIEW](https://github.com/SynapticFour/Ferrum/blob/main/docs/SUITE-OVERVIEW.md).
+These public repositories are maintained by the same organisation and are designed to work together. Each repository keeps its own version and license. For details on roles, maturity, and how the components relate to one another, see [SUITE-OVERVIEW](https://github.com/SynapticFour/.github/blob/main/profile/SUITE-OVERVIEW.md).
 
 ## Quick start
 
@@ -24,7 +22,7 @@ Stop: `make down`. Remove volumes: `make destroy`. Optional: `make up-with-infra
 - [Architecture](docs/ARCHITECTURE.md)
 - [Ferrum integration](docs/FERRUM-INTEGRATION.md) · [Documentation index](docs/README.md)
 
-Adapter traits (`lab-kit-adapters`) and OIDC helpers (`lab-kit-auth`) are Lab Kit libraries. Probe with `lab-kit adapters check`. Ferrum does not depend on these crates at runtime.
+Adapter traits (`lab-kit-adapters`) and OIDC helpers (`lab-kit-auth`) are Lab Kit libraries. `lab-kit generate` maps POSIX/S3/SLURM onto Ferrum gateway env (Compose and Helm). Probe with `lab-kit adapters check`. Ferrum does not take a crate dependency on these libraries.
 
 ## License
 

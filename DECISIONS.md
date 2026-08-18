@@ -20,11 +20,18 @@ Track important architectural and operational decisions here.
 
 ---
 
+### 2026-08-18 - Adapter config is wired into Ferrum env at generate time
+
+- **Context:** `lab-kit-adapters` traits were libraries plus `adapters check` only. Compose already mapped POSIX/S3/SLURM onto `FERRUM_*` env; Helm did not. Operators could believe adapters were unused.
+- **Decision:** `lab-kit generate` (Compose **and** Helm) writes adapter settings onto the Ferrum gateway env (`FERRUM_STORAGE__*`, `FERRUM_WES_BACKEND`, `FERRUM_TES_BACKEND`, SLURM partitions). Ferrum still owns runtime I/O. The traits stay in Lab Kit for `adapters check` and as the config schema. Ferrum does not take a crate dependency on Lab Kit.
+- **Consequences:** A Lab Kit profile with POSIX DRS or SLURM WES/TES produces a gateway that Ferrum actually honours. Helm values include `gateway.adapters`. S3 keys stay in the environment, not in values YAML.
+
 ### 2026-08-15 - Runtime is the Ferrum monolith, not Lab Kit adapters
 
 - **Context:** Marketing and README described Lab Kit as a BYO-SLURM/S3/OIDC platform. The CLI runtime path only generates Compose/Helm/systemd around `ghcr.io/synapticfour/ferrum`.
 - **Decision:** Treat Lab Kit as a **YAML on-ramp**. `lab-kit-adapters` / `lab-kit-auth` stay in-tree as libraries and `lab-kit adapters check`. Ferrum images own GA4GH I/O. Docs must state this boundary.
 - **Consequences:** Honest onboarding; no false expectation that Ferrum links Lab Kit traits. Per-service compose/helm images remain `--legacy-per-service` only.
+- **Superseded in part (2026-08-18):** generate-time env wiring is now in both Compose and Helm. Ferrum still does not crate-depend on Lab Kit.
 
 ### 2026-08-15 - Auth and Passport enforcement belong to Ferrum
 

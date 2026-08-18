@@ -33,7 +33,7 @@ docker compose -f docker-compose.yml up -d
 lab-kit generate compose --config lab-kit.toml --with-bra -o docker-compose.yml
 ```
 
-Pin BRA **v0.2.0** (product tag). Build the image from that tag, or point `BRA_IMAGE` at whatever you already run.
+Pin BRA **v0.2.1** (product tag). Build the image from that tag, or point `BRA_IMAGE` at whatever you already run.
 
 HTTP: published GA4GH DRS/WES OpenAPI. Ferrum [utoipa dump](https://github.com/SynapticFour/Ferrum/blob/main/docs/openapi/ferrum.openapi.json) only for Ferrum-only paths.
 
@@ -43,7 +43,7 @@ HTTP: published GA4GH DRS/WES OpenAPI. Ferrum [utoipa dump](https://github.com/S
 [bra]
 enabled = true
 port = 5173
-bra_tag = "v0.2.0"
+bra_tag = "v0.2.1"
 ```
 
 Env: see [`.env.example`](../.env.example) (`BRA_IMAGE`, `BRA_PORT`, `BRA_OIDC_*`, `FERRUM_BEARER_TOKEN`).

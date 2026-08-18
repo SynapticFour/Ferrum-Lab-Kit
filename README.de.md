@@ -2,7 +2,7 @@
 
 **Ferrum Lab Kit** ist ein **Compose-/Helm-/systemd-On-Ramp** zu [Ferrum](https://github.com/SynapticFour/Ferrum): es erzeugt Deploy-YAML, Env-Dateien und Operator-Tools um das **Ferrum-Monolith-Image** (`ghcr.io/synapticfour/ferrum`, SHA-Pin). Es ist ein **eigenes Repository** (kein Fork) und **implementiert keine GA4GH-Protokoll-Logik**. Runtime-I/O (Beacon/DRS/WES/…) ist der Ferrum-Container.
 
-Adapter-Traits (`lab-kit-adapters`) und OIDC-Helfer (`lab-kit-auth`) sind **Lab-Kit-Bibliotheken**. Prüfung: `lab-kit adapters check`. **Ferrum hängt zur Laufzeit nicht von diesen Crates ab.**
+Adapter-Traits (`lab-kit-adapters`) und OIDC-Helfer (`lab-kit-auth`) sind **Lab-Kit-Bibliotheken**. `lab-kit generate` schreibt POSIX/S3/SLURM auf Ferrum-Env. Prüfung: `lab-kit adapters check`. **Ferrum hängt nicht als Crate von diesen Bibliotheken ab.**
 
 ## GA4GH-Stack
 

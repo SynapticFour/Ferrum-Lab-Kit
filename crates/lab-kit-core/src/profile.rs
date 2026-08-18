@@ -423,7 +423,7 @@ mod tests {
         assert!(is_bra_enabled(&cfg));
         assert!(cfg.services.drs.is_some());
         assert!(cfg.services.wes.is_some());
-        assert_eq!(cfg.bra.as_ref().unwrap().bra_tag, "v0.2.0");
+        assert_eq!(cfg.bra.as_ref().unwrap().bra_tag, "v0.2.1");
     }
 
     #[test]

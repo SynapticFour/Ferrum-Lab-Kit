@@ -1,6 +1,6 @@
 # Bring your own infrastructure
 
-Lab Kit **generates** Compose/Helm/systemd around the Ferrum monolith. It does **not** bind your SLURM, S3, or OIDC stack into Ferrum at runtime. Use `external_url` / institute proxies where Ferrum should call existing endpoints.
+Lab Kit **generates** Compose/Helm/systemd around the Ferrum monolith. POSIX/S3/SLURM settings in `lab-kit.toml` are **written onto Ferrum env** (`FERRUM_STORAGE__*`, `FERRUM_WES_BACKEND`, `FERRUM_TES_BACKEND`). The adapter **crates** are not linked into the Ferrum binary. Use `external_url` where Ferrum should call an existing endpoint instead of deploying that surface.
 
 ## External service URLs
 
@@ -27,7 +27,7 @@ Path prefixes match **[Ferrum `ferrum-gateway`](https://github.com/SynapticFour/
 
 ## Adapter traits (`lab-kit-adapters`)
 
-These traits live in **this repository**. They are **not** linked into the Ferrum container. Ferrum has its own storage/scheduler/auth implementations. Use `lab-kit adapters check` to probe what Lab Kit can see on the operator machine (POSIX write, SQLite ping, `sbatch` on PATH). It does **not** submit SLURM jobs or run Nextflow.
+These traits live in **this repository**. They are **not** linked into the Ferrum binary. `lab-kit generate` maps POSIX/S3/SLURM onto Ferrum env so the gateway uses those backends. Use `lab-kit adapters check` to probe what Lab Kit can see on the operator machine (POSIX write, SQLite ping, `sbatch` on PATH). It does **not** submit SLURM jobs or run Nextflow.
 
 | Trait | Purpose in Lab Kit |
 |-------|-------------------|

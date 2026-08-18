@@ -28,7 +28,7 @@ mode = "local"
 [bra]
 enabled = true
 port = 5173
-bra_tag = "v0.2.0"
+bra_tag = "v0.2.1"
 
 [conformance]
 helixtest_timeout_seconds = 120

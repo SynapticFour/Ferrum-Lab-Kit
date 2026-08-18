@@ -619,7 +619,7 @@ fn default_bra_port() -> u16 {
 }
 
 fn default_bra_tag() -> String {
-    "v0.2.0".into()
+    "v0.2.1".into()
 }
 
 impl Default for BraSection {

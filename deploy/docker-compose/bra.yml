@@ -2,7 +2,7 @@
 # Merged when [bra].enabled or `lab-kit generate compose --with-bra`.
 #
 # Product stays in bioresearch-assistant. Lab Kit does not publish a BRA image.
-# Set BRA_IMAGE to a build you already run (tag v0.2.0 or later).
+# Set BRA_IMAGE to a build you already run (tag v0.2.1 or later).
 
 services:
   bra:

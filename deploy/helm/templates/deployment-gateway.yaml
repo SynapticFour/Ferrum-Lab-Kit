@@ -50,6 +50,44 @@ spec:
               value: {{ .Values.gateway.enable.beacon | quote }}
             - name: FERRUM_SERVICES__ENABLE_TRS
               value: {{ .Values.gateway.enable.trs | quote }}
+            {{- with .Values.gateway.adapters }}
+            {{- if .storage_backend }}
+            - name: FERRUM_STORAGE__BACKEND
+              value: {{ .storage_backend | quote }}
+            {{- end }}
+            {{- if .storage_base_path }}
+            - name: FERRUM_STORAGE__BASE_PATH
+              value: {{ .storage_base_path | quote }}
+            {{- end }}
+            {{- if .s3_endpoint }}
+            - name: FERRUM_STORAGE__S3_ENDPOINT
+              value: {{ .s3_endpoint | quote }}
+            {{- end }}
+            {{- if .s3_region }}
+            - name: FERRUM_STORAGE__S3_REGION
+              value: {{ .s3_region | quote }}
+            {{- end }}
+            {{- if .s3_bucket }}
+            - name: FERRUM_STORAGE__S3_BUCKET
+              value: {{ .s3_bucket | quote }}
+            {{- end }}
+            {{- if .wes_backend }}
+            - name: FERRUM_WES_BACKEND
+              value: {{ .wes_backend | quote }}
+            {{- end }}
+            {{- if .tes_backend }}
+            - name: FERRUM_TES_BACKEND
+              value: {{ .tes_backend | quote }}
+            {{- end }}
+            {{- if .wes_slurm_partition }}
+            - name: FERRUM_WES_SLURM_PARTITION
+              value: {{ .wes_slurm_partition | quote }}
+            {{- end }}
+            {{- if .tes_slurm_partition }}
+            - name: FERRUM_TES_SLURM_PARTITION
+              value: {{ .tes_slurm_partition | quote }}
+            {{- end }}
+            {{- end }}
             {{- if .Values.solum.enabled }}
             - name: FERRUM_SOLUM__BASE_URL
               value: http://{{ include "ferrum-lab-kit.name" . }}-solum:8787
