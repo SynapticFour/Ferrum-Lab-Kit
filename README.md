@@ -27,3 +27,5 @@ Adapter traits (`lab-kit-adapters`) and OIDC helpers (`lab-kit-auth`) are Lab Ki
 ## License
 
 Business Source License 1.1 — see [LICENSE](LICENSE).
+
+**Synaptic Four** · [contact@synapticfour.com](mailto:contact@synapticfour.com) · [synapticfour.com](https://synapticfour.com)

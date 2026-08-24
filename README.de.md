@@ -132,6 +132,8 @@ Wer die komplette souveräne Plattform braucht: **[github.com/SynapticFour/Ferru
 
 See [README.md](README.md).
 
+**Synaptic Four** · [contact@synapticfour.com](mailto:contact@synapticfour.com) · [synapticfour.com](https://synapticfour.com)
+
 ## Mitwirken
 
 Siehe [CONTRIBUTING.md](CONTRIBUTING.md).
