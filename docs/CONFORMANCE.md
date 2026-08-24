@@ -3,7 +3,7 @@
 Lab Kit **does not embed** the HelixTest suite; it **invokes** the separate repository [SynapticFour/HelixTest](https://github.com/SynapticFour/HelixTest) as a tool (same pattern as Ferrum).
 HelixTest usage here is GA4GH-centric. Optional MII/KDS checks run separately via `lab-kit mii ...` (delegated to Ferrum MII Connect).
 
-**Pinned revision for CI:** `config/ci/helixtest-revision.txt` — currently **`4a10e126c219`** (Ferrum `HELIXTEST_SHA`, tag label v0.1.2). Bump it in a dedicated change when upgrading HelixTest. GitHub Actions workflow **Conformance** checks out that revision, builds `helixtest-cli`, and runs a CLI smoke test (no live services). A full `--all` run against Compose is **opt-in** via **workflow_dispatch** with `run_live_suite=true`, and also runs automatically when `config/ci/ferrum-revision.txt` is pushed (Ferrum pin bump). When that live step runs, HelixTest failures **fail the job** — they are not masked. A green compose-profile job is **not** certification.
+**Pinned revision for CI:** `config/ci/helixtest-revision.txt` — currently **`1832c043e167`** (Ferrum `HELIXTEST_SHA`, tag **v0.1.3**). Bump it in a dedicated change when upgrading HelixTest. GitHub Actions workflow **Conformance** checks out that revision, builds `helixtest-cli`, and runs a CLI smoke test (no live services). A full `--all` run against Compose is **opt-in** via **workflow_dispatch** with `run_live_suite=true`, and also runs automatically when `config/ci/ferrum-revision.txt` is pushed (Ferrum pin bump). When that live step runs, HelixTest failures **fail the job** — they are not masked. A green compose-profile job is **not** certification.
 
 ## Run
 

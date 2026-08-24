@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-- HelixTest CI pin **`4a10e126c219`** (Ferrum `HELIXTEST_SHA`; tag label v0.1.2). Ferrum image pin **v0.3.2** (`2bd147c9`).
+- HelixTest CI pin **v0.1.3** (`1832c04`). Ferrum image pin **v0.3.2** (`2bd147c9`).
 - Written Ferrum commercial license (Lab Kit is not sold separately): [Ferrum COMMERCIAL.md](https://github.com/SynapticFour/Ferrum/blob/main/docs/COMMERCIAL.md).
 - **`federated-node` profile** — Beacon v2 boolean+count, DRS, Passport-on-DRS (ga4gh-infra), service-registry auto-register, Traefik TLS on **8443**. TES/WES off unless you opt in. Compose-up is **not** an EGA/GDI/ELIXIR membership card. [docs/FEDERATED-NODE.md](docs/FEDERATED-NODE.md).
 - **`archive-submitter` profile** — Ferrum-edge + Metadata Store, no WES/TES. Writes reviewable GHGA/EGA/H3Africa bundles + DRS IDs via Ferrum `ferrum meta export`. Does **not** upload to EGA. Not a fifth SKU. `lab-kit init --profile archive-submitter --non-interactive`.
