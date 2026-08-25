@@ -18,6 +18,8 @@ ignore = [
     { id = "RUSTSEC-2026-0098", reason = "rustls 0.21 name constraints; pulled by aws-smithy-http-client 0.24 stack" },
     { id = "RUSTSEC-2026-0099", reason = "rustls 0.21 wildcard name constraints; same 0.24 TLS stack" },
     { id = "RUSTSEC-2026-0104", reason = "rustls 0.21 CRL parse panic; same 0.24 TLS stack" },
+    # h2 0.3.27 via hyper 0.14 / aws-smithy; patched line is h2 0.4.19 already in the lockfile.
+    { id = "RUSTSEC-2026-0258", reason = "h2 0.3 via AWS smithy hyper 0.14 stack; no 0.3 patch (fixed in h2 >=0.4.16, which we have)" },
 ]
 
 [licenses]
