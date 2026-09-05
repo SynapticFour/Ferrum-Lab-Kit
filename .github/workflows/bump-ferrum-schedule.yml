@@ -2,9 +2,11 @@ name: Bump ferrum-core pin
 
 # Suite join pins Ferrum **tag v0.3.2**, not `main` (HEAD after the tag is unreleased).
 on:
-  schedule:
-    # Weekly Monday 09:00 UTC — re-assert the suite Ferrum tag if the pin drifted.
-    - cron: "0 9 * * 1"
+  # Paused 2026-09 for development freeze; re-enable after pause; do not bump Ferrum Lab Kit to main.
+  # Freeze join is Ferrum tag v0.3.2 — do not bump to main.
+  # schedule:
+  #   # Weekly Monday 09:00 UTC — re-assert the suite Ferrum tag if the pin drifted.
+  #   - cron: "0 9 * * 1"
   workflow_dispatch:
 
 permissions:
