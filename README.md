@@ -2,7 +2,7 @@
 
 Generates Compose / Helm / systemd around a SHA-pinned [Ferrum](https://github.com/SynapticFour/Ferrum) monolith image (`ghcr.io/synapticfour/ferrum`). This repository does **not** implement GA4GH protocol logic. Runtime Beacon/DRS/WES I/O is the Ferrum container. Pin: `config/ci/ferrum-revision.txt` (Ferrum **v0.3.2**).
 
-**Maturity: Early access.** Ferrum companion — not a fifth product. License SPDX **BUSL-1.1** (GitHub may label this Other).
+**Maturity: Early access.** Generates deploy files around pinned Ferrum — protocol logic stays in the Ferrum container. License SPDX **BUSL-1.1** (GitHub may label this Other).
 
 > This README describes technical capabilities, not legal advice.
 

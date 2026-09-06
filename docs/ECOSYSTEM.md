@@ -1,6 +1,6 @@
 # Synaptic Four — this repo in the portfolio
 
-Four **products**, two free **ambassadors**, Ferrum **companions**, and **proof** repos. Glue is GA4GH; Solum extends into clinical data. **Not a bundle SKU.** Canonical map: [Ferrum PORTFOLIO.md](https://github.com/SynapticFour/Ferrum/blob/main/docs/PORTFOLIO.md).
+Ferrum, ga4gh-infra, Solum, and BioResearch Assistant sit alongside Helix/HelixTest (API checks), HELIOS (pipeline evidence), Ferrum companions, and local demos. Glue is GA4GH; Solum extends into clinical data. Canonical map: [Ferrum PORTFOLIO.md](https://github.com/SynapticFour/Ferrum/blob/main/docs/PORTFOLIO.md).
 
 **You are here:** [Ferrum-Lab-Kit](https://github.com/SynapticFour/Ferrum-Lab-Kit) — **Ferrum companion**. Selects 1–3 GA4GH surfaces and generates Compose/Helm/systemd around the Ferrum image.
 
