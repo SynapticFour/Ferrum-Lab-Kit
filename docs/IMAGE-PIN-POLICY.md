@@ -11,7 +11,7 @@
 | **Pilot / production** | Prefer digest pins (`image@sha256:…`) or SemVer tags when Ferrum publishes them. Override with `FERRUM_IMAGE`. |
 | **Third-party infra** (Traefik, Postgres, …) | Pin minor/major versions (e.g. `traefik:v3.3`); bump deliberately in a PR with notes. |
 | **ga4gh-infra siblings** | Use version env vars (`MOCK_IDP_VERSION`, etc.) already present in compose; keep defaults aligned with published infra tags. |
-| **Legacy per-service fragments** | `--legacy-per-service` still references unpublished `synapticfour/ferrum-*` images. Operators who use that path must supply their own tags. |
+| **Legacy per-service fragments** | `--legacy-per-service` still names unpublished `synapticfour/ferrum-*` images. The `:latest` suffix there is **not** a pin and there is no GHCR tag to invent. Operators who use that path must build and tag their own images. Default generate (no flag) uses the SHA above. |
 | **Solum sidecar** | Compose default `synapticfour/solum-sidecar:lab-kit` is a **local build tag** (see `Dockerfile.solum-sidecar`), not a published GHCR image. Set `SOLUM_IMAGE` or Helm `solum.image` to a real registry tag for pilots. |
 | **Custom arch / air-gap** | `lab-kit build image --variant edge --platform linux/arm64` clones the pinned Ferrum SHA and runs Ferrum’s `deploy/Dockerfile`. |
 

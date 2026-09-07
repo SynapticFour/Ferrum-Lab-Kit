@@ -1,3 +1,7 @@
+# Unpublished: there is no public synapticfour/ferrum-tes image or version tag.
+# :latest is not a pin — do not invent one. Default path is docker-compose.gateway.yml
+# (ghcr.io/synapticfour/ferrum:2bd147c99735866ac9cfb530f62ef984c8efce8b).
+# Opt-in only: lab-kit generate compose --legacy-per-service
 services:
   tes:
     image: synapticfour/ferrum-tes:latest

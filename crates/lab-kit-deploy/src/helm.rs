@@ -238,6 +238,14 @@ dataset_id = "ds1"
         );
         assert!(yaml.contains("beacon: true"));
         assert!(yaml.contains("drs: false"));
+        assert!(
+            !yaml.contains(":latest"),
+            "generated helm values must pin a SHA, not float :latest"
+        );
+        assert!(
+            !yaml.contains("synapticfour/ferrum-beacon"),
+            "default helm generate must not emit unpublished per-service images"
+        );
     }
 
     #[test]

@@ -2,6 +2,8 @@
 
 These files (`docker-compose.{beacon,drs,…}.yml`) model a future multi-container
 layout with unpublished image names (`synapticfour/ferrum-beacon`, …).
+`:latest` on those names is **not** a pin — there is no published version to
+copy. Do not invent a GHCR tag.
 
 **Default Lab Kit path** uses the monolith gateway
 (`../docker-compose.gateway.yml` + `FERRUM_SERVICES__ENABLE_*`).

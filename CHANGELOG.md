@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- Legacy per-service Compose fragments and Helm `services.*` images stay unpublished placeholder names. `:latest` there is not a pin; there is no public `synapticfour/ferrum-wes` (etc.) tag to invent. Default path remains `gateway.image` SHA `2bd147c9`.
 - **h2 0.4.16+** — cargo-deny RUSTSEC-2026-0258 (unbounded empty DATA frames). Transitive via hyper; lockfile bump only. Remaining `h2` 0.3.27 (AWS smithy / hyper 0.14) has no patch; ignored in `deny.toml`.
 - HelixTest CI pin **v0.1.3** (`1832c04`). Ferrum image pin **v0.3.2** (`2bd147c9`).
 - Written Ferrum commercial license (Lab Kit is not sold separately): [Ferrum COMMERCIAL.md](https://github.com/SynapticFour/Ferrum/blob/main/docs/COMMERCIAL.md).

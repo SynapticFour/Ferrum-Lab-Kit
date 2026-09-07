@@ -36,6 +36,10 @@ solum:
   port: 8787
 
 # Legacy placeholders (unpublished) — not used by the default gateway chart path.
+# There are no public synapticfour/ferrum-{drs,wes,…} images. :latest is not a pin;
+# do not invent a version. Use gateway.image
+# (ghcr.io/synapticfour/ferrum:2bd147c99735866ac9cfb530f62ef984c8efce8b) instead.
+# Opt-in: lab-kit generate helm --legacy-per-service
 services:
   drs:
     enabled: false
