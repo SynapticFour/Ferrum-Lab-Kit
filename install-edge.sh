@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Ferrum Lab Kit — Field/Edge one-shot installer.
-# Targets Raspberry Pi OS (ARM64), Ubuntu 22.04/24.04 (x86_64 / ARM64).
+# Field board: Raspberry Pi 5, 8 GB, 64-bit, USB SSD or NVMe (see docs/RASPBERRY-PI.md).
+# This script also runs the same edge profile on Ubuntu 22.04/24.04 (x86_64 / ARM64) as a lab path.
 # Minimal GA4GH node: Beacon v2 + DRS on the Ferrum monolith (port 8080).
 set -euo pipefail
 

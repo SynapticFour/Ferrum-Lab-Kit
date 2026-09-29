@@ -32,7 +32,7 @@ services:
     deploy:
       resources:
         limits:
-          memory: 3G      # respect Pi 4GB RAM limit
+          memory: 3G      # Ferrum share of the Pi 5 8GB board (ADR-026)
           cpus: "3.5"     # leave 0.5 CPU for OS
 
 volumes:

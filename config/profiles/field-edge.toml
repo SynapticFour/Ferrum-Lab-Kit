@@ -1,5 +1,6 @@
 # Ferrum Lab Kit — Field/Edge profile
-# For Raspberry Pi 5, laptops, and resource-constrained single-node deployments.
+# Field board: Raspberry Pi 5, 8 GB, 64-bit, USB SSD or NVMe.
+# The same profile also runs on lab laptops (x86_64 / ARM64).
 # Enables: Beacon v2 + DRS (minimal footprint)
 # Disables: WES, TES, TRS (optional — can be re-enabled if hardware allows)
 # Backend: SQLite + local filesystem (no PostgreSQL, no MinIO required)
@@ -28,7 +29,7 @@ objects_path = "~/.ferrum/objects"
 # Optional Ferrum Africa/offline knobs (memory, power). Ignored unless the
 # pinned Ferrum image implements them.
 offline_first = true
-max_memory_mb = 3072          # conservative for 4GB Pi
+max_memory_mb = 3072          # Ferrum share of the 8 GB board; room for OS and companions
 power_monitor = true
 low_power_threshold = 40
 emergency_threshold = 10

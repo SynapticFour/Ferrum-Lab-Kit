@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- **Field board** — Pi kit, `install-on-pi.sh`, and `field-edge` memory cap speak one hardware line: Raspberry Pi 5, 8 GB (16 GB accepted), 64-bit, USB SSD or NVMe. The installer refuses other boards, 32-bit OS, `MemTotal` under 7000 MB, and a data directory on `mmcblk`. Ferrum stays at 3072 MB so Solum Track A and ga4gh-infra fit on that board. No installer profile for Mk1C, Illumina, or rack servers.
 - Legacy per-service Compose fragments and Helm `services.*` images stay unpublished placeholder names. `:latest` there is not a pin; there is no public `synapticfour/ferrum-wes` (etc.) tag to invent. Default path remains `gateway.image` SHA `2bd147c9`.
 - **h2 0.4.16+** — cargo-deny RUSTSEC-2026-0258 (unbounded empty DATA frames). Transitive via hyper; lockfile bump only. Remaining `h2` 0.3.27 (AWS smithy / hyper 0.14) has no patch; ignored in `deny.toml`.
 - HelixTest CI pin **v0.1.3** (`1832c04`). Ferrum image pin **v0.3.2** (`2bd147c9`).

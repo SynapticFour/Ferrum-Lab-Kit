@@ -8,7 +8,7 @@ Lab Kit targets three environments equally (see `lab-kit generate …`).
 - **Flow:** `lab-kit generate compose` → `docker compose -f docker-compose.yml up -d`.
 - **Default runtime:** named Ferrum variant as `ferrum-gateway` on **8080** (`:<sha>` full, `:<sha>-edge`, `:<sha>-edge-infra`) plus `FERRUM_SERVICES__ENABLE_*` from your profile.
 - **Fragments:** `docker-compose.base.yml` + `docker-compose.gateway.yml` (+ `edge.yml` / `infra.yml` / `solum.yml` / `bra.yml` as needed).
-- **Platforms:** Ubuntu 22.04/24.04, macOS (Apple Silicon), x86_64 Linux, Raspberry Pi 5 (use the SHA pin in `config/ci/ferrum-image-arm64.txt`, override with `FERRUM_IMAGE`).
+- **Platforms:** Ubuntu 22.04/24.04, macOS (Apple Silicon), x86_64 Linux, and the field board Raspberry Pi 5, 8 GB, 64-bit (SHA pin in `config/ci/ferrum-image-arm64.txt`, override with `FERRUM_IMAGE`).
 - **Env:** copy [`.env.example`](../.env.example) → `.env`.
 
 ## 2. Kubernetes (Helm)
@@ -38,9 +38,8 @@ Minimal single-node GA4GH stack for **resource-constrained** environments: field
 
 | Target | RAM | Notes |
 |--------|-----|-------|
-| **Raspberry Pi 5** (recommended) | 4–8 GB | ARM64; microSD or USB-SSD for `/data` |
-| **Raspberry Pi 4** (minimum) | 4 GB | Usable with `field-edge` profile defaults |
-| **Laptop** (Ubuntu 22.04/24.04) | 8–16 GB | x86_64 or ARM64 |
+| **Raspberry Pi 5** (the field board) | 8 GB (16 GB accepted) | 64-bit OS. USB SSD or NVMe for `/data`. ADR-026 in Ferrum |
+| **Laptop** (Ubuntu 22.04/24.04) | 8–16 GB | Lab path. x86_64 or ARM64. Not a second field board |
 
 ### Enabled services
 
@@ -67,7 +66,7 @@ The **`field-edge`** profile enables **Beacon v2** and **DRS** only (minimal foo
 
 ```bash
 lab-kit generate raspberry-pi --output ./pi-kit
-# Optional: --with-solum / --with-ga4gh-infra / --profile field-edge+infra+solum --ram-gb 8
+# Optional companions, same board: --with-solum / --with-ga4gh-infra / --profile field-edge+infra+solum
 # Copy pi-kit/ to the Pi, then:
 cd pi-kit && ./install-on-pi.sh
 ```
@@ -114,4 +113,4 @@ When intermittent connectivity returns, register this edge node with your **GDI 
 
 - **Intermittent internet:** opportunistic sync defaults to `0 2 * * *` (2 AM) when bandwidth is available (`[network].bandwidth_adaptive`).
 - **Solar / battery:** the edge overlay sets power-monitor thresholds (`FERRUM_AFRICA__LOW_POWER_THRESHOLD`, `FERRUM_AFRICA__EMERGENCY_THRESHOLD`). These are **ignored by stock Ferrum** unless the pinned image implements them.
-- **Memory:** default `max_memory_mb = 3072` leaves headroom on 4 GB Pi; increase via `lab-kit init` → “Expected RAM (GB)?”.
+- **Memory:** `max_memory_mb = 3072` is Ferrum’s share of the 8 GB board, including when Solum or ga4gh-infra is on the same Pi.

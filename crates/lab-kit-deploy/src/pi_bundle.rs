@@ -15,7 +15,8 @@ pub struct RaspberryPiBundleOptions {
     pub compose: ComposeOptions,
     /// Host data directory on the Pi (expanded by install script).
     pub data_dir: String,
-    /// Expected RAM in GB (documented in README; used for memory hint).
+    /// Board RAM in GB. The supported field board is 8 (16 accepted).
+    /// Ferrum's process cap stays 3072 MB either way.
     pub ram_gb: u32,
 }
 
@@ -24,7 +25,7 @@ impl Default for RaspberryPiBundleOptions {
         Self {
             compose: ComposeOptions::default(),
             data_dir: "~/.ferrum".into(),
-            ram_gb: 4,
+            ram_gb: 8,
         }
     }
 }
@@ -174,7 +175,8 @@ fn pi_env_file(
     options: &RaspberryPiBundleOptions,
     compose: &ComposeOptions,
 ) -> Result<String, DeployError> {
-    let max_mem = options.ram_gb.saturating_mul(768);
+    // Ferrum's share of the 8 GB board. Companions and the OS use the rest.
+    let max_mem = 3072u32;
     let want_solum = compose.with_solum || is_solum_enabled(cfg);
     let want_infra = compose.with_ga4gh_infra || is_co_deploy(cfg);
 
@@ -192,7 +194,7 @@ fn pi_env_file(
         options.data_dir.replace('~', "$HOME")
     ));
     out.push_str(&format!(
-        "# Suggested max_memory_mb for {ram} GB Pi: {max_mem}\n",
+        "# Ferrum max_memory_mb on the {ram} GB Pi 5: {max_mem} (room left for OS and companions)\n",
         ram = options.ram_gb,
         max_mem = max_mem
     ));
@@ -246,18 +248,19 @@ fn pi_readme(cfg: &LabKitConfig, options: &RaspberryPiBundleOptions) -> String {
 
 **Profile:** `{profile}`
 **Stack:** {companions}
-**Target:** Raspberry Pi 5 (recommended, 4–8 GB) or Pi 4 (4 GB minimum)
+**Target:** Raspberry Pi 5, 8 GB RAM (16 GB accepted), 64-bit OS, USB SSD or NVMe
 
-This directory is a **portable install kit**. Copy it to a USB stick, clone it onto the Pi, or `scp -r` it, then run `./install-on-pi.sh` **on the Pi**.
+This directory is a **portable install kit**. Copy it to the Pi, then run `./install-on-pi.sh` **on the Pi**. The script refuses a different board, a 32-bit OS, under 7000 MB `MemTotal`, and a data directory on microSD (`mmcblk`).
 
 ## Hardware checklist
 
 | Item | Guidance |
 |------|----------|
-| Board | **Pi 5** preferred; Pi 4 works for Beacon+DRS only |
-| RAM | 4 GB minimum; **8 GB** if Solum or ga4gh-infra is included |
-| Storage | Prefer **USB SSD** for `{data}` (SQLite + objects); avoid microSD for heavy ingest |
+| Board | Raspberry Pi 5 |
+| RAM | 8 GB (16 GB accepted) |
+| Storage | USB SSD or NVMe for `{data}` (SQLite + objects) |
 | OS | Raspberry Pi OS **64-bit** or Ubuntu 24.04 ARM64 |
+| Power | 27 W USB-C supply and Active Cooler |
 | Network | Needed once to pull the pinned `FERRUM_IMAGE` from `.env` (and companions) |
 
 ## Install on the Pi
@@ -351,20 +354,33 @@ arch="$(uname -m)"
 case "$arch" in
   aarch64|arm64) ;;
   *)
-    echo "warning: architecture is $arch (expected aarch64). Continuing anyway." >&2
+    echo "error: need a 64-bit ARM OS (aarch64). Detected: $arch" >&2
+    exit 1
     ;;
 esac
 
-if [[ -f /proc/meminfo ]]; then
-  ram_mb="$(awk '/MemTotal/ {print int($2/1024)}' /proc/meminfo)"
-  echo "==> Detected RAM: ${ram_mb} MB"
-  if [[ "$ram_mb" -lt 3500 ]]; then
-    echo "error: need at least ~4 GB RAM for field-edge (got ${ram_mb} MB)" >&2
+model=""
+if [[ -r /proc/device-tree/model ]]; then
+  model="$(tr -d '\0' < /proc/device-tree/model)"
+fi
+case "$model" in
+  "Raspberry Pi 5"*) ;;
+  *)
+    echo "error: supported field board is Raspberry Pi 5, 8 GB, 64-bit. Detected: ${model:-unknown}" >&2
     exit 1
-  fi
-  if [[ "$ram_mb" -lt 7000 ]] && grep -q 'solum-sidecar\|aai-broker' docker-compose.yml 2>/dev/null; then
-    echo "warning: <8 GB RAM with Solum/ga4gh-infra — expect swap pressure; prefer Pi 5 8GB." >&2
-  fi
+    ;;
+esac
+
+if [[ ! -f /proc/meminfo ]]; then
+  echo "error: /proc/meminfo missing; cannot confirm 8 GB RAM" >&2
+  exit 1
+fi
+ram_mb="$(awk '/MemTotal/ {print int($2/1024)}' /proc/meminfo)"
+echo "==> Detected RAM: ${ram_mb} MB ($model)"
+# Pi 5 8 GB reports roughly 7500+ MB MemTotal. 4 GB boards sit near 4000.
+if [[ "$ram_mb" -lt 7000 ]]; then
+  echo "error: need Raspberry Pi 5 with 8 GB RAM or more (MemTotal ${ram_mb} MB)" >&2
+  exit 1
 fi
 
 if ! command -v docker >/dev/null 2>&1; then
@@ -404,6 +420,14 @@ DATA_DIR="${FERRUM_DATA_DIR:-$HOME/.ferrum}"
 DATA_DIR="${DATA_DIR/#\$HOME/$HOME}"
 export FERRUM_DATA_DIR="$DATA_DIR"
 mkdir -p "$DATA_DIR/objects"
+data_dev="$(df -P "$DATA_DIR" | awk 'NR==2 {print $1}')"
+case "$data_dev" in
+  *mmcblk*)
+    echo "error: $DATA_DIR is on microSD ($data_dev). Mount a USB SSD or NVMe and set FERRUM_DATA_DIR to that mount." >&2
+    exit 1
+    ;;
+esac
+echo "==> Data device: $data_dev"
 
 echo "==> FERRUM_IMAGE=$FERRUM_IMAGE"
 echo "==> Data directory: $DATA_DIR"
@@ -461,8 +485,16 @@ mod tests {
             .join("deploy/docker-compose/docker-compose.gateway.yml")
             .is_file());
         assert!(out.join("deploy/docker-compose/edge.yml").is_file());
+        let readme = fs::read_to_string(out.join("README.md")).unwrap();
+        assert!(readme.contains("Raspberry Pi 5, 8 GB"));
+        assert!(!readme.contains("Pi 4"));
+        let script = fs::read_to_string(out.join("install-on-pi.sh")).unwrap();
+        assert!(script.contains("7000"));
+        assert!(script.contains("mmcblk"));
+        assert!(script.contains("Raspberry Pi 5"));
         let env = fs::read_to_string(out.join(".env")).unwrap();
         assert!(env.contains("FERRUM_IMAGE=ghcr.io/synapticfour/ferrum:"));
+        assert!(env.contains("3072"));
         assert!(!env.contains(":latest"));
         let compose = fs::read_to_string(out.join("docker-compose.yml")).unwrap();
         assert!(compose.contains("ferrum-gateway"));

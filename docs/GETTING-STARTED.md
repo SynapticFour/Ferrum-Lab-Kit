@@ -39,7 +39,7 @@ lab-kit generate compose --config lab-kit.toml --fragments deploy/docker-compose
 docker compose -f docker-compose.yml up -d
 ```
 
-Raspberry Pi: `make pi-kit` then on the device `cd pi-kit && ./install-on-pi.sh`. Guide: [RASPBERRY-PI.md](RASPBERRY-PI.md).
+Field board: Raspberry Pi 5, 8 GB, 64-bit, USB SSD or NVMe. `make pi-kit` then on the device `cd pi-kit && ./install-on-pi.sh`. Guide: [RASPBERRY-PI.md](RASPBERRY-PI.md).
 
 Optional BRA workbench (bring `BRA_IMAGE`; not a combo SKU): `lab-kit init --profile bra-companion --non-interactive` then `lab-kit generate compose --with-bra`. See [BRA-CO-DEPLOY.md](BRA-CO-DEPLOY.md).
 

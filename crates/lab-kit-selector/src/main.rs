@@ -265,7 +265,8 @@ enum GenerateTarget {
         with_ga4gh_infra: bool,
         #[arg(long)]
         with_solum: bool,
-        #[arg(long, default_value_t = 4)]
+        /// Board RAM in GB. Supported field board is 8 or more. Ferrum stays capped at 3072 MB.
+        #[arg(long, default_value_t = 8)]
         ram_gb: u32,
         #[arg(long)]
         data_dir: Option<String>,
@@ -421,6 +422,11 @@ async fn main() -> anyhow::Result<()> {
                 ram_gb,
                 data_dir,
             } => {
+                if ram_gb < 8 {
+                    anyhow::bail!(
+                        "supported field board is Raspberry Pi 5 with 8 GB RAM or more (got {ram_gb} GB)"
+                    );
+                }
                 let data = data_dir.clone().unwrap_or_else(|| "~/.ferrum".into());
                 let mut cfg = resolve_pi_config(config.as_ref(), &profile, ram_gb, data_dir)?;
                 if with_ga4gh_infra && !lab_kit_core::is_co_deploy(&cfg) {
@@ -835,8 +841,19 @@ async fn init_non_interactive(
     }
 
     let template = load_profile_template(name).context("load profile template")?;
-    let ram = ram_gb.unwrap_or(4);
-    let max_memory_mb = ram.saturating_mul(768); // leave ~25% for OS on Pi
+    let field_edge = name.starts_with("field-edge");
+    let ram = ram_gb.unwrap_or(if field_edge { 8 } else { 4 });
+    if field_edge && ram < 8 {
+        anyhow::bail!(
+            "field-edge expects the supported field board: Raspberry Pi 5, 8 GB RAM or more (got {ram} GB)"
+        );
+    }
+    // On field-edge, Ferrum's share of the 8 GB board stays 3072 MB so Solum and ga4gh-infra fit.
+    let max_memory_mb = if field_edge {
+        3072
+    } else {
+        ram.saturating_mul(768)
+    };
     let data = data_dir.unwrap_or_else(|| "~/.ferrum".into());
 
     let (lab_name, dataset_id) = match name {
@@ -889,8 +906,13 @@ fn resolve_pi_config(
         );
     }
 
+    if ram_gb < 8 {
+        anyhow::bail!(
+            "supported field board is Raspberry Pi 5 with 8 GB RAM or more (got {ram_gb} GB)"
+        );
+    }
     let template = load_profile_template(profile).context("load profile template")?;
-    let max_memory_mb = ram_gb.saturating_mul(768);
+    let max_memory_mb = 3072u32;
     let data = data_dir.unwrap_or_else(|| "~/.ferrum".into());
     template
         .into_lab_kit_config(
@@ -1088,10 +1110,15 @@ async fn init_field_edge_wizard(
     };
 
     let ram_gb: u32 = Input::with_theme(theme)
-        .with_prompt("Expected RAM (GB)?")
-        .default(4)
+        .with_prompt("Edge board RAM (GB)? Supported field board is Raspberry Pi 5 with 8")
+        .default(8)
         .interact_text()?;
-    let max_memory_mb = ram_gb.saturating_mul(768);
+    if ram_gb < 8 {
+        anyhow::bail!(
+            "supported field board is Raspberry Pi 5 with 8 GB RAM or more (got {ram_gb} GB)"
+        );
+    }
+    let max_memory_mb = 3072u32;
 
     let data_dir: String = Input::with_theme(theme)
         .with_prompt("Data directory?")

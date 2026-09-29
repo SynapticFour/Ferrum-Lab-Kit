@@ -36,7 +36,8 @@ Oder einmalig: `./install-edge.sh` / `make up`.
 ```bash
 lab-kit generate raspberry-pi --output ./pi-kit   # oder: make pi-kit
 # Auf dem Pi: cd pi-kit && ./install-on-pi.sh
-lab-kit generate pi --with-solum --ram-gb 8 -o ./pi-kit
+lab-kit generate pi --with-solum -o ./pi-kit
+# Feld-Board: Raspberry Pi 5, 8 GB, 64-bit, USB-SSD oder NVMe
 ```
 
 Details: [docs/RASPBERRY-PI.md](docs/RASPBERRY-PI.md).

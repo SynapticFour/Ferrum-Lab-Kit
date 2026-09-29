@@ -40,7 +40,7 @@ S3 keys in `lab-kit.toml` are **not** copied into Compose. Set `FERRUM_S3_ACCESS
 
 ## Bring your own hardware (Raspberry Pi / ARM64)
 
-**Ferrum Lab Kit** and **Ferrum** support **ARM64** (Raspberry Pi 5, Apple Silicon, ARM cloud) and **x86_64**. Use the **`field-edge`** profile:
+**Ferrum Lab Kit** and **Ferrum** run on **ARM64** and **x86_64**. The field board is a **Raspberry Pi 5, 8 GB, 64-bit**, data on **USB SSD or NVMe**. Apple Silicon and ARM cloud are lab paths. Use the **`field-edge`** profile:
 
 ```bash
 ./install-edge.sh
