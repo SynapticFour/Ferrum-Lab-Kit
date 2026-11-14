@@ -1,5 +1,15 @@
 # Ferrum Lab Kit
 
+Die englische Seite [README.md](README.md) ist die Grundlage. Diese Datei ist eine deutsche Lesart und behält die Befehlstabellen.
+
+Ferrum Lab Kit schreibt die Startdateien für einen bereits gebauten Ferrum-Dienst, damit eine Einrichtung den Dienst auf den eigenen Rechnern starten kann, ohne die Schnittstellen neu zu bauen.
+
+Für eine Person, die Ferrum in Betrieb nimmt, und für eine Person, die diesen Betrieb prüft.
+
+**Status: Frühe Nutzung.** Registry: TOOL-LAB-KIT-STATUS-001. Die ältere Zeile „Early access“ ist dieselbe Stufe. Frühe Nutzung ist kein Gütesiegel.
+
+Der Pin in `config/ci/ferrum-revision.txt` ist Ferrum-Tag **v0.3.2** (`2bd147c99735866ac9cfb530f62ef984c8efce8b`). Der Pin ist absichtlich. Er ist die Datei auf diesem Commit, kein Versprechen, dass ein späterer Commit denselben Tag behält, und keine Aussage, dass der Standardzweig von Ferrum v0.3.2 ist. Der Standardzweig von Ferrum ist neuer. Der Pin ist nicht „aktuelles Ferrum ist v0.3.2“.
+
 **Ferrum Lab Kit** ist ein **Compose-/Helm-/systemd-On-Ramp** zu [Ferrum](https://github.com/SynapticFour/Ferrum): es erzeugt Deploy-YAML, Env-Dateien und Operator-Tools um das **Ferrum-Monolith-Image** (`ghcr.io/synapticfour/ferrum`, SHA-Pin). Es ist ein **eigenes Repository** (kein Fork) und **implementiert keine GA4GH-Protokoll-Logik**. Runtime-I/O (Beacon/DRS/WES/…) ist der Ferrum-Container.
 
 Adapter-Traits (`lab-kit-adapters`) und OIDC-Helfer (`lab-kit-auth`) sind **Lab-Kit-Bibliotheken**. `lab-kit generate` schreibt POSIX/S3/SLURM auf Ferrum-Env. Prüfung: `lab-kit adapters check`. **Ferrum hängt nicht als Crate von diesen Bibliotheken ab.**
