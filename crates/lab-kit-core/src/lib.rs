@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: Apache-2.0
 //! Core configuration, service registry, and health aggregation for **Ferrum Lab Kit**.
 //! No GA4GH business logic — wiring and operational state only.
 

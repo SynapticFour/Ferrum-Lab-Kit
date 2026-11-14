@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: Apache-2.0
 use std::sync::{Arc, RwLock};
 use std::time::Duration;
 

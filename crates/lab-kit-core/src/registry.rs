@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: Apache-2.0
 //! Which GA4GH surfaces are active and how to reach them (deployed vs external).
 
 use std::fmt;

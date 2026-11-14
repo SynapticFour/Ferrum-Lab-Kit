@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: Apache-2.0
 //! Default Ferrum container image pins (must not float `:latest` for generated artefacts).
 //!
 //! Named variants (`full` / `edge` / `edge-infra`) match Ferrum GHCR tags. See

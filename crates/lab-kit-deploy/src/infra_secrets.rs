@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: Apache-2.0
 //! Generate ga4gh-infra signing keys and API secrets locally (never committed).
 
 use std::fs;

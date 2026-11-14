@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: Apache-2.0
 //! SLURM client on a **remote** login node via the system `ssh` binary (`sbatch`, `squeue`).
 //!
 //! # Auth

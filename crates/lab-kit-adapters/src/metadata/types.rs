@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: Apache-2.0
 //! Row types for Lab Kit metadata tables (`service_registry`, `conformance_runs`, `license_activations`).
 
 use chrono::{DateTime, Utc};

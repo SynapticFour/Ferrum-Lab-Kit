@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: Apache-2.0
 //! Docker-backed Postgres checks for [`crate::metadata::PostgresMetadataStore`].
 //!
 //! Run locally (requires Docker):

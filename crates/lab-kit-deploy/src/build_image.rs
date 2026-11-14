@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: Apache-2.0
 //! Clone pinned Ferrum (optional) and `docker build` a named gateway variant.
 
 use std::path::{Path, PathBuf};

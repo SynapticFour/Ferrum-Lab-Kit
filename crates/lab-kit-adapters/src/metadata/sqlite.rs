@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: Apache-2.0
 //! SQLite metadata store using `sqlx` (same logical schema as PostgreSQL).
 
 use std::str::FromStr as _;

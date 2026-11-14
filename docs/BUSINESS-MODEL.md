@@ -1,23 +1,17 @@
-# Business model (open core)
+# Business model
 
-Licensed under **BUSL-1.1** with parameters aligned to [Ferrum](https://github.com/SynapticFour/Ferrum) — see [LICENSE](../LICENSE). **BUSL is not an OSI Open Source license.** **Change Date:** four years from each version’s first public distribution. Non-commercial research and academic use is permitted under the **Additional Use Grant**.
+The software is free under the Apache License, Version 2.0. See [LICENSE](../LICENSE) and [LICENSING-HISTORY.md](../LICENSING-HISTORY.md). Paid are services and commitments. Prices are on the [consulting page](https://synapticfour.com/en/consulting/).
 
-## Free (source-available under BUSL terms)
+The pinned Ferrum version (v0.3.2) was released under BUSL-1.1. See Ferrum's [LICENSING-HISTORY.md](https://github.com/SynapticFour/Ferrum/blob/main/LICENSING-HISTORY.md). This repository does not change that pin.
 
-- Selective GA4GH **deployment generation** (Compose, Helm, systemd) around the Ferrum monolith.
-- Config schema, `lab-kit-auth` helpers, adapter **libraries** (not Ferrum runtime).
-- HelixTest **runner hook** and **JSON** conformance report (empty / skip-only results are **not** a pass).
-- Documentation and example profiles.
+This page is not legal advice and not a price list.
 
-## Commercial (Synaptic Four)
+## What the code does
 
-- **PDF conformance report** (`lab-kit-report`) — requires a **signed** Ed25519 token `flk1.<payload>.<sig>` in **`FERRUM_LAB_KIT_LICENSE_KEY`** and **`lab-kit license activate`**. Unsigned `flk_` prefixes and SHA-256 self-activation are rejected. Verify with `FERRUM_LAB_KIT_LICENSE_PUBKEY` (64-char hex) or `keys/license-ed25519.pub`.
-- **Multi-site federation tooling** (Beacon Network across deployments) — planned product boundary.
-- **Managed deployment & sign-off** — consulting engagement.
-- **Priority support SLA** — paid support channel.
+- It generates Compose, Helm, and systemd around the pinned Ferrum image.
+- JSON conformance output is not behind a key.
+- PDF conformance output checks a signed `FERRUM_LAB_KIT_LICENSE_KEY` (`flk1.<payload>.<sig>`) and `lab-kit license activate`, because that is what `lab-kit-report` does. The key does not gate running a GA4GH stack.
 
-Lab Kit **comes with Ferrum**. It is not a fifth SKU. Written Ferrum commercial license: [Ferrum COMMERCIAL.md](https://github.com/SynapticFour/Ferrum/blob/main/docs/COMMERCIAL.md).
+Lab Kit comes with Ferrum. It is not a separate product you buy a copyright licence for. Solum stays under the Business Source License 1.1 in its own repository.
 
-## Non-negotiable
-
-The **license key must never gate** running a GA4GH stack. Only the **PDF report output** (and future paid-only tooling) is gated.
+Contact: [contact@synapticfour.com](mailto:contact@synapticfour.com).

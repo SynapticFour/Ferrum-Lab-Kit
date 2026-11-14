@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: Apache-2.0
 //! Generate an Ed25519 license-issuing keypair.
 //! Public key → stdout (hex, 32 bytes). Private seed is written to
 //! `config/secrets/license-ed25519.seed` (gitignored) when run from the repo root.

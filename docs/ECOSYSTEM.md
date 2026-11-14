@@ -8,8 +8,8 @@ Ferrum, ga4gh-infra, Solum, and BioResearch Assistant sit alongside Helix/HelixT
 
 | Kind | Repository | Role | License |
 |------|------------|------|---------|
-| With Ferrum | **Ferrum-Lab-Kit** (this repo) | Subset install / on-ramp | BUSL-1.1 |
-| Product | [Ferrum](https://github.com/SynapticFour/Ferrum) | GA4GH data/compute | BUSL-1.1 |
+| With Ferrum | **Ferrum-Lab-Kit** (this repo) | Subset install / on-ramp | Apache-2.0 |
+| Product | [Ferrum](https://github.com/SynapticFour/Ferrum) | GA4GH data/compute | Apache-2.0 |
 | Product | [ga4gh-infra](https://github.com/SynapticFour/ga4gh-infra) | Identity plane | Apache-2.0 |
 | Ambassador | [HelixTest](https://github.com/SynapticFour/HelixTest) | Conformance CLI | Apache-2.0 |
 | Proof | [Ferrum-GA4GH-Demo](https://github.com/SynapticFour/Ferrum-GA4GH-Demo) | Local `./run` smoke | Apache-2.0 |
