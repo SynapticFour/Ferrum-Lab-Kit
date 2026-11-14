@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: Apache-2.0
 //! Metadata persistence for Lab Kit operational state (not Ferrum’s application schema).
 
 mod postgres;

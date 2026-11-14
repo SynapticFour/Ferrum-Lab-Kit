@@ -1,6 +1,8 @@
 # Contributing
 
-Ferrum Lab Kit is licensed under the **Business Source License 1.1** (BUSL-1.1), with **parameters and grant text aligned to [Ferrum](https://github.com/SynapticFour/Ferrum)** (product name and repo URL adapted); see [LICENSE](LICENSE).
+Ferrum Lab Kit is free under the Apache License, Version 2.0. See [LICENSE](LICENSE).
+
+Contributions need a Developer Certificate of Origin sign-off. Add it with `git commit -s`. The text is at https://developercertificate.org/.
 
 ## Development
 
@@ -8,10 +10,12 @@ Ferrum Lab Kit is licensed under the **Business Source License 1.1** (BUSL-1.1),
 cargo fmt --all
 cargo clippy --workspace --all-targets -- -D warnings
 cargo test --workspace
-python3 scripts/spdx-rs.py . --license BUSL-1.1 --check
+python3 scripts/spdx-rs.py . --license Apache-2.0 --check
 ```
 
-New first-party Rust files start with `// SPDX-License-Identifier: BUSL-1.1`.
+New first-party Rust files start with `// SPDX-License-Identifier: Apache-2.0`.
+
+Paid are services and commitments. Prices are on the [consulting page](https://synapticfour.com/en/consulting/). The pinned Ferrum version was released under BUSL-1.1; see Ferrum's LICENSING-HISTORY.md.
 
 Or `./install.sh` for a release build of the `lab-kit` binary (see [README](README.md#install-cli-optional)).
 
@@ -28,7 +32,7 @@ cargo test -p lab-kit-adapters --features integration-tests postgres_metadata_ro
 - **Do not** re-implement GA4GH service logic here — integrate [Ferrum](https://github.com/SynapticFour/Ferrum) crates.
 - **Docs:** tutorials, checklists, architecture explanations, and reference Compose belong here; link to Ferrum for product behaviour. Start from the [documentation index](docs/README.md).
 - Prefer **Rust** for tooling; keep shell to trivial bootstrap only.
-- Open-core boundary: **PDF conformance reports** are license-gated via a **signed** `FERRUM_LAB_KIT_LICENSE_KEY` (`flk1.<payload>.<sig>`) plus `lab-kit license activate`; JSON and GA4GH deployments are not.
+- PDF conformance reports check a signed `FERRUM_LAB_KIT_LICENSE_KEY` (`flk1.<payload>.<sig>`) plus `lab-kit license activate`. JSON output and GA4GH deployments do not.
 
 ## Identity
 

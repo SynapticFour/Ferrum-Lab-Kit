@@ -7,15 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- Licence is Apache-2.0 from this commit. Versions released before this change were published under the Business Source License 1.1. See [LICENSING-HISTORY.md](LICENSING-HISTORY.md). The Ferrum pin stays v0.3.2, which was released under BUSL-1.1.
 - **Field board** — Pi kit, `install-on-pi.sh`, and `field-edge` memory cap speak one hardware line: Raspberry Pi 5, 8 GB (16 GB accepted), 64-bit, USB SSD or NVMe. The installer refuses other boards, 32-bit OS, `MemTotal` under 7000 MB, and a data directory on `mmcblk`. Ferrum stays at 3072 MB so Solum Track A and ga4gh-infra fit on that board. No installer profile for Mk1C, Illumina, or rack servers.
 - Legacy per-service Compose fragments and Helm `services.*` images stay unpublished placeholder names. `:latest` there is not a pin; there is no public `synapticfour/ferrum-wes` (etc.) tag to invent. Default path remains `gateway.image` SHA `2bd147c9`.
 - **h2 0.4.16+** — cargo-deny RUSTSEC-2026-0258 (unbounded empty DATA frames). Transitive via hyper; lockfile bump only. Remaining `h2` 0.3.27 (AWS smithy / hyper 0.14) has no patch; ignored in `deny.toml`.
 - HelixTest CI pin **v0.1.3** (`1832c04`). Ferrum image pin **v0.3.2** (`2bd147c9`).
-- Written Ferrum commercial license (Lab Kit is not sold separately): [Ferrum COMMERCIAL.md](https://github.com/SynapticFour/Ferrum/blob/main/docs/COMMERCIAL.md).
+- The software is free under Apache-2.0. Paid are services and commitments. Lab Kit is not a separate copyright licence. Prices are on the consulting page. [Ferrum COMMERCIAL.md](https://github.com/SynapticFour/Ferrum/blob/main/docs/COMMERCIAL.md).
 - **`federated-node` profile** — Beacon v2 boolean+count, DRS, Passport-on-DRS (ga4gh-infra), service-registry auto-register, Traefik TLS on **8443**. TES/WES off unless you opt in. Compose-up is **not** an EGA/GDI/ELIXIR membership card. [docs/FEDERATED-NODE.md](docs/FEDERATED-NODE.md).
 - **`archive-submitter` profile** — Ferrum-edge + Metadata Store, no WES/TES. Writes reviewable GHGA/EGA/H3Africa bundles + DRS IDs via Ferrum `ferrum meta export`. Does **not** upload to EGA. Not a fifth SKU. `lab-kit init --profile archive-submitter --non-interactive`.
 - **BRA workbench companion** — `[bra]` config, `bra.yml`, CLI `--with-bra`, profile `bra-companion`. Lab Kit does not ship a BRA image (`BRA_IMAGE` required). Not a combo SKU. [docs/BRA-CO-DEPLOY.md](docs/BRA-CO-DEPLOY.md).
-- **SPDX on first-party `.rs`** — `// SPDX-License-Identifier: BUSL-1.1`; CI `spdx.yml`.
+- **SPDX on first-party `.rs`** — `// SPDX-License-Identifier: Apache-2.0`; CI `spdx.yml`.
 - Pin Ferrum **v0.3.2** (`2bd147c9`) for `ferrum-core` and GHCR variant tags (full / edge / edge-infra).
 - Solum sidecar pin **v0.1.0** (same tag as Solum-Demo). Historical companion SHA `6b4519c` is retired.
 - ga4gh-infra Compose image tags **0.2.3** (`ga4gh-infra-v0.2.3` stack publish).

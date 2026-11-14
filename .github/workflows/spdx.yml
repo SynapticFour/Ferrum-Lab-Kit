@@ -13,4 +13,4 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - name: Check SPDX-License-Identifier on first-party Rust
-        run: python3 scripts/spdx-rs.py . --license BUSL-1.1 --check
+        run: python3 scripts/spdx-rs.py . --license Apache-2.0 --check

@@ -18,7 +18,7 @@ It writes Compose, Helm, and systemd around a pinned Ferrum image. It does not i
 
 ## Licence
 
-Research, teaching, and internal research are free of charge when that use is not a service for third parties. Non-production use is allowed. The source can be read. This is not an open licence. After four years each version becomes the Apache License 2.0. A commercial service needs written permission. Registry: TOOL-LAB-KIT-LICENSE-001. Not legal advice. The file is [LICENSE](../LICENSE).
+Ferrum Lab Kit is free under the Apache License, Version 2.0. Paid are services and commitments. Prices are on the [consulting page](https://synapticfour.com/en/consulting/). The pinned Ferrum version was released under BUSL-1.1; see Ferrum's [LICENSING-HISTORY.md](https://github.com/SynapticFour/Ferrum/blob/main/LICENSING-HISTORY.md). Versions of this repository released before this change were published under the Business Source License 1.1; see [LICENSING-HISTORY.md](../LICENSING-HISTORY.md). The file is [LICENSE](../LICENSE).
 
 ## What this page does not record
 

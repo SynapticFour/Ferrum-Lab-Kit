@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: Apache-2.0
 //! Portable Raspberry Pi field-edge install kit.
 
 use std::fs;

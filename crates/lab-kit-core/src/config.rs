@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: Apache-2.0
 //! Canonical `lab-kit.toml` schema (see repository `config/lab-kit.example.toml`).
 
 use serde::{Deserialize, Serialize};

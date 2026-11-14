@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: Apache-2.0
 //! Conformance report generation from HelixTest-style JSON.
 //! **PDF** output requires a vendor-signed `flk1.` token in
 //! `FERRUM_LAB_KIT_LICENSE_KEY` plus `lab-kit license activate`.

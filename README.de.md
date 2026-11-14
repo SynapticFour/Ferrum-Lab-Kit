@@ -115,7 +115,7 @@ Mehr in [docs/GA4GH-STANDARDS.md](docs/GA4GH-STANDARDS.md).
 
 ## Open-Core-Modell
 
-**GA4GH-Deploy-Tooling** steht unter **BUSL-1.1** (siehe [LICENSE](LICENSE)) — BUSL ist **kein** OSI-Open-Source-Lizenztext; nicht-kommerzielle Forschung ist über den Additional Use Grant erlaubt. **PDF-Konformitätsberichte** brauchen einen **signierten** `FERRUM_LAB_KIT_LICENSE_KEY` (`flk1.<payload>.<sig>`) und **`lab-kit license activate`**. JSON-Berichte und der GA4GH-Stack sind nicht lizenzgeschützt. Details: [docs/BUSINESS-MODEL.md](docs/BUSINESS-MODEL.md).
+Die Software ist frei unter der Apache License, Version 2.0 (siehe [LICENSE](LICENSE) und [LICENSING-HISTORY.md](LICENSING-HISTORY.md)). Die gepinnte Ferrum-Version wurde unter BUSL-1.1 veröffentlicht; siehe Ferrums [LICENSING-HISTORY.md](https://github.com/SynapticFour/Ferrum/blob/main/LICENSING-HISTORY.md). Bezahlt werden Dienstleistungen und Zusagen. Preise stehen auf der [Beratungsseite](https://synapticfour.com/de/consulting/). **PDF-Konformitätsberichte** prüfen weiterhin einen signierten `FERRUM_LAB_KIT_LICENSE_KEY` (`flk1.<payload>.<sig>`) und **`lab-kit license activate`**, weil der Code das tut. JSON-Berichte sind nicht an diesen Schlüssel gebunden. Details: [docs/BUSINESS-MODEL.md](docs/BUSINESS-MODEL.md).
 
 ## CLI (`lab-kit`)
 

@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: Apache-2.0
 //! Probe configured Lab Kit backends (POSIX / SQLite / SLURM presence). These
 //! adapters are Lab Kit libraries; Ferrum owns runtime GA4GH I/O.
 

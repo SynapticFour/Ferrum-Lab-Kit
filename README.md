@@ -72,7 +72,11 @@ The full index, one line for every file under `docs/`, is [docs/README.md](docs/
 
 ## Licence
 
-Research, teaching, and an institution's internal research are free of charge, as long as that is not a service for third parties. Non-production use is allowed. The source can be read, and this is not an open licence. After four years each version becomes the Apache License 2.0. A commercial service needs written permission. Registry: TOOL-LAB-KIT-LICENSE-001. Not legal advice. The file is [LICENSE](LICENSE).
+Ferrum Lab Kit is free under the Apache License, Version 2.0. The file is [LICENSE](LICENSE). Versions released before this change were published under the Business Source License 1.1; see [LICENSING-HISTORY.md](LICENSING-HISTORY.md).
+
+The pinned Ferrum version was released under BUSL-1.1; see Ferrum's [LICENSING-HISTORY.md](https://github.com/SynapticFour/Ferrum/blob/main/LICENSING-HISTORY.md).
+
+Paid are services and commitments. Prices are on the [consulting page](https://synapticfour.com/en/consulting/).
 
 ## Cite
 

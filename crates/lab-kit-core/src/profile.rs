@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: Apache-2.0
 //! Deployment profile templates (e.g. `config/profiles/field-edge.toml`) and expansion
 //! into canonical [`LabKitConfig`].
 
