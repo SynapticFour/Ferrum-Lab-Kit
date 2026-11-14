@@ -20,6 +20,16 @@ ignore = [
     { id = "RUSTSEC-2026-0104", reason = "rustls 0.21 CRL parse panic; same 0.24 TLS stack" },
     # h2 0.3.27 via hyper 0.14 / aws-smithy; patched line is h2 0.4.19 already in the lockfile.
     { id = "RUSTSEC-2026-0258", reason = "h2 0.3 via AWS smithy hyper 0.14 stack; no 0.3 patch (fixed in h2 >=0.4.16, which we have)" },
+    # rustls 0.23.46, rustls-webpki 0.103.17, tokio 1.54.1, and webpki-roots 1.0.12 are locked.
+    # The copies below stay because a parent crate pins an older major with no patch on that line.
+    { id = "RUSTSEC-2026-0346", reason = "rustls 0.21 Debug of TLS secrets; aws-smithy hyper-rustls 0.24 has no 0.21 patch" },
+    { id = "RUSTSEC-2026-0349", reason = "rustls 0.21 ServerHello downgrade; same hyper-rustls 0.24 stack" },
+    { id = "RUSTSEC-2026-0382", reason = "rustls-webpki 0.101 via rustls 0.21; 0.103.17 is already locked for the 0.23 line" },
+    { id = "RUSTSEC-2026-0387", reason = "crypto-bigint 0.5 via jsonwebtoken 10 / elliptic-curve 0.13; patched line is >=0.7.6" },
+    { id = "RUSTSEC-2026-0459", reason = "sqlx 0.8 pins libsqlite3-sys 0.30; patched line is 0.39. Lab Kit opens its own metadata file, not a caller-supplied database and WAL" },
+    { id = "RUSTSEC-2026-0440", reason = "astral-tokio-tar unmaintained via testcontainers 0.27; advisory says no safe upgrade" },
+    { id = "RUSTSEC-2026-0441", reason = "pin-utils archived; aws-smithy-http and hyper have no replacement release" },
+    { id = "RUSTSEC-2024-0449", reason = "unsafe-libyaml via serde_yaml 0.9 in lab-kit-deploy; no patched release" },
 ]
 
 [licenses]
