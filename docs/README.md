@@ -1,44 +1,50 @@
 # Ferrum Lab Kit — documentation index
 
-## Concepts & reproducibility
+Every document under `docs/`, grouped as a tutorial, how-to guides, reference, and explanation. One line each.
 
-| Doc | What it’s for |
-|-----|----------------|
-| [ECOSYSTEM.md](ECOSYSTEM.md) | **Five-repo stack** — roles, ports, quick starts (mirrored in each SynapticFour GA4GH repo) |
-| [IMAGE-PIN-POLICY.md](IMAGE-PIN-POLICY.md) | When `:latest` is unacceptable; pin rules for pilots |
-| [GA4GH-WORKFLOW-PRIMER.md](GA4GH-WORKFLOW-PRIMER.md) | **TRS → WES → TES → engine** control flow, **DRS** metadata vs bytes, **nested Docker** paths, **WDL / CWL / Nextflow** at a glance, **amd64 vs arm64**, happy-path steps — patterns + links to **[Ferrum `GA4GH.md`](https://github.com/SynapticFour/Ferrum/blob/main/docs/GA4GH.md)** (authoritative endpoints) |
-| [GA4GH-STANDARDS.md](GA4GH-STANDARDS.md) | Short mapping of GA4GH surfaces to lab use cases |
-| [OPERATIONS-CHECKLIST.md](OPERATIONS-CHECKLIST.md) | **Runbook checklist**: env vars, Docker, network, storage, naming |
+## Tutorial
 
-## Architecture & deployment
+| Document | What it is |
+|----------|------------|
+| [GETTING-STARTED.md](GETTING-STARTED.md) | Clone, `make up`, and the optional CLI. |
 
-| Doc | What it’s for |
-|-----|----------------|
-| [ARCHITECTURE.md](ARCHITECTURE.md) | Lab Kit crates and how config drives deploy artefacts |
-| [DEPLOYMENT-TARGETS.md](DEPLOYMENT-TARGETS.md) | Where Lab Kit aims to run (compose, K8s, systemd, …) |
-| [RASPBERRY-PI.md](RASPBERRY-PI.md) | **Pi field kit** — `lab-kit generate raspberry-pi`, on-device install, Solum/hub boundaries |
-| [FEDERATED-NODE.md](FEDERATED-NODE.md) | **Technical federated node** — Beacon+DRS+infra+TLS; operator checklists, not a membership badge |
-| [BRING-YOUR-OWN.md](BRING-YOUR-OWN.md) | External endpoints vs generated stacks |
+## How-to guides
 
-## Integration & identity
+| Document | What it is |
+|----------|------------|
+| [RASPBERRY-PI.md](RASPBERRY-PI.md) | Generate a Pi field kit and install it on the device. |
+| [OPERATIONS-CHECKLIST.md](OPERATIONS-CHECKLIST.md) | Environment, Docker, network, storage, and names. |
+| [BRING-YOUR-OWN.md](BRING-YOUR-OWN.md) | Point at endpoints you already run, instead of a generated stack. |
+| [SOLUM-CO-DEPLOY.md](SOLUM-CO-DEPLOY.md) | Optional Solum sidecar. Consent stays in Solum. |
+| [BRA-CO-DEPLOY.md](BRA-CO-DEPLOY.md) | Optional BioResearch Assistant companion. Not a combined product. |
+| [FEDERATED-NODE.md](FEDERATED-NODE.md) | Beacon, DRS, infra, and TLS for a node. Not a membership badge. |
+| [FERRUM-GA4GH-DEMO-OVERLAY.md](FERRUM-GA4GH-DEMO-OVERLAY.md) | Compose overlay shared with the laptop demo. |
+| [ELIXIR-AAI.md](ELIXIR-AAI.md) | Notes toward LS Login and Passports. |
+| [GA4GH-WORKFLOW-PRIMER.md](GA4GH-WORKFLOW-PRIMER.md) | TRS, WES, TES, and engines, with links to Ferrum for the endpoints. |
+| [CONFORMANCE.md](CONFORMANCE.md) | HelixTest reports. JSON is open. PDF needs the licence token. |
 
-| Doc | What it’s for |
-|-----|----------------|
-| [FERRUM-INTEGRATION.md](FERRUM-INTEGRATION.md) | Git pin to `ferrum-core`, monolith images, **`lab-kit ingest`**, ga4gh-infra / Solum wiring |
-| [SOLUM-CO-DEPLOY.md](SOLUM-CO-DEPLOY.md) | Optional Solum sidecar companion (consent teeth) |
-| [FERRUM-GA4GH-DEMO-OVERLAY.md](FERRUM-GA4GH-DEMO-OVERLAY.md) | Ferrum **GA4GH Compose overlay** (WES/TES Docker, workdirs, Crypt4GH) — mirrors under `contrib/ferrum/` + patch |
-| [ELIXIR-AAI.md](ELIXIR-AAI.md) | LS Login / Passport-oriented notes |
+## Reference
 
-## Conformance & governance
+| Document | What it is |
+|----------|------------|
+| [IMAGE-PIN-POLICY.md](IMAGE-PIN-POLICY.md) | When a floating tag is refused, and how pins are set. |
+| [FERRUM-INTEGRATION.md](FERRUM-INTEGRATION.md) | The git pin, the image variants, and `lab-kit ingest`. |
+| [IDENTITY.md](IDENTITY.md) | Names and versions this repository uses for itself. |
+| [GA4GH-STANDARDS.md](GA4GH-STANDARDS.md) | Short map from a GA4GH surface to a lab task. |
+| [ECOSYSTEM.md](ECOSYSTEM.md) | This repository beside Ferrum, ga4gh-infra, and the demo. |
+| [BUSINESS-MODEL.md](BUSINESS-MODEL.md) | Open-core boundary. Not a price list. |
 
-| Doc | What it’s for |
-|-----|----------------|
-| [CONFORMANCE.md](CONFORMANCE.md) | HelixTest, reports, JSON vs PDF |
-| [BUSINESS-MODEL.md](BUSINESS-MODEL.md) | Open-core boundary |
+## Explanation
+
+| Document | What it is |
+|----------|------------|
+| [ARCHITECTURE.md](ARCHITECTURE.md) | Crates, and how configuration becomes start files. |
+| [FOR-EVALUATORS.md](FOR-EVALUATORS.md) | Status, the deliberate v0.3.2 pin, and what this page does not record. |
+| [DEPLOYMENT-TARGETS.md](DEPLOYMENT-TARGETS.md) | Compose, Kubernetes, systemd, and the field board as targets. |
 
 ## Examples in the repo
 
-| Path | What it’s for |
+| Path | What it is for |
 |------|----------------|
 | `config/lab-kit.example.toml` | Annotated full config template |
 | `config/profiles/*.toml` | Ready-made selections (`field-edge`, `+infra`, `+solum`, …) |
@@ -47,6 +53,8 @@
 
 ---
 
-**Full platform (implementations, demos, engine details):** upstream **[SynapticFour/Ferrum](https://github.com/SynapticFour/Ferrum)** — e.g. `docs/WORKFLOWS.md`, `docs/INGEST-LAB-KIT.md`.
+The implementations and the engine details are in [Ferrum](https://github.com/SynapticFour/Ferrum), for example `docs/WORKFLOWS.md` and `docs/INGEST-LAB-KIT.md`.
 
-MII/KDS operations (if needed) are exposed as optional wrappers in Lab Kit (`lab-kit mii ...`) and executed via Ferrum upstream (`ferrum mii ...`).
+MII/KDS operations, when needed, are optional wrappers here (`lab-kit mii ...`) and run in Ferrum (`ferrum mii ...`).
+
+*[← Back to the README](../README.md)*
